@@ -30,7 +30,7 @@ class AgentryConfig(BaseModel):
         default_factory=lambda: os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1")
     )
     sentry_model: str = Field(
-        default_factory=lambda: os.getenv("SENTRY_MODEL", "qwen2.5:7b")
+        default_factory=lambda: os.getenv("SENTRY_MODEL", "qwen2.5:3b")
     )
     enable_cloud_llm_fallback: bool = False
     openai_api_key: str = Field(
@@ -47,7 +47,14 @@ class AgentryConfig(BaseModel):
 
     # Data paths
     data_dir: Path = ROOT_DIR / "data"
-    default_dataset_path: Path = ROOT_DIR / "data" / "agent_telemetry.csv"
+    real_dataset_path: Path = ROOT_DIR / "data" / "real_swe_telemetry.csv"
+    default_dataset_path: Path = Field(
+        default_factory=lambda: (
+            ROOT_DIR / "data" / "real_swe_telemetry.csv"
+            if (ROOT_DIR / "data" / "real_swe_telemetry.csv").exists()
+            else ROOT_DIR / "data" / "agent_telemetry.csv"
+        )
+    )
 
 
 # Singleton instance

@@ -50,18 +50,24 @@ class AgentrySentry:
         self._last_ollama_check: float = 0.0
 
     def _check_ollama_alive(self) -> bool:
-        """Fast probe to check if Ollama server is alive without blocking."""
+        """Fast probe to check if Ollama server and configured model are alive without blocking."""
         import time
         now = time.time()
-        if self._ollama_available is not None and (now - self._last_ollama_check) < 30.0:
+        if self._ollama_available is not None and (now - self._last_ollama_check) < 15.0:
             return self._ollama_available
 
         self._last_ollama_check = now
         try:
-            # Quick 250ms probe
-            with httpx.Client(timeout=0.25) as client:
-                res = client.get(self.ollama_url.replace("/v1", ""))
-                self._ollama_available = (res.status_code in [200, 404])
+            # Quick 400ms probe to check if model is installed
+            base_url = self.ollama_url.replace("/v1", "")
+            with httpx.Client(timeout=0.40) as client:
+                res = client.get(f"{base_url}/api/tags")
+                if res.status_code == 200:
+                    models = [m.get("name", "") for m in res.json().get("models", [])]
+                    # Check if requested model or base name is installed
+                    self._ollama_available = any(self.model in m or m.startswith(self.model.split(":")[0]) for m in models)
+                else:
+                    self._ollama_available = False
         except Exception:
             self._ollama_available = False
         return self._ollama_available
@@ -179,7 +185,7 @@ Respond strictly in JSON with two keys:
 "reason": "A 1-2 sentence concise forensic summary explaining the decision and TabPFN metrics",
 "reroute_instruction": "A corrective directive for the agent if action is REROUTE, else null"
 """
-            with httpx.Client(timeout=3.0) as client:
+            with httpx.Client(timeout=12.0) as client:
                 res = client.post(
                     f"{self.ollama_url}/chat/completions",
                     json={
@@ -193,7 +199,12 @@ Respond strictly in JSON with two keys:
                 )
                 if res.status_code == 200:
                     data = res.json()
-                    content = data["choices"][0]["message"]["content"]
+                    content = data["choices"][0]["message"]["content"].strip()
+                    if content.startswith("```"):
+                        content = content.split("```")[1]
+                        if content.startswith("json"):
+                            content = content[4:]
+                    content = content.strip()
                     parsed = json.loads(content)
                     return parsed.get("reason", ""), parsed.get("reroute_instruction")
         except Exception:

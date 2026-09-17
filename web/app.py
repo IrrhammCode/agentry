@@ -97,23 +97,38 @@ st.markdown("""
 
 
 @st.cache_resource
-def get_engine_and_data():
+def get_engine_and_data(source_mode: str):
     """Cache engine and dataset to ensure rapid web UI responsiveness."""
-    df = load_telemetry_data()
+    from agentry.config import ROOT_DIR
+    real_csv = ROOT_DIR / "data" / "real_swe_telemetry.csv"
+    
+    if "Real" in source_mode and real_csv.exists():
+        df = pd.read_csv(real_csv)
+    else:
+        df = load_telemetry_data()
+        
     engine = TabPFNGuardrailEngine()
     engine.fit(df)
     sentry = AgentrySentry(engine)
     return df, engine, sentry
 
 
-df_history, engine, sentry = get_engine_and_data()
-
 # Sidebar Navigation
 st.sidebar.title("🛡️ Agentry Sentry")
 st.sidebar.caption(f"v{__version__} | Prior Labs TabPFN-3.5 Hackathon")
 
+data_source = st.sidebar.selectbox(
+    "📁 Telemetry Data Mode:",
+    [
+        "🌐 Real SWE-bench Trajectories (Hugging Face)",
+        "⚙️ Synthetic Multi-Agent Fleet"
+    ]
+)
+
+df_history, engine, sentry = get_engine_and_data(data_source)
+
 engine_badge = "☁️ Prior Labs TabPFN-3.5 Cloud" if engine.is_cloud_tabpfn else "⚡ TabPFN High-Fidelity Local Engine"
-st.sidebar.info(f"**Engine:** {engine_badge}\n\n**Brain:** {sentry.model} (Local Privacy-First)")
+st.sidebar.info(f"**Engine:** {engine_badge}\n\n**Brain:** {sentry.model} (Local Ollama / GPU)\n\n**Dataset:** {'Real SWE-bench (739 steps)' if 'Real' in data_source else 'Synthetic (3,524 steps)'}")
 
 page = st.sidebar.radio(
     "Navigation",

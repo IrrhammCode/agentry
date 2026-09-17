@@ -44,32 +44,84 @@ def print_banner():
     console.print(banner_text)
 
 
-def run_live_fleet_demo(num_steps: int = 24, speed_s: float = 0.6):
+def load_real_agent_sessions() -> list:
+    """Loads 4 real-world SWE-bench agent sessions from Hugging Face dataset."""
+    import pandas as pd
+    from agentry.config import ROOT_DIR
+    from agentry.telemetry import AgentStepTelemetry
+
+    real_csv = ROOT_DIR / "data" / "real_swe_telemetry.csv"
+    if not real_csv.exists():
+        from agentry.swe_telemetry import build_real_swe_telemetry_dataset
+        build_real_swe_telemetry_dataset(num_sessions=30)
+
+    df = pd.read_csv(real_csv)
+    # Pick sessions with diverse outcomes
+    sids = df["session_id"].unique()
+    agents = []
+    for sid in sids[:4]:
+        sub_df = df[df["session_id"] == sid].sort_values("step_index")
+        steps = [
+            AgentStepTelemetry(
+                session_id=str(r["session_id"]),
+                step_index=int(r["step_index"]),
+                agent_role=str(r["agent_role"]),
+                model_name=str(r["model_name"]),
+                tool_name=str(r["tool_name"]),
+                step_latency_ms=float(r["step_latency_ms"]),
+                prompt_tokens=int(r["prompt_tokens"]),
+                completion_tokens=int(r["completion_tokens"]),
+                total_tokens=int(r["total_tokens"]),
+                tool_call_count=int(r["tool_call_count"]),
+                error_streak=int(r["error_streak"]),
+                repetition_score=float(r["repetition_score"]),
+                thought_length=int(r["thought_length"]),
+                accumulated_cost_usd=float(r["accumulated_cost_usd"]),
+                thought_trace=str(r["thought_trace"]),
+                failure_status=str(r["failure_status"]),
+                is_failure=int(r["is_failure"]),
+                final_cost_usd=float(r["final_cost_usd"]),
+            )
+            for _, r in sub_df.iterrows()
+        ]
+        label = sid.replace("swe_", "")[:18]
+        agents.append({"name": f"SWE-{label}", "steps": steps, "alive": True})
+    return agents
+
+
+def run_live_fleet_demo(num_steps: int = 24, speed_s: float = 0.4, use_real: bool = True):
     """
-    Streams a live simulated multi-agent fleet execution,
+    Streams a live multi-agent fleet execution,
     showing TabPFN real-time risk assessment and autonomous Sentry interventions.
     """
     print_banner()
 
-    with console.status("[bold green]Fitting TabPFN Guardrail Engine on fleet telemetry history...", spinner="dots"):
-        df = load_telemetry_data()
+    dataset_desc = "Real SWE-bench Fleet Data (Hugging Face)" if use_real else "Synthetic Fleet Simulator"
+    with console.status(f"[bold green]Fitting TabPFN Guardrail Engine on {dataset_desc}...", spinner="dots"):
+        import pandas as pd
+        from agentry.config import ROOT_DIR
+        real_csv = ROOT_DIR / "data" / "real_swe_telemetry.csv"
+        df = pd.read_csv(real_csv) if (use_real and real_csv.exists()) else load_telemetry_data()
         engine = TabPFNGuardrailEngine()
         engine.fit(df)
         sentry = AgentrySentry(engine)
 
     mode_status = "[bold green]TabPFN-3.5 Cloud (Thinking Mode)[/]" if engine.is_cloud_tabpfn else "[bold yellow]TabPFN Local High-Fidelity Engine (Set TABPFN_TOKEN for Cloud API)[/]"
+    console.print(f"  • Telemetry Source: [bold cyan]{dataset_desc}[/]")
     console.print(f"  • Engine: {mode_status}")
-    console.print(f"  • Sentry Brain: [cyan]{sentry.model}[/] (Ollama endpoint or Deterministic Local Sentry)")
-    console.print(f"  • Monitored Fleet: [bold]4 Autonomous Agents[/] (Coder, DevOps, Researcher, DataAnalyst)\n")
+    console.print(f"  • Sentry Brain: [cyan]{sentry.model}[/] (Ollama local inference)")
+    console.print(f"  • Monitored Fleet: [bold]4 Autonomous Coding Agents[/]\n")
 
-    # Generate sessions for 4 agents: 2 healthy, 1 loop, 1 hallucination
-    sim = TelemetrySimulator(seed=101)
-    agents = [
-        {"name": "Agent-Alpha (Coder)", "steps": sim.generate_session(forced_mode="NORMAL"), "alive": True},
-        {"name": "Agent-Beta (DevOps)", "steps": sim.generate_session(forced_mode="INFINITE_LOOP"), "alive": True},
-        {"name": "Agent-Gamma (Analyst)", "steps": sim.generate_session(forced_mode="TOOL_HALLUCINATION"), "alive": True},
-        {"name": "Agent-Delta (Researcher)", "steps": sim.generate_session(forced_mode="COST_RUNAWAY"), "alive": True},
-    ]
+    if use_real:
+        agents = load_real_agent_sessions()
+    else:
+        sim = TelemetrySimulator(seed=101)
+        agents = [
+            {"name": "Agent-Alpha (Coder)", "steps": sim.generate_session(forced_mode="NORMAL"), "alive": True},
+            {"name": "Agent-Beta (DevOps)", "steps": sim.generate_session(forced_mode="INFINITE_LOOP"), "alive": True},
+            {"name": "Agent-Gamma (Analyst)", "steps": sim.generate_session(forced_mode="TOOL_HALLUCINATION"), "alive": True},
+            {"name": "Agent-Delta (Researcher)", "steps": sim.generate_session(forced_mode="COST_RUNAWAY"), "alive": True},
+        ]
 
     table = Table(
         title="[bold green]AGENTRY FLEET RADAR & GUARDRAIL EVENT LOG[/]",
@@ -300,9 +352,11 @@ def main():
     demo_parser = subparsers.add_parser("demo", help="Run live multi-agent fleet monitoring demo")
     demo_parser.add_argument("--steps", type=int, default=16, help="Number of steps to simulate")
     demo_parser.add_argument("--speed", type=float, default=0.4, help="Step delay in seconds")
+    demo_parser.add_argument("--synthetic", action="store_true", help="Use synthetic simulator instead of real SWE data")
 
     # Benchmark
-    subparsers.add_parser("benchmark", help="Run TabPFN vs baseline models benchmark")
+    bench_parser = subparsers.add_parser("benchmark", help="Run TabPFN vs baseline models benchmark")
+    bench_parser.add_argument("--synthetic", action="store_true", help="Use synthetic simulator instead of real SWE data")
 
     # Audit
     audit_parser = subparsers.add_parser("audit", help="Audit a specific agent session")
@@ -316,7 +370,8 @@ def main():
     if args.command == "demo" or args.command is None:
         run_live_fleet_demo(
             num_steps=getattr(args, "steps", 16),
-            speed_s=getattr(args, "speed", 0.4)
+            speed_s=getattr(args, "speed", 0.4),
+            use_real=not getattr(args, "synthetic", False)
         )
     elif args.command == "benchmark":
         run_benchmark_cli()
