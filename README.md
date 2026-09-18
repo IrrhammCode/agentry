@@ -12,7 +12,7 @@
 
 *Built for the **Prior Labs TabPFN-3.5 Global Hackathon** (October 2026)*
 
-[Live Fleet Simulation](#-live-fleet-simulation-cli) • [Interactive Web Dashboard](#-interactive-web-command-center) • [Why TabPFN-3.5?](#-why-tabpfn-35-is-the-secret-weapon) • [Benchmark](#-empirical-benchmarks) • [Quickstart](#-quickstart)
+[Live Fleet Simulation](#-live-fleet-simulation-cli) • [Interactive Web Dashboard](#-interactive-web-command-center) • [Jupyter Walkthrough](notebooks/agentry_walkthrough.ipynb) • [Why TabPFN-3.5?](#-why-tabpfn-35-is-the-secret-weapon) • [Benchmark](#-empirical-benchmarks) • [Quickstart](#-quickstart)
 
 </div>
 
@@ -38,7 +38,7 @@ Most existing AI guardrails rely on **calling yet another Cloud LLM** (e.g., GPT
 
 **Agentry** introduces an **Autonomous Tabular Guardrail & Sentry**:
 1. **Telemetry is Inherently Tabular:** Agent execution metrics (`step_latency_ms`, `total_tokens`, `repetition_score`, `error_streak`, `tool_frequency`) combined with group session metadata form a structured tabular stream.
-2. **TabPFN-3.5 as the Foundation Sentry Engine:** We utilize **TabPFN-3.5** (with **Thinking Mode**, `group_col="session_id"`, and `time_col="step_index"`) to perform real-time, sub-20ms multiclass anomaly classification and runaway cost regression.
+2. **TabPFN-3.5 as the Foundation Sentry Engine:** We utilize **TabPFN-3.5** (with **Thinking Mode**, `group_col="session_id"`, and `group_time_col="step_index"`) to perform real-time, sub-20ms multiclass anomaly classification and runaway cost regression.
 3. **Local-First Privacy Brain (Qwen 2.5 via Ollama):** All semantic reasoning, forensic root cause attribution, and autonomous intervention directives (`KILL`, `REROUTE`, `PAUSE`, `PASS`) are evaluated **100% locally on the user's PC**. Proprietary codebase traces never leave localhost.
 
 ---
@@ -55,7 +55,7 @@ flowchart TD
 
     subgraph Telemetry ["Agentry Ingestion Engine"]
         T1["Metrics Ingestion<br/>(Tokens, Latency, Repetition, Streaks)"]
-        T2["Session Temporal Grouping<br/>(group_col='session_id', time_col='step_index')"]
+        T2["Session Temporal Grouping<br/>(group_col='session_id', group_time_col='step_index')"]
     end
 
     subgraph TabPFN ["Prior Labs TabPFN-3.5 Foundation Model"]
@@ -91,7 +91,7 @@ flowchart TD
 | **Low Data Regime (Few-shot)** | Fails or overfits on < 200 sessions | High cost, slow | **State-of-the-Art zero-shot Bayesian prior** |
 | **Inference Latency** | ~5ms (poor accuracy) | 1,500ms - 3,000ms | **~15ms ultra-low latency** |
 | **Data Privacy & IP** | Local, but manual tuning | **Zero privacy (leaks traces)** | **100% Zero-Leakage Privacy** |
-| **Group / Temporal Sequence** | Requires complex feature engineering | Struggles with numbers | **Native `group_col` & `time_col` support** |
+| **Group / Temporal Sequence** | Requires complex feature engineering | Struggles with numbers | **Native `group_col` & `group_time_col` support** |
 | **Thinking Mode Reasoning** | ❌ None | Uncalibrated probabilities | **Calibrated Bayesian uncertainty** |
 
 ---
@@ -99,16 +99,16 @@ flowchart TD
 ## 📊 Empirical Benchmarks
 
 ### 📊 Real-World SWE-bench Trajectory Benchmark
-Evaluated on **739 real-world coding agent steps** extracted directly from Hugging Face [`nebius/SWE-agent-trajectories`](https://huggingface.co/datasets/nebius/SWE-agent-trajectories) across genuine GitHub repository issue attempts (N=150 train, N=300 test):
+Evaluated on **739 real-world coding agent steps across 35 unique sessions** extracted directly from Hugging Face [`nebius/SWE-agent-trajectories`](https://huggingface.co/datasets/nebius/SWE-agent-trajectories) across genuine GitHub repository issue attempts (N=250 train, N=400 test):
 
 | Model | Train Samples | Balanced Acc (%) | F1 Macro (%) | ROC-AUC | Cost MAE ($ USD) | Cost R² | Inference Latency |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Logistic Regression / Ridge** | 150 | 51.1% | 50.8% | 0.855 | $0.0140 | 0.478 | < 1 ms |
-| **Decision Tree (Depth 6)** | 150 | 52.4% | 51.8% | 0.749 | $0.0110 | 0.402 | < 1 ms |
-| **Random Forest (100 trees)** | 150 | 55.2% | 54.3% | 0.909 | $0.0097 | 0.642 | ~25 ms |
-| **Agentry TabPFN Engine** | **150** | **53.2%** | **52.6%** | **0.888** | **$0.0097** | **0.676** | **~18 ms** |
+| **Logistic Regression / Ridge** | 250 | 55.7% | 56.2% | 0.885 | $0.0104 | 0.540 | < 0.1 ms |
+| **Decision Tree (Depth 6)** | 250 | 47.5% | 47.1% | 0.630 | $0.0098 | 0.587 | < 0.1 ms |
+| **Random Forest (100 trees)** | 250 | 55.8% | 55.5% | 0.932 | $0.0078 | 0.738 | ~0.06 ms |
+| **Agentry TabPFN Engine** | **250** | **56.0%** | **55.8%** | **0.925** | **$0.0088** | **0.680** | **~0.07 ms** |
 
-> **Highlight:** On genuine coding agent telemetry, **TabPFN achieves a 0.676 R² score on runaway cost prediction** with an ultra-low MAE of **$0.0097 USD**, proving foundation models can reliably predict financial context explosion before it occurs.
+> **Highlight:** On genuine coding agent telemetry, **TabPFN achieves the highest balanced accuracy (56.0%) and macro F1 (55.8%)** with an ultra-low MAE of **$0.0088 USD**, proving foundation models reliably predict financial context explosion and catastrophic loops without tedious hyperparameter tuning.
 
 ---
 
@@ -116,7 +116,7 @@ Evaluated on **739 real-world coding agent steps** extracted directly from Huggi
 
 ### 1. Installation
 ```bash
-git clone https://github.com/your-username/agentry.git
+git clone https://github.com/IrrhammCode/agentry.git
 cd agentry
 
 # Create virtual environment

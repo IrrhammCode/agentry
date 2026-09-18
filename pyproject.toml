@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agentry"
+version = "0.1.0"
+description = "Agentry: Real-Time Tabular In-Context Sentry for Autonomous AI Agents Powered by TabPFN-3.5 and Local SLMs"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "Apache-2.0"}
+authors = [
+    {name = "Agentry Team"}
+]
+keywords = [
+    "tabpfn",
+    "agent-guardrail",
+    "tabular-foundation-model",
+    "autonomous-agents",
+    "ai-safety",
+    "in-context-learning",
+    "swe-bench"
+]
+dependencies = [
+    "pandas>=2.0.0",
+    "numpy>=1.24.0",
+    "scikit-learn>=1.3.0",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "python-dotenv>=1.0.0",
+    "requests>=2.31.0",
+    "streamlit>=1.30.0",
+    "datasets>=2.18.0",
+    "tabpfn-client>=0.1.0",
+    "typer>=0.9.0",
+    "rich>=13.0.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "black>=24.0.0",
+    "isort>=5.13.0"
+]
+
+[project.scripts]
+agentry = "agentry.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["agentry*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

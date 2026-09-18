@@ -18,6 +18,7 @@ from rich.text import Text
 from rich import box
 
 from agentry import __version__
+from agentry.config import ROOT_DIR
 from agentry.telemetry import TelemetrySimulator, load_telemetry_data
 from agentry.engine import TabPFNGuardrailEngine
 from agentry.agent import AgentrySentry
@@ -215,10 +216,14 @@ def run_live_fleet_demo(num_steps: int = 24, speed_s: float = 0.4, use_real: boo
     console.print(Panel(summary, title="[bold cyan]Agentry Fleet Sentry Summary[/]", border_style="cyan"))
 
 
-def run_benchmark_cli():
+def run_benchmark_cli(use_real: bool = True):
     """Runs the benchmark suite and outputs the formatted comparison."""
     print_banner()
-    console.print("[bold yellow]Starting Agentry TabPFN-3.5 Guardrail Benchmark Suite...[/]\n")
+    source_name = "Real SWE-bench Trajectories" if use_real else "Synthetic Telemetry Simulator"
+    console.print(f"[bold yellow]Starting Agentry TabPFN Guardrail Benchmark Suite ({source_name})...[/]\n")
+
+    real_csv = ROOT_DIR / "data" / "real_swe_telemetry.csv"
+    data_path = str(real_csv) if (use_real and real_csv.exists()) else None
 
     with Progress(
         SpinnerColumn(),
@@ -226,10 +231,10 @@ def run_benchmark_cli():
         BarColumn(),
         console=console
     ) as progress:
-        task = progress.add_task("[cyan]Evaluating models across agent telemetry samples...", total=100)
-        suite = GuardrailBenchmarkSuite()
+        task = progress.add_task(f"[cyan]Evaluating models across {source_name}...", total=100)
+        suite = GuardrailBenchmarkSuite(data_path=data_path)
         progress.update(task, advance=30)
-        results = suite.run_benchmark(train_samples=250, test_samples=500)
+        results = suite.run_benchmark(train_samples=250, test_samples=400)
         progress.update(task, advance=70)
 
     console.print("\n[bold green]Benchmark Results (TabPFN vs Classical Baselines on Agent Telemetry):[/]\n")
@@ -374,7 +379,7 @@ def main():
             use_real=not getattr(args, "synthetic", False)
         )
     elif args.command == "benchmark":
-        run_benchmark_cli()
+        run_benchmark_cli(use_real=not getattr(args, "synthetic", False))
     elif args.command == "audit":
         audit_session_cli(args.session_id)
     elif args.command == "web":

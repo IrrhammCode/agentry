@@ -58,6 +58,25 @@ class TabPFNGuardrailEngine:
         "thought_has_spill",
     ]
 
+    # Raw multimodal columns passed to TabPFN-3.5 Cloud Foundation Model
+    RAW_TABPFN_COLS = [
+        "session_id",
+        "step_index",
+        "agent_role",
+        "tool_name",
+        "model_name",
+        "step_latency_ms",
+        "prompt_tokens",
+        "completion_tokens",
+        "total_tokens",
+        "tool_call_count",
+        "error_streak",
+        "repetition_score",
+        "thought_length",
+        "accumulated_cost_usd",
+        "thought_trace",
+    ]
+
     def __init__(self, token: Optional[str] = None, use_thinking: Optional[bool] = None):
         self.token = token or settings.tabpfn_token
         self.use_thinking = use_thinking if use_thinking is not None else settings.tabpfn_use_thinking
@@ -84,16 +103,17 @@ class TabPFNGuardrailEngine:
             tabpfn_client.set_access_token(self.token)
             
             # Initialize TabPFN 3.5 Classifier & Regressor with Thinking Mode
+            # Grouped temporal series in TabPFN-3.5 requires group_col + group_time_col
             self.classifier = tabpfn_client.TabPFNClassifier(
                 thinking_mode=self.use_thinking,
                 group_col="session_id",
-                time_col="step_index",
+                group_time_col="step_index",
                 n_estimators=settings.tabpfn_n_estimators
             )
             self.regressor = tabpfn_client.TabPFNRegressor(
                 thinking_mode=self.use_thinking,
                 group_col="session_id",
-                time_col="step_index",
+                group_time_col="step_index",
                 n_estimators=settings.tabpfn_n_estimators
             )
             self.is_cloud_tabpfn = True
@@ -143,12 +163,12 @@ class TabPFNGuardrailEngine:
 
         if self.is_cloud_tabpfn:
             try:
-                # TabPFN accepts group_col and time_col if passed as DataFrame
-                X_with_meta = processed_df[["session_id", "step_index"] + self.FEATURE_COLS]
-                self.classifier.fit(X_with_meta, y_class)
-                self.regressor.fit(X_with_meta, y_reg)
+                # TabPFN accepts raw multimodal DataFrame with group_col, group_time_col, and raw text
+                X_tabpfn = training_df[self.RAW_TABPFN_COLS].copy()
+                self.classifier.fit(X_tabpfn, y_class)
+                self.regressor.fit(X_tabpfn, y_reg)
                 self.is_fitted = True
-                logger.info("TabPFN-3.5 Cloud Engine fitted successfully on %d telemetry steps.", len(X))
+                logger.info("TabPFN-3.5 Cloud Engine fitted successfully on %d telemetry steps.", len(X_tabpfn))
                 return
             except Exception as e:
                 logger.error("TabPFN Cloud fit error: %s. Falling back to local offline model.", e)
@@ -190,7 +210,7 @@ class TabPFNGuardrailEngine:
         processed_step = self._extract_tabular_features(df_step, fit=False)
 
         if self.is_cloud_tabpfn:
-            X_input = processed_step[["session_id", "step_index"] + self.FEATURE_COLS]
+            X_input = df_step[self.RAW_TABPFN_COLS]
         else:
             X_input = processed_step[self.FEATURE_COLS]
 

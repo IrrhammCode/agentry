@@ -112,9 +112,14 @@ class GuardrailBenchmarkSuite:
         train_time = round(time.time() - t0, 3)
 
         t_inf0 = time.time()
-        cls_probs = engine.classifier.predict_proba(X_test)
+        if engine.is_cloud_tabpfn:
+            test_slice_df = self.df.iloc[X_test.index]
+            X_test_input = test_slice_df[engine.RAW_TABPFN_COLS]
+        else:
+            X_test_input = X_test
+        cls_probs = engine.classifier.predict_proba(X_test_input)
         cls_preds = np.argmax(cls_probs, axis=1)
-        reg_preds = engine.regressor.predict(X_test)
+        reg_preds = engine.regressor.predict(X_test_input)
         inf_latency = round(((time.time() - t_inf0) / len(X_test)) * 1000, 2)
 
         bal_acc = round(float(balanced_accuracy_score(y_test_cls, cls_preds)), 4)

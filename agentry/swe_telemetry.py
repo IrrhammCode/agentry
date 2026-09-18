@@ -71,7 +71,7 @@ def is_error_output(text: str) -> bool:
     return any(p in lower for p in error_patterns)
 
 
-def parse_swe_trajectory_session(row: Dict[str, Any]) -> List[AgentStepTelemetry]:
+def parse_swe_trajectory_session(row: Dict[str, Any], session_idx: int = 0) -> List[AgentStepTelemetry]:
     """Parses a single real SWE-bench trajectory into structured AgentStepTelemetry rows."""
     instance_id = row.get("instance_id", "unknown_instance")
     model_name = row.get("model_name", "swe-agent-llama-70b")
@@ -157,7 +157,7 @@ def parse_swe_trajectory_session(row: Dict[str, Any]) -> List[AgentStepTelemetry
 
             steps.append(
                 AgentStepTelemetry(
-                    session_id=f"swe_{instance_id}",
+                    session_id=f"swe_{instance_id}_s{session_idx:03d}",
                     step_index=step_idx,
                     agent_role="SWE-Coder",
                     model_name=model_name,
@@ -200,7 +200,7 @@ def build_real_swe_telemetry_dataset(num_sessions: int = 60, output_path: Option
     session_count = 0
 
     for row in ds:
-        parsed_steps = parse_swe_trajectory_session(row)
+        parsed_steps = parse_swe_trajectory_session(row, session_idx=session_count)
         if len(parsed_steps) >= 4:  # Keep meaningful trajectories
             all_records.extend([s.__dict__ for s in parsed_steps])
             session_count += 1
