@@ -8,11 +8,19 @@ __author__ = "Agentry Team"
 
 from agentry.telemetry import TelemetrySimulator, load_telemetry_data
 from agentry.engine import TabPFNGuardrailEngine
-from agentry.agent import AgentrySentry
+from agentry.agent import AgentrySentry, SentryDecision
+from agentry.guard import AgentryGuard, AgentHaltException, StepContext
+from agentry.integrations import AgentryLangChainCallback, AgentryCrewHook
 
 __all__ = [
     "TelemetrySimulator",
     "load_telemetry_data",
     "TabPFNGuardrailEngine",
     "AgentrySentry",
+    "SentryDecision",
+    "AgentryGuard",
+    "AgentHaltException",
+    "StepContext",
+    "AgentryLangChainCallback",
+    "AgentryCrewHook",
 ]

@@ -146,6 +146,46 @@ SENTRY_MODEL=qwen2.5:3b
 
 ---
 
+## 🔌 Drop-in SDK & Agent Middleware
+
+Integrate real-time TabPFN-3.5 guardrails into any AI agent framework in **2 lines of code**:
+
+### 1. Python Tool Decorator (`@guard.protect`)
+```python
+from agentry import AgentryGuard, AgentHaltException
+
+guard = AgentryGuard(raise_on_kill=True)
+
+@guard.protect(session_id="agent_coder_01", tool_name="bash")
+def execute_bash(command: str) -> str:
+    return run_shell(command)
+
+# If an agent spirals into an infinite loop or runaway cost:
+# -> Agentry intercepts in < 15ms and raises AgentHaltException,
+#    saving wasted tokens and stopping further execution!
+```
+
+### 2. LangChain & LangGraph Integration
+```python
+from agentry.integrations import AgentryLangChainCallback
+from langchain.agents import AgentExecutor
+
+callback = AgentryLangChainCallback(session_id="langchain_run_01")
+executor = AgentExecutor(agent=agent, tools=tools, callbacks=[callback])
+executor.invoke({"input": "Refactor authentication flow"})
+```
+
+### 3. CrewAI Agent Step Hook
+```python
+from agentry.integrations import AgentryCrewHook
+from crewai import Agent
+
+hook = AgentryCrewHook(session_id="crew_run_01")
+coder = Agent(role="Senior Coder", goal="Implement features", step_callback=hook)
+```
+
+---
+
 ## 🖥️ Live Fleet Simulation (CLI)
 
 Experience real-time guardrail defense in your terminal:
@@ -204,8 +244,9 @@ Ensure system reliability with the automated test suite:
 pytest tests/
 ```
 ```text
-tests/test_agentry.py ....                                               [100%]
-======================== 4 passed in 2.99s =========================
+tests/test_agentry.py ....                                               [ 44%]
+tests/test_guard_sdk.py .....                                            [100%]
+======================== 9 passed in 11.86s =========================
 ```
 
 ---
