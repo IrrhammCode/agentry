@@ -16,6 +16,7 @@ from agentry.config import ROOT_DIR, settings
 from agentry.telemetry import AgentStepTelemetry, load_telemetry_data
 from agentry.engine import TabPFNGuardrailEngine
 from agentry.agent import AgentrySentry, SentryDecision
+from agentry.storage import AuditStorage
 from agentry.swe_telemetry import compute_string_overlap, is_error_output
 
 logger = logging.getLogger("agentry.guard")
@@ -143,6 +144,7 @@ class AgentryGuard:
         self,
         engine: Optional[TabPFNGuardrailEngine] = None,
         sentry: Optional[AgentrySentry] = None,
+        storage: Optional[AuditStorage] = None,
         auto_fit: bool = True,
         raise_on_kill: bool = True,
         cost_per_1k_tokens: float = 0.002
@@ -154,6 +156,7 @@ class AgentryGuard:
             self.engine.fit(training_data)
 
         self.sentry = sentry or AgentrySentry(self.engine)
+        self.storage = storage or AuditStorage()
         self.raise_on_kill = raise_on_kill
         self.cost_per_1k = cost_per_1k_tokens
         self._sessions: Dict[str, SessionState] = {}
@@ -327,6 +330,12 @@ class AgentryGuard:
         decision = self.sentry.audit_step(telemetry)
         state.last_decision = decision
         state.step_index += 1
+
+        # Record decision to persistent audit storage for enterprise governance
+        try:
+            self.storage.record_decision(decision)
+        except Exception as e:
+            logger.debug("Failed recording audit event: %s", e)
 
         # 7. Execute Halt if required
         if decision.action == "KILL":

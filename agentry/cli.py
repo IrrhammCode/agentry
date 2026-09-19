@@ -370,6 +370,11 @@ def main():
     # Web
     subparsers.add_parser("web", help="Launch interactive Streamlit Command Center")
 
+    # Serve (HTTP REST API Gateway)
+    serve_parser = subparsers.add_parser("serve", help="Launch HTTP REST API daemon")
+    serve_parser.add_argument("--host", type=str, default="127.0.0.1", help="Host interface to bind")
+    serve_parser.add_argument("--port", type=int, default=8787, help="Port to listen on")
+
     args = parser.parse_args()
 
     if args.command == "demo" or args.command is None:
@@ -386,6 +391,9 @@ def main():
         import subprocess
         console.print("[bold green]Launching Agentry Streamlit Web Dashboard...[/]")
         subprocess.run([sys.executable, "-m", "streamlit", "run", "web/app.py"])
+    elif args.command == "serve":
+        from agentry.server import start_server
+        start_server(host=args.host, port=args.port)
     else:
         parser.print_help()
 

@@ -58,9 +58,9 @@ class AgentrySentry:
 
         self._last_ollama_check = now
         try:
-            # Quick 400ms probe to check if model is installed
+            # Quick probe to check if model is installed
             base_url = self.ollama_url.replace("/v1", "")
-            with httpx.Client(timeout=0.40) as client:
+            with httpx.Client(timeout=2.0) as client:
                 res = client.get(f"{base_url}/api/tags")
                 if res.status_code == 200:
                     models = [m.get("name", "") for m in res.json().get("models", [])]
