@@ -29,8 +29,26 @@ class SentryDecision:
     reroute_instruction: Optional[str]
     estimated_tokens_saved: int
     estimated_cost_saved_usd: float
-    sentry_provider: str  # 'ollama-qwen2.5:7b' or 'local-rule-engine'
+    sentry_provider: str  # 'groq-llama-3.3-70b', 'ollama-qwen2.5:3b', or 'local-rule-engine'
     tabpfn_assessment: StepRiskAssessment
+
+
+class GroqKeyRotator:
+    """
+    Round-robin API key pool with automatic failover across multiple Groq keys.
+    Prevents rate limits (429) during heavy agent fleet monitoring.
+    """
+
+    def __init__(self, keys: List[str]):
+        self.keys = [k.strip() for k in keys if k.strip()]
+        self._index = 0
+
+    def get_key(self) -> Optional[str]:
+        if not self.keys:
+            return None
+        key = self.keys[self._index % len(self.keys)]
+        self._index += 1
+        return key
 
 
 class AgentrySentry:
@@ -44,6 +62,7 @@ class AgentrySentry:
         self.engine = engine or TabPFNGuardrailEngine()
         self.ollama_url = settings.ollama_base_url
         self.model = settings.sentry_model
+        self.groq_rotator = GroqKeyRotator(settings.groq_api_keys)
 
         # Cache Ollama availability
         self._ollama_available: Optional[bool] = None
@@ -147,14 +166,99 @@ class AgentrySentry:
         assessment: StepRiskAssessment,
         action: str
     ) -> Tuple[str, Optional[str], str]:
-        """Queries local Ollama instance if alive, or uses deterministic sentry intelligence."""
-        if self._check_ollama_alive():
+        """
+        Generates Sentry forensic reasoning.
+        Priority:
+        1. Groq Cloud Engine (if keys provided and preferred/auto).
+        2. Local Ollama SLM (Zero-leakage local privacy).
+        3. Deterministic Sentry Brain Fallback.
+        """
+        provider_pref = settings.sentry_provider
+
+        # 1. Groq Ultra-Fast Cloud Engine (with multi-key rotation)
+        if provider_pref in ("groq", "auto") and self.groq_rotator.keys:
+            groq_result = self._query_groq(step, assessment, action)
+            if groq_result:
+                return groq_result[0], groq_result[1], f"groq-{settings.groq_model}"
+
+        # 2. Local Ollama SLM (Zero-leakage local privacy)
+        if provider_pref in ("ollama", "auto") and self._check_ollama_alive():
             ollama_result = self._query_ollama(step, assessment, action)
             if ollama_result:
                 return ollama_result[0], ollama_result[1], f"ollama-{self.model}"
 
-        # Deterministic Sentry Brain
+        # 3. Deterministic Sentry Brain Fallback
         return self._rule_based_sentry_brain(step, assessment, action)
+
+    def _query_groq(
+        self,
+        step: AgentStepTelemetry,
+        assessment: StepRiskAssessment,
+        action: str
+    ) -> Optional[Tuple[str, Optional[str]]]:
+        """Queries Groq API with automatic key rotation across available keys."""
+        if not self.groq_rotator.keys:
+            return None
+
+        prompt = f"""You are Agentry, an autonomous AI Sentry safeguarding an agent fleet.
+A monitored agent '{step.agent_role}' running '{step.model_name}' produced telemetry:
+- Step: {step.step_index}
+- Tool: {step.tool_name}
+- Error Streak: {step.error_streak}
+- Repetition Score: {step.repetition_score:.2f}
+- Accumulated Cost: ${step.accumulated_cost_usd:.4f}
+- Thought: "{step.thought_trace}"
+
+TabPFN-3.5 Tabular Assessment:
+- Failure Risk Probability: {assessment.failure_probability:.1%}
+- Failure Mode: {assessment.predicted_failure_mode}
+- Driver: {assessment.primary_risk_driver}
+- Projected Cost: ${assessment.projected_final_cost_usd:.4f}
+
+Recommended Action: {action}
+
+Respond strictly in JSON with two keys:
+"reason": "A 1-2 sentence concise forensic summary explaining the decision and TabPFN metrics",
+"reroute_instruction": "A corrective directive for the agent if action is REROUTE, else null"
+"""
+        max_attempts = min(len(self.groq_rotator.keys) * 2, 8)
+        for attempt in range(max_attempts):
+            api_key = self.groq_rotator.get_key()
+            if not api_key:
+                break
+            try:
+                with httpx.Client(timeout=6.0) as client:
+                    res = client.post(
+                        f"{settings.groq_base_url}/chat/completions",
+                        headers={
+                            "Authorization": f"Bearer {api_key}",
+                            "Content-Type": "application/json"
+                        },
+                        json={
+                            "model": settings.groq_model,
+                            "messages": [
+                                {"role": "system", "content": "You are Agentry, an autonomous AI Sentry. Output valid JSON only."},
+                                {"role": "user", "content": prompt}
+                            ],
+                            "response_format": {"type": "json_object"},
+                            "temperature": 0.2,
+                            "max_tokens": 350
+                        }
+                    )
+                    if res.status_code == 200:
+                        data = res.json()
+                        content = data["choices"][0]["message"]["content"].strip()
+                        parsed = json.loads(content)
+                        return parsed.get("reason", ""), parsed.get("reroute_instruction")
+                    elif res.status_code in (429, 401):
+                        masked = f"{api_key[:6]}...{api_key[-4:]}" if len(api_key) > 10 else "***"
+                        logger.warning("Groq key %s returned %d. Rotating key (attempt %d/%d)...",
+                                       masked, res.status_code, attempt + 1, max_attempts)
+                        continue
+            except Exception as e:
+                logger.debug("Groq query attempt %d failed: %s", attempt + 1, e)
+                continue
+        return None
 
     def _query_ollama(
         self,

@@ -107,3 +107,16 @@ def test_crewai_hook_integration():
     assert decision is not None
     assert decision.action == "PASS"
     assert decision.step_index == 0
+
+
+def test_groq_key_rotator():
+    """Test 7-key round-robin rotation for Groq API keys."""
+    from agentry.agent import GroqKeyRotator
+    keys = [f"gsk_key_{i}" for i in range(1, 8)]
+    rotator = GroqKeyRotator(keys)
+    assert len(rotator.keys) == 7
+
+    # Verify smooth round-robin cycling through all 7 keys
+    sequence = [rotator.get_key() for _ in range(14)]
+    assert sequence[:7] == keys
+    assert sequence[7:14] == keys

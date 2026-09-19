@@ -13,6 +13,14 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(ROOT_DIR / ".env")
 
 
+def _parse_groq_keys() -> list[str]:
+    raw = os.getenv("GROQ_API_KEYS", os.getenv("GROQ_API_KEY", ""))
+    if not raw:
+        return []
+    import re
+    return [k.strip() for k in re.split(r"[,;\s\n]+", raw) if k.strip()]
+
+
 class AgentryConfig(BaseModel):
     """Global configuration settings for Agentry."""
 
@@ -24,6 +32,20 @@ class AgentryConfig(BaseModel):
         default_factory=lambda: os.getenv("TABPFN_THINKING_MODE", "true").lower() in ("true", "1", "yes")
     )
     tabpfn_n_estimators: int = 8
+
+    # Provider Selection ('auto', 'groq', 'ollama', 'rule')
+    sentry_provider: str = Field(
+        default_factory=lambda: os.getenv("SENTRY_PROVIDER", "auto").lower()
+    )
+
+    # Groq Settings (Supports multi-key pool for automatic rotation)
+    groq_api_keys: list[str] = Field(default_factory=_parse_groq_keys)
+    groq_model: str = Field(
+        default_factory=lambda: os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+    )
+    groq_base_url: str = Field(
+        default_factory=lambda: os.getenv("GROQ_BASE_URL", "https://api.groq.com/openai/v1")
+    )
 
     # Local Sentry Brain (Ollama or OpenAI-compatible endpoint)
     ollama_base_url: str = Field(
