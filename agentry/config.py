@@ -50,7 +50,7 @@ class AgentryConfig(BaseModel):
     # Groq Settings (Supports multi-key pool for automatic rotation)
     groq_api_keys: list[str] = Field(default_factory=_parse_groq_keys)
     groq_model: str = Field(
-        default_factory=lambda: os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+        default_factory=lambda: os.getenv("GROQ_MODEL", "qwen/qwen3.8-27b")
     )
     groq_base_url: str = Field(
         default_factory=lambda: os.getenv("GROQ_BASE_URL", "https://api.groq.com/openai/v1")
