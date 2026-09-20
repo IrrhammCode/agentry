@@ -15,10 +15,19 @@ load_dotenv(ROOT_DIR / ".env")
 
 def _parse_groq_keys() -> list[str]:
     raw = os.getenv("GROQ_API_KEYS", os.getenv("GROQ_API_KEY", ""))
-    if not raw:
-        return []
-    import re
-    return [k.strip() for k in re.split(r"[,;\s\n]+", raw) if k.strip()]
+    keys = []
+    if raw:
+        import re
+        keys.extend([k.strip() for k in re.split(r"[,;\s\n]+", raw) if k.strip()])
+    
+    # Also support numbered keys: GROQ_API_KEY_1 .. GROQ_API_KEY_10
+    for i in range(1, 21):
+        numbered_key = os.getenv(f"GROQ_API_KEY_{i}")
+        if numbered_key and numbered_key.strip():
+            k = numbered_key.strip()
+            if k not in keys:
+                keys.append(k)
+    return keys
 
 
 class AgentryConfig(BaseModel):
