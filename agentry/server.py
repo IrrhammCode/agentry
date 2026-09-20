@@ -7,7 +7,7 @@ to interact with the TabPFN-3.5 guardrail engine over standard HTTP.
 import json
 import logging
 import time
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import HTTPServer, ThreadingHTTPServer, BaseHTTPRequestHandler
 from typing import Optional
 from urllib.parse import urlparse, parse_qs
 
@@ -26,6 +26,11 @@ def get_guard() -> AgentryGuard:
     if _guard_instance is None:
         _guard_instance = AgentryGuard(auto_fit=True, raise_on_kill=False)
     return _guard_instance
+
+
+def set_guard(guard: AgentryGuard) -> None:
+    global _guard_instance
+    _guard_instance = guard
 
 
 class AgentryHTTPRequestHandler(BaseHTTPRequestHandler):

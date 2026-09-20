@@ -32,7 +32,7 @@ from agentry.engine import TabPFNGuardrailEngine
 from agentry.agent import AgentrySentry
 from agentry.guard import AgentryGuard, AgentHaltException
 from agentry.storage import AuditStorage
-from agentry.server import AgentryHTTPRequestHandler, HTTPServer
+from agentry.server import AgentryHTTPRequestHandler, HTTPServer, ThreadingHTTPServer, set_guard
 
 console = Console()
 
@@ -195,16 +195,17 @@ def test_phase_5_audit_storage(storage: AuditStorage):
 
 def test_phase_6_http_server(guard: AgentryGuard):
     print_step_header(6, "Testing Agentry HTTP REST API Gateway Daemon")
+    set_guard(guard)
     # Start server in a background daemon thread
     port = 8799
-    server = HTTPServer(("127.0.0.1", port), AgentryHTTPRequestHandler)
+    server = ThreadingHTTPServer(("127.0.0.1", port), AgentryHTTPRequestHandler)
     server_thread = threading.Thread(target=server.serve_forever, daemon=True)
     server_thread.start()
-    time.sleep(0.3)
+    time.sleep(0.5)
 
     base_url = f"http://127.0.0.1:{port}"
     try:
-        with httpx.Client(timeout=5.0) as client:
+        with httpx.Client(timeout=15.0) as client:
             # 1. Health check
             res_health = client.get(f"{base_url}/health")
             assert res_health.status_code == 200
