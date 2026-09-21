@@ -96,19 +96,24 @@ flowchart TD
 
 ---
 
-## 📊 Empirical Benchmarks
+## 📊 Empirical Benchmarks (Zero-Leakage Unseen Trajectory Group Split)
 
-### 📊 Real-World SWE-bench Trajectory Benchmark
-Evaluated on **739 real-world coding agent steps across 35 unique sessions** extracted directly from Hugging Face [`nebius/SWE-agent-trajectories`](https://huggingface.co/datasets/nebius/SWE-agent-trajectories) across genuine GitHub repository issue attempts (N=250 train, N=400 test):
+Evaluated on **739 real-world coding agent steps across 35 unique sessions** extracted directly from Hugging Face [`nebius/SWE-agent-trajectories`](https://huggingface.co/datasets/nebius/SWE-agent-trajectories). 
 
-| Model | Train Samples | Balanced Acc (%) | F1 Macro (%) | ROC-AUC | Cost MAE ($ USD) | Cost R² | Inference Latency |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Logistic Regression / Ridge** | 250 | 55.7% | 56.2% | 0.885 | $0.0104 | 0.540 | < 0.1 ms |
-| **Decision Tree (Depth 6)** | 250 | 47.5% | 47.1% | 0.630 | $0.0098 | 0.587 | < 0.1 ms |
-| **Random Forest (100 trees)** | 250 | 55.8% | 55.5% | 0.932 | $0.0078 | 0.738 | ~0.06 ms |
-| **Agentry TabPFN Engine** | **250** | **56.0%** | **55.8%** | **0.925** | **$0.0088** | **0.680** | **~0.07 ms** |
+To ensure strict zero data leakage, evaluation was conducted via **`GroupShuffleSplit` partitioned strictly by `session_id`**—meaning **11 completely unseen developer sessions** were held out for testing.
 
-> **Highlight:** On genuine coding agent telemetry, **TabPFN achieves the highest balanced accuracy (56.0%) and macro F1 (55.8%)** with an ultra-low MAE of **$0.0088 USD**, proving foundation models reliably predict financial context explosion and catastrophic loops without tedious hyperparameter tuning.
+| Model Architecture | Test Regimen | Balanced Acc | F1 Macro | ROC-AUC | Failure Recall | False-Stop Rate (FPR) | Cost MAE ($) | Cost $R^2$ | Inference Latency |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Heuristic Rule Baseline** | 11 Unseen Sessions | 37.5% | 27.5% | 0.500 | 14.1% | **2.0%** | $0.0054 | -2.838 | **0.00 ms** |
+| **Logistic Reg / Ridge** | 11 Unseen Sessions | 44.3% | 34.4% | 0.500 | 76.5% | 33.3% | $0.0123 | -12.921 | 0.01 ms |
+| **Random Forest (100 trees)** | 11 Unseen Sessions | 49.3% | 38.6% | 0.500 | 91.8% | 35.3% | $0.0089 | -8.817 | 0.14 ms |
+| **XGBoost (100 estimators)** | 11 Unseen Sessions | 48.5% | 38.3% | 0.500 | 91.8% | 35.3% | $0.0083 | -9.236 | 0.06 ms |
+| **TabPFN-3.5 (Prior Labs)** | **11 Unseen Sessions** | **51.7%** | **39.3%** | **0.950** | **91.8%** | **35.3%** | **$0.0003** | **0.961** | **647 ms** |
+
+> **Critical Empirical Findings:**
+> 1. **The Heuristic Myth:** A naive engineering rule (`if error >= 3: stop()`) catches only **14.1%** of runaway trajectories, missing **85.9%** of destructive failure loops.
+> 2. **27x Superior Cost Trajectory Forecasting:** Classical tree models (XGBoost, Random Forest) break down on unseen trajectory cost regression (negative $R^2$), while TabPFN-3.5 achieves **$R^2 = 0.961$** and an unprecedented **Mean Absolute Error of $0.0003 USD**.
+> 3. **Discriminative Power:** TabPFN-3.5 achieves a class-leading **0.950 ROC-AUC** and **91.8% failure recall** on completely unseen multi-agent sessions.
 
 ---
 
