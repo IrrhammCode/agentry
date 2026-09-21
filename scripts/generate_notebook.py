@@ -13,12 +13,12 @@ nb = {
             "cell_type": "markdown",
             "metadata": {},
             "source": [
-                "# Agentry: Real-Time Tabular In-Context Sentry for Autonomous AI Agents\n",
-                "### Powered by TabPFN-3.5 Foundation Model & Local Edge SLM (Qwen 2.5)\n",
+                "# Agentry: Predictive Runtime Control Layer for Autonomous Agent Fleets\n",
+                "### Powered by Prior Labs TabPFN-3.5 Tabular Foundation Model & Edge Intelligence\n",
                 "\n",
                 "**Prior Labs TabPFN-3.5 Global Hackathon 2026 Submission**\n",
                 "\n",
-                "Agentry is an autonomous safety, cost, and reliability guardrail for multi-agent fleets. It monitors real-time tabular execution telemetry (token burn rates, repetition entropy, error streaks, tool latencies, and thought traces) and detects catastrophic failure modes (**Infinite Loops**, **Context / Cost Runaways**, and **Tool Hallucinations**) in <5ms without expensive LLM-as-a-judge overhead."
+                "Agentry is a predictive runtime control layer for multi-agent fleets. It monitors real-time tabular execution telemetry (token velocities, repetition entropy, error streaks, tool latencies, and thought traces) and predicts unrecoverable failure cascades (**Infinite Loops**, **Context / Cost Runaways**, and **Tool Hallucinations**) before compute is incinerated."
             ]
         },
         {
@@ -42,6 +42,7 @@ nb = {
                 "from agentry.engine import TabPFNGuardrailEngine\n",
                 "from agentry.agent import AgentrySentry\n",
                 "from agentry.benchmark import GuardrailBenchmarkSuite\n",
+                "from agentry.guard import AgentryGuard\n",
                 "\n",
                 "print(\"Agentry modules loaded successfully!\")"
             ]
@@ -51,7 +52,7 @@ nb = {
             "metadata": {},
             "source": [
                 "## 2. Load Real-World SWE-bench Agent Telemetry\n",
-                "We evaluate on genuine agent execution traces streamed from `nebius/SWE-agent-trajectories`."
+                "We evaluate on genuine agent execution traces streamed from `nebius/SWE-agent-trajectories` (739 steps, 35 unique sessions)."
             ]
         },
         {
@@ -73,7 +74,7 @@ nb = {
             "metadata": {},
             "source": [
                 "## 3. Fit TabPFN-3.5 Guardrail Engine\n",
-                "TabPFN utilizes In-Context Learning (ICL) directly across multimodal tabular features: sequential grouped session dynamics (`group_col`, `group_time_col`), numerical metrics, and raw thought traces."
+                "TabPFN utilizes In-Context Learning (ICL) directly across multimodal tabular features: sequential grouped session dynamics (`group_col='session_id'`, `group_time_col='step_index'`), numerical metrics, and raw thought traces."
             ]
         },
         {
@@ -91,7 +92,7 @@ nb = {
             "cell_type": "markdown",
             "metadata": {},
             "source": [
-                "## 4. Real-Time Step Risk Evaluation & Sentry Intervention\n",
+                "## 4. Real-Time Step Risk Evaluation & Unified Economic Policy\n",
                 "Simulate a live agent step and observe the real-time TabPFN risk probability, predicted failure mode, cost projection, and Sentry intervention."
             ]
         },
@@ -134,15 +135,15 @@ nb = {
                 "print(f\"Predicted Failure Mode:  {decision.tabpfn_assessment.predicted_failure_mode}\")\n",
                 "print(f\"Projected Cost:          ${decision.tabpfn_assessment.projected_final_cost_usd:.4f}\")\n",
                 "print(f\"Estimated Cost Saved:    ${decision.estimated_cost_saved_usd:.4f}\")\n",
-                "print(f\"Sentry Explanation:      {decision.explanation}\")"
+                "print(f\"Sentry Reason:           {decision.reason}\")"
             ]
         },
         {
             "cell_type": "markdown",
             "metadata": {},
             "source": [
-                "## 5. Benchmark: TabPFN vs Classical ML Baselines\n",
-                "Compare balanced accuracy, ROC-AUC, and cost estimation MAE across models in low-data regimes."
+                "## 5. Rigorous Empirical Benchmark (Unseen Trajectory Group Split)\n",
+                "Compare Failure Recall, False-Stop Rate (FPR), ROC-AUC, and Cost MAE across models on **unseen agent sessions**."
             ]
         },
         {
@@ -152,23 +153,59 @@ nb = {
             "outputs": [],
             "source": [
                 "suite = GuardrailBenchmarkSuite()\n",
-                "results = suite.run_benchmark(train_samples=250, test_samples=400)\n",
+                "results = suite.run_benchmark(group_split=True)\n",
                 "\n",
                 "records = [\n",
                 "    {\n",
-                "        \"Model\": r.model_name,\n",
-                "        \"Train Samples\": r.sample_size,\n",
-                "        \"Balanced Acc (%)\": round(r.classification_balanced_acc * 100, 2),\n",
-                "        \"F1 Macro (%)\": round(r.classification_f1_macro * 100, 2),\n",
-                "        \"ROC-AUC\": r.classification_roc_auc,\n",
-                "        \"Cost MAE ($)\": r.regression_mae_usd,\n",
-                "        \"Cost R2\": r.regression_r2,\n",
-                "        \"Latency (ms)\": r.inference_latency_ms\n",
+                "        \"Model Architecture\": r.model_name,\n",
+                "        \"Unseen Test Sessions\": f\"{r.test_sessions_count} sessions\",\n",
+                "        \"Balanced Acc (%)\": f\"{r.classification_balanced_acc * 100:.1f}%\",\n",
+                "        \"F1 Macro (%)\": f\"{r.classification_f1_macro * 100:.1f}%\",\n",
+                "        \"ROC-AUC\": f\"{r.classification_roc_auc:.3f}\",\n",
+                "        \"Failure Recall\": f\"{r.failure_recall * 100:.1f}%\",\n",
+                "        \"False-Stop Rate\": f\"{r.false_stop_rate * 100:.1f}%\",\n",
+                "        \"Cost MAE ($)\": f\"${r.regression_mae_usd:.4f}\",\n",
+                "        \"Cost R2\": f\"{r.regression_r2:.3f}\",\n",
+                "        \"Inf Latency\": f\"{r.inference_latency_ms:.2f} ms\"\n",
                 "    }\n",
                 "    for r in results\n",
                 "]\n",
                 "bench_df = pd.DataFrame(records)\n",
                 "bench_df"
+            ]
+        },
+        {
+            "cell_type": "markdown",
+            "metadata": {},
+            "source": [
+                "## 6. Equal-Success-Rate Fleet Runtime Experiment\n",
+                "Evaluating the fundamental trade-off: **Preserving successful tasks vs Slashing token burn.**"
+            ]
+        },
+        {
+            "cell_type": "code",
+            "execution_count": None,
+            "metadata": {},
+            "outputs": [],
+            "source": [
+                "from scripts.run_equal_success_experiment import run_fleet_simulation\n",
+                "regimes, total_succ, total_fail = run_fleet_simulation()\n",
+                "\n",
+                "baseline_tokens = regimes['Unprotected Fleet (No Guard)']['total_tokens']\n",
+                "fleet_records = []\n",
+                "for name, stats in regimes.items():\n",
+                "    succ_pct = (stats['completed_successes'] / max(1, total_succ)) * 100\n",
+                "    reduc = ((baseline_tokens - stats['total_tokens']) / baseline_tokens) * 100\n",
+                "    fleet_records.append({\n",
+                "        'Strategy': name,\n",
+                "        'Task Success Rate': f'{succ_pct:.1f}% ({stats[\"completed_successes\"]}/{total_succ})',\n",
+                "        'False Kills': stats['false_kills'],\n",
+                "        'Runaways Caught': f'{stats[\"runaways_interrupted\"]}/{total_fail}',\n",
+                "        'Total Tokens': f'{stats[\"total_tokens\"]:,}',\n",
+                "        'Fleet Cost': f'${stats[\"total_cost_usd\"]:.4f}',\n",
+                "        'Compute Reduction': 'Baseline (0%)' if reduc == 0 else f'-{reduc:.1f}%'\n",
+                "    })\n",
+                "pd.DataFrame(fleet_records)"
             ]
         }
     ],
