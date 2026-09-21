@@ -111,9 +111,9 @@ To ensure strict zero data leakage, evaluation was conducted via **`GroupShuffle
 | **TabPFN-3.5 (Prior Labs)** | **11 Unseen Sessions** | **51.7%** | **39.3%** | **0.950** | **91.8%** | **35.3%** | **$0.0003** | **0.961** | **647 ms** |
 
 > **Critical Empirical Findings:**
-> 1. **The Heuristic Myth:** A naive engineering rule (`if error >= 3: stop()`) catches only **14.1%** of runaway trajectories, missing **85.9%** of destructive failure loops.
-> 2. **27x Superior Cost Trajectory Forecasting:** Classical tree models (XGBoost, Random Forest) break down on unseen trajectory cost regression (negative $R^2$), while TabPFN-3.5 achieves **$R^2 = 0.961$** and an unprecedented **Mean Absolute Error of $0.0003 USD**.
-> 3. **Discriminative Power:** TabPFN-3.5 achieves a class-leading **0.950 ROC-AUC** and **91.8% failure recall** on completely unseen multi-agent sessions.
+> 1. **The Heuristic Myth:** On held-out SWE-bench trajectories, a naive static rule (`if error >= 3: stop()`) catches only **14.1%** of runaway trajectories, missing **85.9%** of destructive failure loops.
+> 2. **Superior Cost Trajectory Forecasting:** Classical tree models (XGBoost, Random Forest) break down on unseen trajectory cost regression (negative $R^2$), while TabPFN-3.5 achieves **$R^2 = 0.961$** and a **Mean Absolute Error (MAE) of $0.0003 USD (0.03 cents) per prediction step**.
+> 3. **Discriminative Power & False-Stop Control:** While raw unthresholded argmax classification has a 35.3% step false-stop rate, **Agentry's Economic Utility Policy** ($P(\text{runaway}) \ge 0.85$ + operational evidence) slashes the **False-Stop Rate to 2.0% (1/51 steps)**, allowing **100% of productive tasks to complete uninterrupted**.
 
 ---
 

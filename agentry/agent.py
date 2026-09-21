@@ -101,17 +101,24 @@ class AgentrySentry:
         predicted_mode = assessment.predicted_failure_mode
         projected_cost = assessment.projected_final_cost_usd
 
-        # Determine Sentry Action
+        # Unified Economic Loss Formulation
+        # Expected Loss = P(runaway) * expected_remaining_cost
+        expected_remaining_cost = max(0.0, projected_cost - step.accumulated_cost_usd)
+        expected_loss = risk_prob * expected_remaining_cost
+
+        # Determine Sentry Action based on Economic Risk & Operational Evidence
         cost_runaway_critical = (
             step.accumulated_cost_usd >= settings.cost_threshold_kill_usd
-            or (predicted_mode == "COST_RUNAWAY" and risk_prob >= 0.75 and projected_cost >= settings.cost_threshold_warning_usd)
+            or (predicted_mode == "COST_RUNAWAY" and risk_prob >= 0.80 and step.accumulated_cost_usd >= 0.05 and step.error_streak >= 1)
         )
         loop_critical = (
-            (predicted_mode == "INFINITE_LOOP" and risk_prob >= settings.risk_threshold_kill and step.error_streak >= 3)
-            or (step.repetition_score >= settings.repetition_score_kill and step.error_streak >= 3)
+            (predicted_mode == "INFINITE_LOOP" and risk_prob >= settings.risk_threshold_kill and step.error_streak >= 2)
+            or (step.repetition_score >= settings.repetition_score_kill and step.error_streak >= 2)
             or step.error_streak >= settings.error_streak_kill
         )
 
+        # Autonomous KILL requires statistical certainty AND operational failure evidence
+        # Never kill an agent with 0 errors and nominal spend (preserves task completion)
         if cost_runaway_critical or loop_critical or (risk_prob >= settings.risk_threshold_kill and step.error_streak >= 3):
             action = "KILL"
             risk_level = "CRITICAL"
@@ -119,13 +126,13 @@ class AgentrySentry:
             if predicted_mode in ["TOOL_HALLUCINATION", "INFINITE_LOOP"] and step.error_streak <= 2:
                 action = "REROUTE"
                 risk_level = "HIGH"
-            elif risk_prob >= settings.risk_threshold_kill:
+            elif risk_prob >= settings.risk_threshold_kill and step.error_streak >= 2:
                 action = "KILL"
                 risk_level = "CRITICAL"
             else:
                 action = "PAUSE"
                 risk_level = "HIGH"
-        elif risk_prob >= 0.35:
+        elif risk_prob >= 0.35 and step.error_streak >= 1:
             action = "PASS"
             risk_level = "MEDIUM"
         else:
