@@ -202,6 +202,7 @@ class TelemetrySimulator:
             final_cost = max(final_cost, round(self.rng.uniform(0.60, 2.80), 4))
         for item in session_steps:
             item.final_cost_usd = final_cost
+            item.remaining_cost_usd = max(0.0, round(final_cost - item.accumulated_cost_usd, 5))
 
         return session_steps
 

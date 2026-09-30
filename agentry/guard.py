@@ -8,6 +8,8 @@ and preventing runaway token costs via TabPFN-3.5 and Local SLM.
 import time
 import re
 import functools
+import inspect
+import threading
 import logging
 from dataclasses import dataclass, field
 from typing import Dict, Any, List, Optional, Callable, Union
@@ -160,17 +162,20 @@ class AgentryGuard:
         self.raise_on_kill = raise_on_kill
         self.cost_per_1k = cost_per_1k_tokens
         self._sessions: Dict[str, SessionState] = {}
+        self._lock = threading.RLock()
 
     def get_or_create_session(self, session_id: str) -> SessionState:
-        """Retrieves or creates tracked state for a session."""
-        if session_id not in self._sessions:
-            self._sessions[session_id] = SessionState(session_id=session_id)
-        return self._sessions[session_id]
+        """Retrieves or creates tracked state for a session in a thread-safe manner."""
+        with self._lock:
+            if session_id not in self._sessions:
+                self._sessions[session_id] = SessionState(session_id=session_id)
+            return self._sessions[session_id]
 
     def reset_session(self, session_id: str):
-        """Resets tracking for a specific session."""
-        if session_id in self._sessions:
-            del self._sessions[session_id]
+        """Resets tracking for a specific session in a thread-safe manner."""
+        with self._lock:
+            if session_id in self._sessions:
+                del self._sessions[session_id]
 
     def step(
         self,
@@ -203,6 +208,7 @@ class AgentryGuard:
     ):
         """
         Python function/method decorator to monitor and guard tool executions.
+        Supports both synchronous functions and asynchronous coroutines.
         
         Example:
             @guard.protect(session_id="agent_1")
@@ -210,48 +216,86 @@ class AgentryGuard:
                 return run(command)
         """
         def decorator(func: Callable):
-            @functools.wraps(func)
-            def wrapper(*args, **kwargs):
-                # Resolve session_id
-                resolved_session_id = session_id
-                if session_id_getter is not None:
-                    resolved_session_id = session_id_getter(*args, **kwargs)
-                elif resolved_session_id is None:
-                    resolved_session_id = getattr(args[0], "session_id", "default_session") if args else "default_session"
+            if inspect.iscoroutinefunction(func):
+                @functools.wraps(func)
+                async def async_wrapper(*args, **kwargs):
+                    resolved_session_id = session_id
+                    if session_id_getter is not None:
+                        resolved_session_id = session_id_getter(*args, **kwargs)
+                    elif resolved_session_id is None:
+                        resolved_session_id = getattr(args[0], "session_id", "default_session") if args else "default_session"
 
-                # Resolve tool_name
-                resolved_tool = tool_name or func.__name__
+                    resolved_tool = tool_name or func.__name__
+                    input_snippet = str(args) if args else str(kwargs)
+                    thought = thought_getter(*args, **kwargs) if thought_getter else ""
 
-                # Resolve input snippet
-                input_snippet = str(args) if args else str(kwargs)
-                thought = thought_getter(*args, **kwargs) if thought_getter else ""
+                    t0 = time.time()
+                    output_str = ""
+                    try:
+                        result = await func(*args, **kwargs)
+                        output_str = str(result)
+                        return result
+                    except Exception as exc:
+                        output_str = f"{type(exc).__name__}: {str(exc)}"
+                        raise exc
+                    finally:
+                        latency = (time.time() - t0) * 1000.0
+                        try:
+                            self.audit(
+                                session_id=resolved_session_id,
+                                tool_name=resolved_tool,
+                                input_text=input_snippet,
+                                output_text=output_str,
+                                thought_trace=thought,
+                                agent_role=agent_role,
+                                model_name=model_name,
+                                latency_ms=latency
+                            )
+                        except AgentHaltException:
+                            raise
+                        except Exception as audit_err:
+                            logger.warning("Audit telemetry recording encountered non-fatal error: %s", audit_err)
+                return async_wrapper
+            else:
+                @functools.wraps(func)
+                def sync_wrapper(*args, **kwargs):
+                    resolved_session_id = session_id
+                    if session_id_getter is not None:
+                        resolved_session_id = session_id_getter(*args, **kwargs)
+                    elif resolved_session_id is None:
+                        resolved_session_id = getattr(args[0], "session_id", "default_session") if args else "default_session"
 
-                t0 = time.time()
-                error_occurred = False
-                output_str = ""
-                result = None
+                    resolved_tool = tool_name or func.__name__
+                    input_snippet = str(args) if args else str(kwargs)
+                    thought = thought_getter(*args, **kwargs) if thought_getter else ""
 
-                try:
-                    result = func(*args, **kwargs)
-                    output_str = str(result)
-                    return result
-                except Exception as exc:
-                    error_occurred = True
-                    output_str = f"{type(exc).__name__}: {str(exc)}"
-                    raise exc
-                finally:
-                    latency = (time.time() - t0) * 1000.0
-                    self.audit(
-                        session_id=resolved_session_id,
-                        tool_name=resolved_tool,
-                        input_text=input_snippet,
-                        output_text=output_str,
-                        thought_trace=thought,
-                        agent_role=agent_role,
-                        model_name=model_name,
-                        latency_ms=latency
-                    )
-            return wrapper
+                    t0 = time.time()
+                    output_str = ""
+                    try:
+                        result = func(*args, **kwargs)
+                        output_str = str(result)
+                        return result
+                    except Exception as exc:
+                        output_str = f"{type(exc).__name__}: {str(exc)}"
+                        raise exc
+                    finally:
+                        latency = (time.time() - t0) * 1000.0
+                        try:
+                            self.audit(
+                                session_id=resolved_session_id,
+                                tool_name=resolved_tool,
+                                input_text=input_snippet,
+                                output_text=output_str,
+                                thought_trace=thought,
+                                agent_role=agent_role,
+                                model_name=model_name,
+                                latency_ms=latency
+                            )
+                        except AgentHaltException:
+                            raise
+                        except Exception as audit_err:
+                            logger.warning("Audit telemetry recording encountered non-fatal error: %s", audit_err)
+                return sync_wrapper
         return decorator
 
     def audit(
@@ -270,78 +314,89 @@ class AgentryGuard:
         """
         Audits a step in real-time, updates session telemetry,
         and triggers autonomous interventions if risk thresholds are breached.
+        Thread-safe across multi-agent environments.
         """
-        state = self.get_or_create_session(session_id)
-        if state.is_halted:
-            logger.warning("Attempted execution on halted session: %s", session_id)
-            if self.raise_on_kill and state.last_decision:
-                raise AgentHaltException(state.last_decision)
+        with self._lock:
+            state = self.get_or_create_session(session_id)
+            if state.is_halted:
+                logger.warning("Attempted execution on halted session: %s", session_id)
+                if self.raise_on_kill and state.last_decision:
+                    raise AgentHaltException(state.last_decision)
 
-        # 1. Update token metrics
-        comp_est = completion_tokens if completion_tokens > 0 else max(30, len(output_text) // 4)
-        prompt_est = prompt_tokens if prompt_tokens > 0 else max(100, len(input_text) // 6)
+            # Defensive normalization
+            prompt_tokens = max(0, int(prompt_tokens or 0))
+            completion_tokens = max(0, int(completion_tokens or 0))
+            input_text = str(input_text or "")
+            output_text = str(output_text or "")
+            thought_trace = str(thought_trace or "")
+            tool_name = str(tool_name or "tool")
 
-        state.accumulated_comp_tokens += comp_est
-        state.accumulated_prompt_tokens += prompt_est
-        total_tokens = state.accumulated_prompt_tokens + state.accumulated_comp_tokens
-        state.accumulated_cost_usd = round((total_tokens / 1000.0) * self.cost_per_1k, 5)
-        state.tool_call_count += 1
+            # 1. Update token metrics
+            comp_est = completion_tokens if completion_tokens > 0 else max(30, len(output_text) // 4)
+            prompt_est = prompt_tokens if prompt_tokens > 0 else max(100, len(input_text) // 6)
 
-        # 2. Check for tool failure / errors
-        if is_error_output(output_text):
-            state.error_streak += 1
-        else:
-            state.error_streak = max(0, state.error_streak - 1)
+            state.accumulated_comp_tokens += comp_est
+            state.accumulated_prompt_tokens += prompt_est
+            total_tokens = state.accumulated_prompt_tokens + state.accumulated_comp_tokens
+            state.accumulated_cost_usd = round((total_tokens / 1000.0) * self.cost_per_1k, 5)
+            state.tool_call_count += 1
 
-        # 3. Compute repetition score against recent turns
-        input_snippet = input_text.replace("\n", " ")[:150]
-        if state.recent_inputs:
-            repetition = max(compute_string_overlap(input_snippet, prev) for prev in state.recent_inputs[-4:])
-        else:
-            repetition = 0.05
-        state.recent_inputs.append(input_snippet)
+            # 2. Check for tool failure / errors
+            if is_error_output(output_text):
+                state.error_streak += 1
+            else:
+                state.error_streak = max(0, state.error_streak - 1)
 
-        # 4. Latency
-        step_latency = latency_ms if latency_ms is not None else 850.0
+            # 3. Compute repetition score against recent turns
+            input_snippet = input_text.replace("\n", " ")[:150]
+            if state.recent_inputs:
+                repetition = max(compute_string_overlap(input_snippet, prev) for prev in state.recent_inputs[-4:])
+            else:
+                repetition = 0.05
+            state.recent_inputs.append(input_snippet)
 
-        # 5. Assemble tabular telemetry
-        telemetry = AgentStepTelemetry(
-            session_id=session_id,
-            step_index=state.step_index,
-            agent_role=agent_role,
-            model_name=model_name,
-            tool_name=tool_name,
-            step_latency_ms=round(step_latency, 1),
-            prompt_tokens=state.accumulated_prompt_tokens,
-            completion_tokens=state.accumulated_comp_tokens,
-            total_tokens=total_tokens,
-            tool_call_count=state.tool_call_count,
-            error_streak=state.error_streak,
-            repetition_score=round(repetition, 3),
-            thought_length=len(thought_trace),
-            accumulated_cost_usd=state.accumulated_cost_usd,
-            thought_trace=thought_trace or input_snippet[:100],
-            failure_status="NORMAL",
-            is_failure=0,
-            final_cost_usd=0.0
-        )
+            # 4. Latency
+            step_latency = max(0.0, float(latency_ms)) if latency_ms is not None else 850.0
 
-        # 6. Audit via Sentry & TabPFN
-        decision = self.sentry.audit_step(telemetry)
-        state.last_decision = decision
-        state.step_index += 1
+            # 5. Assemble tabular telemetry
+            telemetry = AgentStepTelemetry(
+                session_id=str(session_id),
+                step_index=state.step_index,
+                agent_role=str(agent_role or "Autonomous-Agent"),
+                model_name=str(model_name or "swe-agent-70b"),
+                tool_name=tool_name,
+                step_latency_ms=round(step_latency, 1),
+                prompt_tokens=state.accumulated_prompt_tokens,
+                completion_tokens=state.accumulated_comp_tokens,
+                total_tokens=total_tokens,
+                tool_call_count=state.tool_call_count,
+                error_streak=state.error_streak,
+                repetition_score=round(repetition, 3),
+                thought_length=len(thought_trace),
+                accumulated_cost_usd=state.accumulated_cost_usd,
+                thought_trace=thought_trace or input_snippet[:100],
+                failure_status="NORMAL",
+                is_failure=0,
+                final_cost_usd=0.0,
+                remaining_cost_usd=0.0
+            )
 
-        # Record decision to persistent audit storage for enterprise governance
-        try:
-            self.storage.record_decision(decision)
-        except Exception as e:
-            logger.debug("Failed recording audit event: %s", e)
+            # 6. Audit via Sentry & TabPFN
+            decision = self.sentry.audit_step(telemetry)
+            state.last_decision = decision
+            state.step_index += 1
 
-        # 7. Execute Halt if required
-        if decision.action == "KILL":
-            state.is_halted = True
-            logger.error("Agentry Sentry TRIGGERED KILL on session '%s' at step %d: %s", session_id, telemetry.step_index, decision.reason)
-            if self.raise_on_kill:
-                raise AgentHaltException(decision)
+            # Record decision to persistent audit storage for enterprise governance
+            try:
+                self.storage.record_decision(decision)
+            except Exception as e:
+                logger.debug("Failed recording audit event: %s", e)
 
-        return decision
+            # 7. Execute Halt if required
+            if decision.action == "KILL":
+                state.is_halted = True
+                logger.error("Agentry Sentry TRIGGERED KILL on session '%s' at step %d: %s", session_id, telemetry.step_index, decision.reason)
+                if self.raise_on_kill:
+                    raise AgentHaltException(decision)
+
+            return decision

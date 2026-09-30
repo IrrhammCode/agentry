@@ -82,6 +82,7 @@ def load_real_agent_sessions() -> list:
                 failure_status=str(r["failure_status"]),
                 is_failure=int(r["is_failure"]),
                 final_cost_usd=float(r["final_cost_usd"]),
+                remaining_cost_usd=float(r.get("remaining_cost_usd", 0.0)),
             )
             for _, r in sub_df.iterrows()
         ]

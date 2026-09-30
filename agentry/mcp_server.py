@@ -92,6 +92,18 @@ def audit_agent_step(
         predicted failure mode, reason, and estimated token savings.
     """
     guard = get_guard()
+    # Defensive input sanitization
+    session_id = str(session_id or "default_session")
+    step_index = max(0, int(step_index or 0))
+    tool_name = str(tool_name or "bash")
+    thought_trace = str(thought_trace or "")
+    prompt_tokens = max(0, int(prompt_tokens or 0))
+    completion_tokens = max(0, int(completion_tokens or 0))
+    error_streak = max(0, int(error_streak or 0))
+    repetition_score = min(1.0, max(0.0, float(repetition_score or 0.0)))
+    accumulated_cost_usd = max(0.0, float(accumulated_cost_usd or 0.0))
+    step_latency_ms = max(0.0, float(step_latency_ms or 0.0))
+
     total_tokens = prompt_tokens + completion_tokens
 
     step = AgentStepTelemetry(
@@ -112,13 +124,17 @@ def audit_agent_step(
         accumulated_cost_usd=accumulated_cost_usd,
         failure_status="NORMAL",
         is_failure=0,
-        final_cost_usd=accumulated_cost_usd
+        final_cost_usd=accumulated_cost_usd,
+        remaining_cost_usd=0.0
     )
 
     decision = guard.sentry.audit_step(step)
 
-    # Persist event to SQLite WAL audit database
-    guard.storage.record_decision(decision)
+    # Persist event to SQLite WAL audit database safely
+    try:
+        guard.storage.record_decision(decision)
+    except Exception as exc:
+        logger.warning("MCP failed to record audit event to SQLite: %s", exc)
 
     return {
         "session_id": session_id,

@@ -254,9 +254,10 @@ Respond strictly in JSON with two keys:
                     )
                     if res.status_code == 200:
                         data = res.json()
-                        content = data["choices"][0]["message"]["content"].strip()
-                        parsed = json.loads(content)
-                        return parsed.get("reason", ""), parsed.get("reroute_instruction")
+                        content = data["choices"][0]["message"]["content"]
+                        parsed = self._extract_json_response(content)
+                        if parsed:
+                            return parsed.get("reason", ""), parsed.get("reroute_instruction")
                     elif res.status_code in (429, 401):
                         masked = f"{api_key[:6]}...{api_key[-4:]}" if len(api_key) > 10 else "***"
                         logger.warning("Groq key %s returned %d. Rotating key (attempt %d/%d)...",
@@ -310,17 +311,31 @@ Respond strictly in JSON with two keys:
                 )
                 if res.status_code == 200:
                     data = res.json()
-                    content = data["choices"][0]["message"]["content"].strip()
-                    if content.startswith("```"):
-                        content = content.split("```")[1]
-                        if content.startswith("json"):
-                            content = content[4:]
-                    content = content.strip()
-                    parsed = json.loads(content)
-                    return parsed.get("reason", ""), parsed.get("reroute_instruction")
+                    content = data["choices"][0]["message"]["content"]
+                    parsed = self._extract_json_response(content)
+                    if parsed:
+                        return parsed.get("reason", ""), parsed.get("reroute_instruction")
         except Exception:
             # Local Ollama not available or timed out
             pass
+        return None
+
+    @staticmethod
+    def _extract_json_response(content: str) -> Optional[Dict[str, Any]]:
+        """Robustly extracts JSON dictionary from LLM response text."""
+        import re
+        if not content:
+            return None
+        clean = content.strip()
+        try:
+            return json.loads(clean)
+        except json.JSONDecodeError:
+            match = re.search(r"\{[\s\S]*\}", clean)
+            if match:
+                try:
+                    return json.loads(match.group(0))
+                except json.JSONDecodeError:
+                    pass
         return None
 
     def _rule_based_sentry_brain(

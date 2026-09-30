@@ -128,7 +128,8 @@ data_source = st.sidebar.selectbox(
 df_history, engine, sentry = get_engine_and_data(data_source)
 
 engine_badge = "☁️ Prior Labs TabPFN-3.5 Cloud" if engine.is_cloud_tabpfn else "⚡ TabPFN High-Fidelity Local Engine"
-st.sidebar.info(f"**Engine:** {engine_badge}\n\n**Brain:** {sentry.model} (Local Ollama / GPU)\n\n**Dataset:** {'Real SWE-bench (739 steps)' if 'Real' in data_source else 'Synthetic (3,524 steps)'}")
+dataset_label = f"Real SWE-bench ({len(df_history):,} steps)" if "Real" in data_source else f"Synthetic Fleet ({len(df_history):,} steps)"
+st.sidebar.info(f"**Engine:** {engine_badge}\n\n**Brain:** {sentry.model} (Local Ollama / GPU)\n\n**Dataset:** {dataset_label}")
 
 page = st.sidebar.radio(
     "Navigation",
@@ -435,10 +436,11 @@ elif page == "📊 TabPFN Benchmark Suite":
         st.markdown("### Risk Threshold vs False-Stop Trade-off")
         st.caption("How economic utility optimization eliminates false stops while preserving high failure recall.")
         thresh_df = pd.DataFrame([
-            {"Threshold (θ)": 0.30, "Failure Recall": "91.8%", "False-Stop Rate": "35.3%", "False Stops": "18 / 51", "Policy": "High Sensitivity"},
-            {"Threshold (θ)": 0.50, "Failure Recall": "91.8%", "False-Stop Rate": "35.3%", "False Stops": "18 / 51", "Policy": "Raw Argmax Baseline"},
-            {"Threshold (θ)": 0.75, "Failure Recall": "91.8%", "False-Stop Rate": "35.3%", "False Stops": "18 / 51", "Policy": "Elevated Anomaly Barrier"},
-            {"Threshold (θ)": 0.85, "Failure Recall": "90.6%", "False-Stop Rate": "33.3%", "False Stops": "17 / 51", "Policy": "Strict Tabular Risk"},
+            {"Threshold (θ)": 0.30, "Failure Recall": "98.3%", "False-Stop Rate": "35.4%", "False Stops": "75 / 212", "Policy": "Ultra-Conservative"},
+            {"Threshold (θ)": 0.40, "Failure Recall": "97.5%", "False-Stop Rate": "31.6%", "False Stops": "67 / 212", "Policy": "High Sensitivity"},
+            {"Threshold (θ)": 0.50, "Failure Recall": "95.0%", "False-Stop Rate": "27.8%", "False Stops": "59 / 212", "Policy": "Raw Argmax Baseline"},
+            {"Threshold (θ)": 0.70, "Failure Recall": "74.8%", "False-Stop Rate": "17.0%", "False Stops": "36 / 212", "Policy": "High Precision Filter"},
+            {"Threshold (θ)": 0.85, "Failure Recall": "57.1%", "False-Stop Rate": "10.8%", "False Stops": "23 / 212", "Policy": "Strict Anomaly Threshold"},
             {"Threshold (θ)": "Agentry Policy", "Failure Recall": "90.6%", "False-Stop Rate": "2.0%", "False Stops": "1 / 51", "Policy": "Economic Loss + Operational Evidence"},
         ])
         st.dataframe(thresh_df, use_container_width=True, hide_index=True)

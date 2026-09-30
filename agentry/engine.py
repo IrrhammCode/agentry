@@ -89,6 +89,8 @@ class TabPFNGuardrailEngine:
         self.mode_encoder = LabelEncoder()
         self.is_fitted = False
 
+        self._local_classifier = None
+        self._local_regressor = None
         # Attempt to initialize TabPFN client
         self._init_tabpfn_client()
 
@@ -126,20 +128,37 @@ class TabPFNGuardrailEngine:
         """Extracts engineered numerical & categorical features from telemetry rows."""
         processed = df.copy()
 
+        # Fill NaNs defensively
+        for col in ["agent_role", "tool_name", "model_name"]:
+            if col in processed.columns:
+                processed[col] = processed[col].fillna("unknown").astype(str)
+            else:
+                processed[col] = "unknown"
+
+        for num_col in [
+            "step_latency_ms", "prompt_tokens", "completion_tokens", "total_tokens",
+            "tool_call_count", "error_streak", "repetition_score", "thought_length",
+            "accumulated_cost_usd"
+        ]:
+            if num_col in processed.columns:
+                processed[num_col] = pd.to_numeric(processed[num_col], errors="coerce").fillna(0.0)
+            else:
+                processed[num_col] = 0.0
+
         # Categorical encoding
         if fit:
-            processed["agent_role_cat"] = self.role_encoder.fit_transform(processed["agent_role"].astype(str))
-            processed["tool_name_cat"] = self.tool_encoder.fit_transform(processed["tool_name"].astype(str))
-            processed["model_name_cat"] = self.model_encoder.fit_transform(processed["model_name"].astype(str))
+            processed["agent_role_cat"] = self.role_encoder.fit_transform(processed["agent_role"])
+            processed["tool_name_cat"] = self.tool_encoder.fit_transform(processed["tool_name"])
+            processed["model_name_cat"] = self.model_encoder.fit_transform(processed["model_name"])
         else:
             # Handle unknown categories safely
-            processed["agent_role_cat"] = processed["agent_role"].astype(str).map(
+            processed["agent_role_cat"] = processed["agent_role"].map(
                 lambda s: self.role_encoder.transform([s])[0] if s in self.role_encoder.classes_ else 0
             )
-            processed["tool_name_cat"] = processed["tool_name"].astype(str).map(
+            processed["tool_name_cat"] = processed["tool_name"].map(
                 lambda s: self.tool_encoder.transform([s])[0] if s in self.tool_encoder.classes_ else 0
             )
-            processed["model_name_cat"] = processed["model_name"].astype(str).map(
+            processed["model_name_cat"] = processed["model_name"].map(
                 lambda s: self.model_encoder.transform([s])[0] if s in self.model_encoder.classes_ else 0
             )
 
@@ -152,14 +171,22 @@ class TabPFNGuardrailEngine:
         return processed
 
     def fit(self, training_df: pd.DataFrame):
-        """Fit the TabPFN engine or offline emulator on historical agent telemetry."""
+        """Fit the TabPFN engine and pre-warm offline fallback on historical agent telemetry."""
         # Preprocess features
         processed_df = self._extract_tabular_features(training_df, fit=True)
-        self.mode_encoder.fit(training_df["failure_status"].astype(str))
+        self.mode_encoder.fit(training_df["failure_status"].fillna("NORMAL").astype(str))
 
         X = processed_df[self.FEATURE_COLS]
-        y_class = self.mode_encoder.transform(training_df["failure_status"].astype(str))
-        y_reg = training_df["final_cost_usd"].values
+        y_class = self.mode_encoder.transform(training_df["failure_status"].fillna("NORMAL").astype(str))
+        y_reg = pd.to_numeric(training_df["final_cost_usd"], errors="coerce").fillna(0.0).values
+
+        # Pre-warm local fallback models (always available as instant, zero-latency safety net)
+        self._local_classifier = HistGradientBoostingClassifier(random_state=42, max_iter=150)
+        self._local_classifier.fit(X, y_class)
+
+        self._local_regressor = HistGradientBoostingRegressor(random_state=42, max_iter=150)
+        self._local_regressor.fit(X, y_reg)
+        self.is_fitted = True
 
         if self.is_cloud_tabpfn:
             try:
@@ -167,20 +194,14 @@ class TabPFNGuardrailEngine:
                 X_tabpfn = training_df[self.RAW_TABPFN_COLS].copy()
                 self.classifier.fit(X_tabpfn, y_class)
                 self.regressor.fit(X_tabpfn, y_reg)
-                self.is_fitted = True
                 logger.info("TabPFN-3.5 Cloud Engine fitted successfully on %d telemetry steps.", len(X_tabpfn))
                 return
             except Exception as e:
-                logger.error("TabPFN Cloud fit error: %s. Falling back to local offline model.", e)
+                logger.warning("TabPFN Cloud fit error: %s. Falling back to local offline model.", e)
                 self.is_cloud_tabpfn = False
 
-        # Local Offline Fallback: High-fidelity gradient boosting ensemble
-        self.classifier = HistGradientBoostingClassifier(random_state=42, max_iter=150)
-        self.classifier.fit(X, y_class)
-
-        self.regressor = HistGradientBoostingRegressor(random_state=42, max_iter=150)
-        self.regressor.fit(X, y_reg)
-        self.is_fitted = True
+        self.classifier = self._local_classifier
+        self.regressor = self._local_regressor
         logger.info("Agentry Local Fallback Engine fitted on %d telemetry steps.", len(X))
 
     def evaluate_step(self, step: AgentStepTelemetry) -> StepRiskAssessment:
@@ -190,53 +211,70 @@ class TabPFNGuardrailEngine:
 
         # Convert step to DataFrame
         row_dict = {
-            "session_id": step.session_id,
-            "step_index": step.step_index,
-            "agent_role": step.agent_role,
-            "model_name": step.model_name,
-            "tool_name": step.tool_name,
-            "step_latency_ms": step.step_latency_ms,
-            "prompt_tokens": step.prompt_tokens,
-            "completion_tokens": step.completion_tokens,
-            "total_tokens": step.total_tokens,
-            "tool_call_count": step.tool_call_count,
-            "error_streak": step.error_streak,
-            "repetition_score": step.repetition_score,
-            "thought_length": step.thought_length,
-            "accumulated_cost_usd": step.accumulated_cost_usd,
-            "thought_trace": step.thought_trace,
+            "session_id": str(step.session_id or "default_session"),
+            "step_index": int(step.step_index or 0),
+            "agent_role": str(step.agent_role or "Agent"),
+            "model_name": str(step.model_name or "default-model"),
+            "tool_name": str(step.tool_name or "tool"),
+            "step_latency_ms": max(0.0, float(step.step_latency_ms or 0.0)),
+            "prompt_tokens": max(0, int(step.prompt_tokens or 0)),
+            "completion_tokens": max(0, int(step.completion_tokens or 0)),
+            "total_tokens": max(0, int(step.total_tokens or 0)),
+            "tool_call_count": max(0, int(step.tool_call_count or 0)),
+            "error_streak": max(0, int(step.error_streak or 0)),
+            "repetition_score": min(1.0, max(0.0, float(step.repetition_score or 0.0))),
+            "thought_length": max(0, int(step.thought_length or 0)),
+            "accumulated_cost_usd": max(0.0, float(step.accumulated_cost_usd or 0.0)),
+            "thought_trace": str(step.thought_trace or ""),
         }
         df_step = pd.DataFrame([row_dict])
         processed_step = self._extract_tabular_features(df_step, fit=False)
 
-        if self.is_cloud_tabpfn:
-            X_input = df_step[self.RAW_TABPFN_COLS]
-        else:
-            X_input = processed_step[self.FEATURE_COLS]
+        # Probabilities & Prediction with automatic fallback on cloud failure
+        probs = None
+        pred_cost = None
+        if self.is_cloud_tabpfn and self.classifier is not None and self.regressor is not None:
+            try:
+                X_cloud = df_step[self.RAW_TABPFN_COLS]
+                probs = self.classifier.predict_proba(X_cloud)[0]
+                pred_cost = float(self.regressor.predict(X_cloud)[0])
+            except Exception as exc:
+                logger.warning("TabPFN Cloud inference failure (%s). Switching to pre-warmed local model.", exc)
+                self.is_cloud_tabpfn = False
+                self.classifier = self._local_classifier
+                self.regressor = self._local_regressor
 
-        # Probabilities & Prediction
-        probs = self.classifier.predict_proba(X_input)[0]
+        if probs is None or pred_cost is None:
+            X_local = processed_step[self.FEATURE_COLS]
+            probs = self.classifier.predict_proba(X_local)[0]
+            pred_cost = float(self.regressor.predict(X_local)[0])
+
         classes = self.mode_encoder.classes_
-        mode_probs = {cls_name: float(round(probs[i], 4)) for i, cls_name in enumerate(classes)}
+        model_classes = getattr(self.classifier, "classes_", list(range(len(probs))))
+        cls_map = {int(c_idx): float(p) for c_idx, p in zip(model_classes, probs)}
+
+        mode_probs = {}
+        for i, cls_name in enumerate(classes):
+            mode_probs[cls_name] = float(round(cls_map.get(i, 0.0), 4))
 
         # Failure probability (sum of all non-NORMAL classes)
         normal_idx = list(classes).index("NORMAL") if "NORMAL" in classes else -1
         if normal_idx != -1:
-            failure_prob = round(float(1.0 - probs[normal_idx]), 4)
+            normal_p = cls_map.get(normal_idx, 0.0)
+            failure_prob = round(float(np.clip(1.0 - normal_p, 0.0, 1.0)), 4)
         else:
             failure_prob = round(float(np.max(probs)), 4)
 
-        pred_class_idx = int(np.argmax(probs))
-        predicted_mode = str(classes[pred_class_idx])
+        pred_class_idx = int(model_classes[np.argmax(probs)])
+        predicted_mode = str(classes[pred_class_idx]) if pred_class_idx < len(classes) else "NORMAL"
 
         # Prediction uncertainty (normalized Shannon entropy)
-        entropy = -np.sum(probs * np.log(probs + 1e-12))
-        max_entropy = np.log(len(classes))
-        normalized_uncertainty = round(float(entropy / max_entropy), 3)
+        entropy = -np.sum(probs * np.log(np.maximum(probs, 1e-12)))
+        max_entropy = np.log(max(2, len(classes)))
+        normalized_uncertainty = round(float(np.clip(entropy / max_entropy, 0.0, 1.0)), 3)
 
         # Regress final projected cost
-        pred_cost = float(self.regressor.predict(X_input)[0])
-        projected_cost = round(max(step.accumulated_cost_usd, pred_cost), 4)
+        projected_cost = round(max(max(0.0, step.accumulated_cost_usd), pred_cost), 4)
 
         # Identify primary risk driver
         risk_driver = self._determine_primary_risk_driver(step, failure_prob, predicted_mode)

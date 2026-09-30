@@ -24,6 +24,8 @@ from sklearn.metrics import (
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.linear_model import LogisticRegression, Ridge
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
 warnings.filterwarnings("ignore", module="sklearn")
@@ -173,8 +175,8 @@ class GuardrailBenchmarkSuite:
         ))
 
         # 2. Classical Baseline 2: Logistic Regression & Ridge
-        lr_cls = LogisticRegression(max_iter=1000, random_state=42)
-        ridge_reg = Ridge(random_state=42)
+        lr_cls = make_pipeline(StandardScaler(), LogisticRegression(max_iter=2000, random_state=42))
+        ridge_reg = make_pipeline(StandardScaler(), Ridge(random_state=42))
         results.append(self._evaluate_model_pair(
             "Logistic Reg / Ridge",
             lr_cls, ridge_reg,

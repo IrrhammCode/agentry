@@ -28,10 +28,11 @@ class AuditStorage:
         self._init_db()
 
     def _get_connection(self) -> sqlite3.Connection:
-        conn = sqlite3.connect(str(self.db_path), timeout=10.0)
+        conn = sqlite3.connect(str(self.db_path), timeout=30.0)
         conn.row_factory = sqlite3.Row
-        # Enable Write-Ahead Logging (WAL) for high concurrency
+        # Enable Write-Ahead Logging (WAL) and set busy timeout for high concurrency
         conn.execute("PRAGMA journal_mode=WAL;")
+        conn.execute("PRAGMA busy_timeout = 30000;")
         return conn
 
     def _init_db(self):
@@ -61,42 +62,49 @@ class AuditStorage:
             """)
 
     def record_decision(self, decision: SentryDecision) -> int:
-        """Persists a single SentryDecision to the audit database."""
-        with self._get_connection() as conn:
-            cursor = conn.execute("""
-                INSERT INTO audit_events (
-                    session_id,
-                    step_index,
-                    timestamp,
-                    action,
-                    risk_level,
-                    failure_probability,
-                    predicted_failure_mode,
-                    projected_final_cost_usd,
-                    confidence,
-                    reason,
-                    reroute_instruction,
-                    estimated_tokens_saved,
-                    estimated_cost_saved_usd,
-                    sentry_provider
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                decision.session_id,
-                decision.step_index,
-                time.time(),
-                decision.action,
-                decision.risk_level,
-                decision.tabpfn_assessment.failure_probability,
-                decision.tabpfn_assessment.predicted_failure_mode,
-                decision.tabpfn_assessment.projected_final_cost_usd,
-                decision.confidence,
-                decision.reason,
-                decision.reroute_instruction or "",
-                decision.estimated_tokens_saved,
-                decision.estimated_cost_saved_usd,
-                decision.sentry_provider
-            ))
-            return cursor.lastrowid
+        """Persists a single SentryDecision to the audit database with retry on lock."""
+        for attempt in range(3):
+            try:
+                with self._get_connection() as conn:
+                    cursor = conn.execute("""
+                        INSERT INTO audit_events (
+                            session_id,
+                            step_index,
+                            timestamp,
+                            action,
+                            risk_level,
+                            failure_probability,
+                            predicted_failure_mode,
+                            projected_final_cost_usd,
+                            confidence,
+                            reason,
+                            reroute_instruction,
+                            estimated_tokens_saved,
+                            estimated_cost_saved_usd,
+                            sentry_provider
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """, (
+                        decision.session_id,
+                        decision.step_index,
+                        time.time(),
+                        decision.action,
+                        decision.risk_level,
+                        decision.tabpfn_assessment.failure_probability,
+                        decision.tabpfn_assessment.predicted_failure_mode,
+                        decision.tabpfn_assessment.projected_final_cost_usd,
+                        decision.confidence,
+                        decision.reason,
+                        decision.reroute_instruction or "",
+                        decision.estimated_tokens_saved,
+                        decision.estimated_cost_saved_usd,
+                        decision.sentry_provider
+                    ))
+                    return cursor.lastrowid
+            except sqlite3.OperationalError as e:
+                if "locked" in str(e).lower() and attempt < 2:
+                    time.sleep(0.05 * (2 ** attempt))
+                    continue
+                raise
 
     def get_session_events(self, session_id: str) -> List[Dict[str, Any]]:
         """Retrieves all recorded audit events for a session ordered by step."""
