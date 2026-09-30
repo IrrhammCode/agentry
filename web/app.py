@@ -137,6 +137,7 @@ page = st.sidebar.radio(
         "🔍 Forensic Session Inspector",
         "📊 TabPFN Benchmark Suite",
         "📂 Historical Telemetry Data",
+        "🔌 Model Context Protocol (MCP)",
         "🏛️ Architecture & Privacy"
     ]
 )
@@ -479,7 +480,127 @@ elif page == "📂 Historical Telemetry Data":
     )
 
 
-# PAGE 5: ARCHITECTURE & PRIVACY
+# PAGE 5: MODEL CONTEXT PROTOCOL (MCP) & INTEGRATIONS
+elif page == "🔌 Model Context Protocol (MCP)":
+    st.markdown('<div class="main-title">Agentry Model Context Protocol (MCP)</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sub-title">Standardized runtime control plane for Claude Desktop, Cursor IDE, Windsurf, & Autonomous Fleets</div>', unsafe_allow_html=True)
+
+    from agentry.storage import AuditStorage
+    storage = AuditStorage()
+    fleet_summary = storage.get_fleet_summary()
+
+    # MCP Live Status Banner
+    st.success(f"🟢 **Agentry MCP Server: Ready & Operational** | Supported Transports: `stdio` (Desktop/IDE), `sse` (Distributed/Web), `streamable-http`")
+
+    # Real-Time SQLite WAL Governance Metrics
+    m1, m2, m3, m4 = st.columns(4)
+    with m1:
+        st.markdown(f"""
+        <div class="metric-box">
+            <div class="metric-label">Audited Steps (WAL)</div>
+            <div class="metric-value">{fleet_summary.get('total_audited_steps', 0):,}</div>
+        </div>
+        """, unsafe_allow_html=True)
+    with m2:
+        st.markdown(f"""
+        <div class="metric-box">
+            <div class="metric-label">Monitored Sessions</div>
+            <div class="metric-value">{fleet_summary.get('unique_sessions', 0):,}</div>
+        </div>
+        """, unsafe_allow_html=True)
+    with m3:
+        st.markdown(f"""
+        <div class="metric-box">
+            <div class="metric-label">Tokens Saved</div>
+            <div class="metric-value" style="color: #10B981;">~{fleet_summary.get('total_tokens_saved', 0):,}</div>
+        </div>
+        """, unsafe_allow_html=True)
+    with m4:
+        st.markdown(f"""
+        <div class="metric-box">
+            <div class="metric-label">Budget Preserved</div>
+            <div class="metric-value" style="color: #60EFFF;">${fleet_summary.get('total_cost_saved_usd', 0.0):.4f}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("---")
+
+    # Interactive MCP Step Auditor
+    st.subheader("🧪 Live MCP Tool Simulator (`agentry_audit_step`)")
+    st.caption("Test how the Agentry MCP tool evaluates agent telemetry and triggers autonomic interventions in real-time.")
+
+    sim_c1, sim_c2 = st.columns([1, 1])
+    with sim_c1:
+        sim_session = st.text_input("Session ID:", value="claude_desktop_task_42")
+        sim_step = st.slider("Step Index:", min_value=0, max_value=25, value=5)
+        sim_tool = st.selectbox("Tool Name:", ["bash", "edit_file", "read_file", "browser_click", "database_query"])
+        sim_repetition = st.slider("Repetition Entropy Score:", min_value=0.0, max_value=1.0, value=0.88, step=0.01)
+        sim_streak = st.slider("Consecutive Error Streak:", min_value=0, max_value=8, value=4)
+        sim_cost = st.number_input("Accumulated Cost ($ USD):", min_value=0.0, max_value=1.0, value=0.065, step=0.005)
+        sim_thought = st.text_area("Agent Thought Trace:", value="Retrying python manage.py test after failed import for the 4th time...")
+
+    with sim_c2:
+        st.markdown("#### Audit Decision Output")
+        if st.button("⚡ Execute MCP Audit Step", type="primary", use_container_width=True):
+            with st.spinner("Evaluating telemetry through TabPFN-3.5 engine..."):
+                from agentry.mcp_server import audit_agent_step
+                audit_res = audit_agent_step(
+                    session_id=sim_session,
+                    step_index=sim_step,
+                    tool_name=sim_tool,
+                    thought_trace=sim_thought,
+                    error_streak=sim_streak,
+                    repetition_score=sim_repetition,
+                    accumulated_cost_usd=sim_cost
+                )
+
+                action = audit_res["action"]
+                badge_class = "badge-kill" if action == "KILL" else ("badge-reroute" if action in ("REROUTE", "PAUSE") else "badge-pass")
+                st.markdown(f"### Autonomic Intervention: <span class='{badge_class}'>{action}</span>", unsafe_allow_html=True)
+                
+                col_res1, col_res2 = st.columns(2)
+                col_res1.metric("Failure Risk Probability", f"{audit_res['failure_probability'] * 100:.1f}%")
+                col_res2.metric("Predicted Failure Mode", audit_res["predicted_failure_mode"])
+
+                col_res3, col_res4 = st.columns(2)
+                col_res3.metric("Tokens Saved", f"~{audit_res['estimated_tokens_saved']:,}")
+                col_res4.metric("Dollars Saved", f"${audit_res['estimated_cost_saved_usd']:.4f}")
+
+                st.info(f"**Forensic Attribution Reason:**\n\n{audit_res['reason']}")
+                if audit_res.get("reroute_instruction"):
+                    st.warning(f"**Corrective Prompt Directive:**\n\n{audit_res['reroute_instruction']}")
+        else:
+            st.info("Click **Execute MCP Audit Step** to simulate a real MCP tool execution.")
+
+    st.markdown("---")
+
+    # Claude Desktop & Cursor Integration Guide
+    st.subheader("📋 Client Setup: Claude Desktop & Cursor IDE")
+    st.markdown("""
+    To equip **Claude Desktop** with Agentry tabular guardrails, add the following snippet to your `claude_desktop_config.json`:
+    """)
+    st.code("""{
+  "mcpServers": {
+    "agentry": {
+      "command": "python",
+      "args": ["-m", "agentry.mcp_server", "--transport", "stdio"],
+      "cwd": "C:\\\\Users\\\\Irham\\\\Documents\\\\code\\\\tabfpn"
+    }
+  }
+}""", language="json")
+
+    st.markdown("""
+    **Exposed MCP Tools & Resources:**
+    - `agentry_audit_step`: Real-time TabPFN risk classification and runaway cost estimation.
+    - `agentry_get_fleet_status`: Enterprise fleet metrics and total cost/token savings.
+    - `agentry_inspect_session_history`: Chronological audit trail for forensics.
+    - `agentry_reset_session`: Resets telemetry state for an agent task.
+    - `fleet://metrics`: Live fleet governance metrics resource.
+    - `fleet://recent-interventions`: Recent SQLite WAL audit log resource.
+    """)
+
+
+# PAGE 6: ARCHITECTURE & PRIVACY
 elif page == "🏛️ Architecture & Privacy":
     st.markdown('<div class="main-title">Agentry Architectural Blueprint</div>', unsafe_allow_html=True)
     st.markdown('<div class="sub-title">Local-First Guardrail Engine & TabPFN Foundation Model Integration</div>', unsafe_allow_html=True)
