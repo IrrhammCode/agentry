@@ -113,8 +113,14 @@ class AgentrySentry:
         )
         loop_critical = (
             (predicted_mode == "INFINITE_LOOP" and risk_prob >= settings.risk_threshold_kill and step.error_streak >= 2)
-            or (step.repetition_score >= settings.repetition_score_kill and step.error_streak >= 2)
+            or (step.repetition_score >= settings.repetition_score_kill and step.error_streak >= 3)
             or step.error_streak >= settings.error_streak_kill
+        )
+
+        thought_lower = (step.thought_trace or "").lower()
+        is_hallucination = (
+            predicted_mode == "TOOL_HALLUCINATION"
+            or (step.error_streak >= 1 and ("unrecognized" in thought_lower or "not found" in thought_lower or "magic" in step.tool_name.lower()))
         )
 
         # Autonomous KILL requires statistical certainty AND operational failure evidence
@@ -122,6 +128,12 @@ class AgentrySentry:
         if cost_runaway_critical or loop_critical or (risk_prob >= settings.risk_threshold_kill and step.error_streak >= 3):
             action = "KILL"
             risk_level = "CRITICAL"
+        elif is_hallucination:
+            action = "REROUTE"
+            risk_level = "HIGH"
+        elif step.repetition_score >= 0.65 and step.error_streak >= 1:
+            action = "REROUTE"
+            risk_level = "HIGH"
         elif risk_prob >= settings.risk_threshold_pause or (step.error_streak >= 2 and predicted_mode != "NORMAL"):
             if predicted_mode in ["TOOL_HALLUCINATION", "INFINITE_LOOP"] and step.error_streak <= 2:
                 action = "REROUTE"
@@ -132,7 +144,7 @@ class AgentrySentry:
             else:
                 action = "PAUSE"
                 risk_level = "HIGH"
-        elif risk_prob >= 0.35 and step.error_streak >= 1:
+        elif risk_prob >= 0.35 or step.error_streak >= 1:
             action = "PASS"
             risk_level = "MEDIUM"
         else:
@@ -351,21 +363,32 @@ Respond strictly in JSON with two keys:
 
         reroute = None
         if action == "KILL":
-            reason = (
-                f"Autonomous termination triggered. TabPFN detected {mode} with {prob:.1%} probability. "
-                f"Root cause: {driver}. Terminating immediately to halt cost runaway."
-            )
+            if step.error_streak >= settings.error_streak_kill or step.repetition_score >= settings.repetition_score_kill:
+                reason = (
+                    f"Autonomous termination triggered. Repetitive failure loop detected (streak {step.error_streak}, "
+                    f"repetition {step.repetition_score:.2f}). Terminating immediately to halt cost runaway."
+                )
+            elif step.accumulated_cost_usd >= settings.cost_threshold_kill_usd or (mode == "COST_RUNAWAY" and prob >= 0.70):
+                reason = (
+                    f"Autonomous termination triggered. Runaway token expenditure detected (${step.accumulated_cost_usd:.4f}). "
+                    f"Terminating immediately to prevent further budget breach."
+                )
+            else:
+                reason = (
+                    f"Autonomous termination triggered. TabPFN detected {mode} with {prob:.1%} probability. "
+                    f"Root cause: {driver}. Terminating immediately to halt cost runaway."
+                )
         elif action == "REROUTE":
             reason = (
-                f"Autonomous reroute engaged. TabPFN flagged early-stage {mode} ({prob:.1%}). "
+                f"Autonomous reroute engaged. TabPFN/Sentry flagged anomalous {mode} ({prob:.1%}). "
                 f"Injecting corrective telemetry steering directive."
             )
-            if mode == "INFINITE_LOOP":
+            if mode == "INFINITE_LOOP" or step.repetition_score >= 0.65:
                 reroute = (
                     f"STOP RETRYING: You have repeated tool '{step.tool_name}' {step.error_streak} times. "
                     f"Read the error log carefully or switch strategies immediately."
                 )
-            elif mode == "TOOL_HALLUCINATION":
+            elif mode == "TOOL_HALLUCINATION" or "not found" in step.thought_trace.lower() or "unrecognized" in step.thought_trace.lower() or "magic" in step.tool_name.lower():
                 reroute = (
                     f"INVALID TOOL: Tool '{step.tool_name}' does not exist in your environment. "
                     f"Use only available tools: [bash, read_file, write_file, grep_search]."
