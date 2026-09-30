@@ -33,7 +33,8 @@ dependencies = [
     "datasets>=2.18.0",
     "tabpfn-client>=0.1.0",
     "typer>=0.9.0",
-    "rich>=13.0.0"
+    "rich>=13.0.0",
+    "mcp>=1.0.0"
 ]
 
 [project.optional-dependencies]

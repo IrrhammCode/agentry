@@ -134,7 +134,10 @@ Agentry functions as an in-line predictive control plane:
 * **Dual-Profile Deployment:**
   * **Air-Gapped Sovereign Mode:** 100% on-premise execution (TabPFN + Local Ollama Qwen 2.5 + SQLite WAL). **Zero bytes network egress** for military, medical, and banking compliance.
   * **High-Throughput Fleet Mode:** Multi-key Groq LPU pool with sub-350ms root-cause synthesis and automatic 429 failover.
-* **Open Protocols:** Built-in REST API Gateway (`/health`, `/v1/audit`, `/v1/fleet`) enabling polyglot agents (Node.js, Go, Rust, cURL) to leverage TabPFN protection.
+* **Open Protocols & Standard Integrations:**
+  * **Model Context Protocol (MCP) Server:** Native `agentry mcp --transport stdio|sse` server exposing TabPFN-3.5 runtime guardrail tools and fleet resources directly to Claude Desktop, Cursor IDE, Windsurf, and custom agent hosts.
+  * **HTTP REST API Gateway:** Built-in REST daemon (`/health`, `/v1/audit`, `/v1/fleet`) enabling polyglot agents (Node.js, Go, Rust, cURL) to leverage TabPFN protection.
+  * **SDK Middleware:** First-class callbacks for LangChain, LangGraph, and CrewAI.
 
 ---
 
@@ -161,4 +164,4 @@ In a monitored SWE-bench test trajectory:
 * **Dataset:** Hugging Face `nebius/SWE-agent-trajectories` (SWE-bench benchmark)
 * **Local SLM:** Ollama + Qwen 2.5 (Local-first forensic attribution)
 * **Baselines:** XGBoost, Scikit-learn (Random Forest, Logistic Regression, GroupShuffleSplit)
-* **Infrastructure:** Python 3.10+, SQLite WAL, Streamlit, Rich, Pydantic, HTTP REST Gateway
+* **Infrastructure:** Python 3.10+, SQLite WAL, Streamlit, Rich, Pydantic, HTTP REST Gateway, Model Context Protocol (MCP 2.x)

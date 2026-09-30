@@ -201,6 +201,39 @@ hook = AgentryCrewHook(session_id="crew_run_01")
 coder = Agent(role="Senior Coder", goal="Implement features", step_callback=hook)
 ```
 
+### 4. Model Context Protocol (MCP) Server
+Deploy Agentry as a standardized **Model Context Protocol (MCP)** server for **Claude Desktop**, **Cursor IDE**, and **Windsurf**:
+```bash
+# Start Agentry MCP Server over standard I/O (stdio)
+agentry mcp --transport stdio
+
+# Or start with SSE for web/distributed agent clients
+agentry mcp --transport sse --port 8788
+```
+
+#### Claude Desktop Configuration (`claude_desktop_config.json`)
+```json
+{
+  "mcpServers": {
+    "agentry": {
+      "command": "python",
+      "args": ["-m", "agentry.mcp_server", "--transport", "stdio"],
+      "cwd": "C:\\path\\to\\agentry"
+    }
+  }
+}
+```
+
+#### MCP Tools & Resources Exposed
+| Tool / Resource | Type | Description |
+| :--- | :--- | :--- |
+| `agentry_audit_step` | **Tool** | Real-time TabPFN-3.5 failure risk audit, predicted mode, projected cost, and intervention (`PASS`, `REROUTE`, `PAUSE`, `KILL`). |
+| `agentry_get_fleet_status` | **Tool** | Fleet-wide governance metrics (total audited steps, tokens/dollars saved, intervention distribution). |
+| `agentry_inspect_session_history` | **Tool** | Detailed chronological audit logs and tabular telemetry for a specific agent session. |
+| `agentry_reset_session` | **Tool** | Resets the in-memory telemetry tracker and circuit breaker for a given session ID. |
+| `fleet://metrics` | **Resource** | Live JSON resource showing fleet statistics and cumulative cost/token savings. |
+| `fleet://recent-interventions` | **Resource** | Live JSON resource with recent SQLite WAL audit trail records for compliance forensics. |
+
 ---
 
 ## 🖥️ Live Fleet Simulation (CLI)

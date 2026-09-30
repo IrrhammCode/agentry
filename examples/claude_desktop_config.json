@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "agentry": {
+      "command": "python",
+      "args": ["-m", "agentry.mcp_server", "--transport", "stdio"],
+      "cwd": "C:\\Users\\Irham\\Documents\\code\\tabfpn"
+    }
+  }
+}

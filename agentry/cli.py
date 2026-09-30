@@ -375,6 +375,12 @@ def main():
     serve_parser.add_argument("--host", type=str, default="127.0.0.1", help="Host interface to bind")
     serve_parser.add_argument("--port", type=int, default=8787, help="Port to listen on")
 
+    # MCP Server
+    mcp_parser = subparsers.add_parser("mcp", help="Launch Model Context Protocol (MCP) server for Claude Desktop / Cursor")
+    mcp_parser.add_argument("--transport", default="stdio", choices=["stdio", "sse", "streamable-http"], help="MCP transport protocol (default: stdio)")
+    mcp_parser.add_argument("--host", default="127.0.0.1", help="Host interface for SSE/HTTP")
+    mcp_parser.add_argument("--port", type=int, default=8788, help="Port for SSE/HTTP")
+
     args = parser.parse_args()
 
     if args.command == "demo" or args.command is None:
@@ -394,6 +400,9 @@ def main():
     elif args.command == "serve":
         from agentry.server import start_server
         start_server(host=args.host, port=args.port)
+    elif args.command == "mcp":
+        from agentry.mcp_server import run_mcp_server
+        run_mcp_server(transport=args.transport, host=args.host, port=args.port)
     else:
         parser.print_help()
 

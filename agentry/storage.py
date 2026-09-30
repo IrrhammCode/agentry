@@ -107,6 +107,15 @@ class AuditStorage:
             ).fetchall()
             return [dict(r) for r in rows]
 
+    def get_all_events(self, limit: int = 50) -> List[Dict[str, Any]]:
+        """Retrieves most recent audit events across all sessions."""
+        with self._get_connection() as conn:
+            rows = conn.execute(
+                "SELECT * FROM audit_events ORDER BY id DESC LIMIT ?",
+                (limit,)
+            ).fetchall()
+            return [dict(r) for r in rows]
+
     def get_fleet_summary(self) -> Dict[str, Any]:
         """Calculates fleet-wide governance and intervention metrics."""
         with self._get_connection() as conn:
