@@ -31,8 +31,9 @@ class AgentStepTelemetry:
     accumulated_cost_usd: float
     thought_trace: str
     failure_status: str  # NORMAL, INFINITE_LOOP, TOOL_HALLUCINATION, COST_RUNAWAY
-    is_failure: int      # 0 or 1
-    final_cost_usd: float
+    is_failure: int = 0
+    final_cost_usd: float = 0.0
+    remaining_cost_usd: float = 0.0
 
 
 # Failure modes categorized
