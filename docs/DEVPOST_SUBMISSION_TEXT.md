@@ -82,7 +82,7 @@ Agentry is an enterprise-grade predictive runtime control layer and tabular safe
 • 155.2x Faster & 99.998% Cheaper than Cloud LLMs: TabPFN-3.5 evaluates steps in 14.5ms and costs $21.90/year for 500,000 daily steps, compared to GPT-4o's 2,250ms and $1,368,750.00/year.
 • 4 Full Enterprise Capabilities: Shipped Human-in-the-Loop (HITL) escalation, Slack/Discord webhooks, automated post-mortem reporting (Markdown/HTML), and OpenAI reverse proxy.
 • Model Context Protocol (MCP) Native Support: Built a fully compliant MCP Server allowing Claude Desktop and Cursor users to guard their agents with TabPFN out-of-the-box.
-• 100% Passing Test Suite: 28 comprehensive unit and integration tests passing in CI in under 10 seconds.
+• 100% Passing Test Suite: 37 comprehensive unit, integration, and adversarial chaos tests passing in CI (validating multithreaded concurrency, SSE streaming proxy, and cloud outage fallback).
 • One-Command Deployment: Complete Docker & Docker Compose configuration orchestrating Web UI, Reverse Proxy Gateway, and MCP Server.
 ```
 

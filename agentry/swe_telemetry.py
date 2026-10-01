@@ -37,12 +37,16 @@ def extract_tool_from_text(text: str) -> str:
     return "bash"
 
 
-def compute_string_overlap(s1: str, s2: str) -> float:
+def compute_string_overlap(s1: Any, s2: Any) -> float:
     """Computes Jaccard word-overlap similarity between two strings."""
-    if not s1 or not s2:
+    if s1 is None or s2 is None:
         return 0.0
-    w1 = set(re.findall(r"\w+", s1.lower()))
-    w2 = set(re.findall(r"\w+", s2.lower()))
+    str1 = str(s1)[:5000].lower()
+    str2 = str(s2)[:5000].lower()
+    if not str1 or not str2:
+        return 0.0
+    w1 = set(re.findall(r"\w+", str1))
+    w2 = set(re.findall(r"\w+", str2))
     if not w1 or not w2:
         return 0.0
     intersection = len(w1.intersection(w2))
@@ -50,9 +54,11 @@ def compute_string_overlap(s1: str, s2: str) -> float:
     return round(intersection / float(union), 3)
 
 
-def is_error_output(text: str) -> bool:
+def is_error_output(text: Any) -> bool:
     """Checks if tool output or user prompt indicates an error or failure."""
-    lower = text.lower()
+    if not text:
+        return False
+    lower = str(text).lower()
     error_patterns = [
         "traceback (most recent call last)",
         "syntax error",

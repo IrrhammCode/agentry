@@ -127,7 +127,6 @@ class WebhookNotifier:
         except Exception as exc:
             logger.warning("Webhook alert dispatch error: %s", exc)
             return False
-            logger.debug("Failed sending webhook alert: %s", exc)
 
     def _build_slack_payload(self, alert: Any) -> Dict[str, Any]:
         """Constructs rich Slack Block Kit message."""

@@ -141,7 +141,7 @@ class TabPFNGuardrailEngine:
             "accumulated_cost_usd"
         ]:
             if num_col in processed.columns:
-                processed[num_col] = pd.to_numeric(processed[num_col], errors="coerce").fillna(0.0)
+                processed[num_col] = pd.to_numeric(processed[num_col], errors="coerce").replace([np.inf, -np.inf], np.nan).fillna(0.0)
             else:
                 processed[num_col] = 0.0
 
@@ -305,9 +305,10 @@ class TabPFNGuardrailEngine:
             drivers.append(f"High step latency ({step.step_latency_ms:.0f}ms)")
         if step.accumulated_cost_usd > settings.cost_threshold_warning_usd:
             drivers.append(f"High token cost burn (${step.accumulated_cost_usd:.4f})")
-        if "retry" in step.thought_trace.lower() or "again" in step.thought_trace.lower():
+        thought_lower = str(step.thought_trace or "").lower()
+        if "retry" in thought_lower or "again" in thought_lower:
             drivers.append("Thought trace indicates repetitive retries")
-        if "not found" in step.thought_trace.lower() or "unrecognized" in step.thought_trace.lower():
+        if "not found" in thought_lower or "unrecognized" in thought_lower:
             drivers.append("Thought trace indicates hallucinated tool/flag")
 
         if not drivers:

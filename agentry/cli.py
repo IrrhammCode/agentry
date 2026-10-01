@@ -528,9 +528,8 @@ def main():
         else:
             hitl_list_cli(status=getattr(args, "status", "PENDING"))
     elif args.command == "web":
-        import subprocess
-        console.print("[bold green]Launching Agentry Streamlit Web Dashboard...[/]")
-        subprocess.run([sys.executable, "-m", "streamlit", "run", "web/app.py"])
+        web_script = str(ROOT_DIR / "web" / "app.py")
+        subprocess.run([sys.executable, "-m", "streamlit", "run", web_script])
     elif args.command == "serve":
         from agentry.server import start_server
         start_server(host=args.host, port=args.port)

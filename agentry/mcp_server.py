@@ -17,7 +17,7 @@ if str(ROOT_DIR) not in sys.path:
 
 from mcp.server.mcpserver import MCPServer
 from agentry import __version__
-from agentry.guard import AgentryGuard, SentryDecision
+from agentry.guard import AgentryGuard, SentryDecision, _safe_int, _safe_float
 from agentry.telemetry import AgentStepTelemetry
 from agentry.report import generate_incident_report, export_incident_report_to_file
 from agentry.hitl import hitl_gateway
@@ -96,15 +96,15 @@ def audit_agent_step(
     guard = get_guard()
     # Defensive input sanitization
     session_id = str(session_id or "default_session")
-    step_index = max(0, int(step_index or 0))
+    step_index = _safe_int(step_index, default=0, min_val=0)
     tool_name = str(tool_name or "bash")
     thought_trace = str(thought_trace or "")
-    prompt_tokens = max(0, int(prompt_tokens or 0))
-    completion_tokens = max(0, int(completion_tokens or 0))
-    error_streak = max(0, int(error_streak or 0))
-    repetition_score = min(1.0, max(0.0, float(repetition_score or 0.0)))
-    accumulated_cost_usd = max(0.0, float(accumulated_cost_usd or 0.0))
-    step_latency_ms = max(0.0, float(step_latency_ms or 0.0))
+    prompt_tokens = _safe_int(prompt_tokens, default=0, min_val=0)
+    completion_tokens = _safe_int(completion_tokens, default=0, min_val=0)
+    error_streak = _safe_int(error_streak, default=0, min_val=0)
+    repetition_score = _safe_float(repetition_score, default=0.0, min_val=0.0, max_val=1.0)
+    accumulated_cost_usd = _safe_float(accumulated_cost_usd, default=0.0, min_val=0.0)
+    step_latency_ms = _safe_float(step_latency_ms, default=0.0, min_val=0.0)
 
     total_tokens = prompt_tokens + completion_tokens
 

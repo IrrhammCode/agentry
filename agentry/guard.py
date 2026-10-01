@@ -21,9 +21,40 @@ from agentry.agent import AgentrySentry, SentryDecision
 from agentry.storage import AuditStorage
 from agentry.alerts import default_notifier, WebhookNotifier
 from agentry.hitl import hitl_gateway, HITLManager
+import math
 from agentry.swe_telemetry import compute_string_overlap, is_error_output
 
 logger = logging.getLogger("agentry.guard")
+
+
+def _safe_int(val: Any, default: int = 0, min_val: Optional[int] = 0) -> int:
+    """Safely converts any input into an integer with NaN/Inf protection."""
+    try:
+        f = float(val)
+        if math.isnan(f) or math.isinf(f):
+            i = default
+        else:
+            i = int(f)
+    except (ValueError, TypeError):
+        i = default
+    if min_val is not None:
+        i = max(min_val, i)
+    return i
+
+
+def _safe_float(val: Any, default: float = 0.0, min_val: Optional[float] = 0.0, max_val: Optional[float] = None) -> float:
+    """Safely converts any input into a bounded float with NaN/Inf protection."""
+    try:
+        f = float(val)
+        if math.isnan(f) or math.isinf(f):
+            f = default
+    except (ValueError, TypeError):
+        f = default
+    if min_val is not None:
+        f = max(min_val, f)
+    if max_val is not None:
+        f = min(max_val, f)
+    return f
 
 
 class AgentHaltException(Exception):
@@ -339,8 +370,8 @@ class AgentryGuard:
                     raise AgentHaltException(state.last_decision)
 
             # Defensive normalization
-            prompt_tokens = max(0, int(prompt_tokens or 0))
-            completion_tokens = max(0, int(completion_tokens or 0))
+            prompt_tokens = _safe_int(prompt_tokens, default=0, min_val=0)
+            completion_tokens = _safe_int(completion_tokens, default=0, min_val=0)
             input_text = str(input_text or "")
             output_text = str(output_text or "")
             thought_trace = str(thought_trace or "")
@@ -371,7 +402,7 @@ class AgentryGuard:
             state.recent_inputs.append(input_snippet)
 
             # 4. Latency
-            step_latency = max(0.0, float(latency_ms)) if latency_ms is not None else 850.0
+            step_latency = _safe_float(latency_ms, default=850.0, min_val=0.0)
 
             # 5. Assemble tabular telemetry
             telemetry = AgentStepTelemetry(

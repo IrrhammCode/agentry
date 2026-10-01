@@ -117,10 +117,11 @@ class AgentrySentry:
             or step.error_streak >= settings.error_streak_kill
         )
 
-        thought_lower = (step.thought_trace or "").lower()
+        thought_lower = str(step.thought_trace or "").lower()
+        tool_name_lower = str(step.tool_name or "").lower()
         is_hallucination = (
             predicted_mode == "TOOL_HALLUCINATION"
-            or (step.error_streak >= 1 and ("unrecognized" in thought_lower or "not found" in thought_lower or "magic" in step.tool_name.lower()))
+            or (step.error_streak >= 1 and ("unrecognized" in thought_lower or "not found" in thought_lower or "magic" in tool_name_lower))
         )
 
         # Autonomous KILL requires statistical certainty AND operational failure evidence
@@ -383,12 +384,14 @@ Respond strictly in JSON with two keys:
                 f"Autonomous reroute engaged. TabPFN/Sentry flagged anomalous {mode} ({prob:.1%}). "
                 f"Injecting corrective telemetry steering directive."
             )
+            thought_low = str(step.thought_trace or "").lower()
+            tool_low = str(step.tool_name or "").lower()
             if mode == "INFINITE_LOOP" or step.repetition_score >= 0.65:
                 reroute = (
                     f"STOP RETRYING: You have repeated tool '{step.tool_name}' {step.error_streak} times. "
                     f"Read the error log carefully or switch strategies immediately."
                 )
-            elif mode == "TOOL_HALLUCINATION" or "not found" in step.thought_trace.lower() or "unrecognized" in step.thought_trace.lower() or "magic" in step.tool_name.lower():
+            elif mode == "TOOL_HALLUCINATION" or "not found" in thought_low or "unrecognized" in thought_low or "magic" in tool_low:
                 reroute = (
                     f"INVALID TOOL: Tool '{step.tool_name}' does not exist in your environment. "
                     f"Use only available tools: [bash, read_file, write_file, grep_search]."

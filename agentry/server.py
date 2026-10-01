@@ -13,7 +13,7 @@ from typing import Optional, Dict, Any
 from urllib.parse import urlparse, parse_qs
 
 from agentry import __version__
-from agentry.guard import AgentryGuard, SentryDecision
+from agentry.guard import AgentryGuard, SentryDecision, _safe_int, _safe_float
 from agentry.storage import AuditStorage
 from agentry.report import generate_incident_report
 from agentry.hitl import hitl_gateway
@@ -163,22 +163,52 @@ class AgentryHTTPRequestHandler(BaseHTTPRequestHandler):
         if path == "/v1/chat/completions":
             proxy = get_proxy_handler()
             client_headers = {k.lower(): v for k, v in self.headers.items()}
+            is_stream = bool(payload.get("stream", False))
+
+            if is_stream:
+                session_id = proxy._resolve_session_id(payload, client_headers)
+                state = guard.get_or_create_session(session_id)
+                if state.is_halted:
+                    self._send_json(429, {
+                        "error": {
+                            "message": f"AGENTRY SENTRY CIRCUIT BREAKER: Session '{session_id}' is permanently HALTED.",
+                            "type": "circuit_breaker_kill",
+                            "code": "SESSION_HALTED"
+                        }
+                    }, extra_headers={"X-Agentry-Action": "KILL"})
+                    return
+
+                self.send_response(200)
+                self.send_header("Content-Type", "text/event-stream; charset=utf-8")
+                self.send_header("Cache-Control", "no-cache")
+                self.send_header("Connection", "keep-alive")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+
+                try:
+                    for chunk in proxy.stream_chat_completion(payload, client_headers, guard):
+                        self.wfile.write(chunk)
+                        self.wfile.flush()
+                except (BrokenPipeError, ConnectionResetError):
+                    logger.debug("Client disconnected during SSE stream.")
+                return
+
             status_code, resp_data, extra_headers = proxy.handle_chat_completion(payload, client_headers, guard)
             self._send_json(status_code, resp_data, extra_headers=extra_headers)
             return
 
         # 2. Audit step endpoint: POST /v1/audit
         if path == "/v1/audit":
-            session_id = payload.get("session_id", f"session_{int(time.time())}")
-            tool_name = payload.get("tool_name", "tool")
-            input_text = payload.get("input_text", "")
-            output_text = payload.get("output_text", "")
-            prompt_tokens = int(payload.get("prompt_tokens", 0))
-            completion_tokens = int(payload.get("completion_tokens", 0))
-            thought_trace = payload.get("thought_trace", "")
-            agent_role = payload.get("agent_role", "Autonomous-Agent")
-            model_name = payload.get("model_name", "swe-agent-70b")
-            latency_ms = payload.get("latency_ms")
+            session_id = str(payload.get("session_id") or f"session_{int(time.time())}")
+            tool_name = str(payload.get("tool_name") or "tool")
+            input_text = str(payload.get("input_text") or "")
+            output_text = str(payload.get("output_text") or "")
+            prompt_tokens = _safe_int(payload.get("prompt_tokens"), default=0, min_val=0)
+            completion_tokens = _safe_int(payload.get("completion_tokens"), default=0, min_val=0)
+            thought_trace = str(payload.get("thought_trace") or "")
+            agent_role = str(payload.get("agent_role") or "Autonomous-Agent")
+            model_name = str(payload.get("model_name") or "swe-agent-70b")
+            latency_ms = _safe_float(payload.get("latency_ms"), default=850.0, min_val=0.0)
 
             decision = guard.audit(
                 session_id=session_id,
@@ -190,7 +220,7 @@ class AgentryHTTPRequestHandler(BaseHTTPRequestHandler):
                 thought_trace=thought_trace,
                 agent_role=agent_role,
                 model_name=model_name,
-                latency_ms=float(latency_ms) if latency_ms is not None else None
+                latency_ms=latency_ms
             )
 
             response = {
