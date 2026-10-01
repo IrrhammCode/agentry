@@ -12,12 +12,15 @@ from http.server import HTTPServer, ThreadingHTTPServer, BaseHTTPRequestHandler
 from typing import Optional, Dict, Any
 from urllib.parse import urlparse, parse_qs
 
+from dataclasses import asdict
 from agentry import __version__
 from agentry.guard import AgentryGuard, SentryDecision, _safe_int, _safe_float
 from agentry.storage import AuditStorage
 from agentry.report import generate_incident_report
 from agentry.hitl import hitl_gateway
 from agentry.proxy import OpenAIProxyHandler
+from agentry.budget import budget_governor
+from agentry.healing import trajectory_healer
 from agentry.config import settings
 
 logger = logging.getLogger("agentry.server")
@@ -72,6 +75,15 @@ class AgentryHTTPRequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def _send_plain_text(self, status_code: int, text_content: str):
+        body = text_content.encode("utf-8")
+        self.send_response(status_code)
+        self.send_header("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.end_headers()
+        self.wfile.write(body)
+
     def do_OPTIONS(self):
         """Handle CORS pre-flight requests."""
         self._send_json(200, {"status": "ok"})
@@ -96,7 +108,56 @@ class AgentryHTTPRequestHandler(BaseHTTPRequestHandler):
             })
             return
 
-        # 2. OpenAI-Compatible Models Endpoint: GET /v1/models
+        # 2. Prometheus Exposition Format: GET /metrics
+        if path == "/metrics":
+            summary = guard.storage.get_fleet_summary()
+            budget = budget_governor.check_fleet_budget()
+            interventions = summary.get("interventions", {})
+            lines = [
+                "# HELP agentry_audited_steps_total Total number of agent execution steps audited by TabPFN.",
+                "# TYPE agentry_audited_steps_total counter",
+                f"agentry_audited_steps_total {summary.get('total_audited_steps', 0)}",
+                "",
+                "# HELP agentry_unique_sessions_total Total number of unique agent sessions monitored.",
+                "# TYPE agentry_unique_sessions_total counter",
+                f"agentry_unique_sessions_total {summary.get('unique_sessions', 0)}",
+                "",
+                "# HELP agentry_interventions_total Total number of autonomic interventions by action type.",
+                "# TYPE agentry_interventions_total counter",
+                f'agentry_interventions_total{{action="KILL"}} {interventions.get("KILL", 0)}',
+                f'agentry_interventions_total{{action="REROUTE"}} {interventions.get("REROUTE", 0)}',
+                f'agentry_interventions_total{{action="PAUSE"}} {interventions.get("PAUSE", 0)}',
+                f'agentry_interventions_total{{action="PASS"}} {interventions.get("PASS", 0)}',
+                "",
+                "# HELP agentry_tokens_saved_total Total estimated tokens saved by circuit breakers.",
+                "# TYPE agentry_tokens_saved_total counter",
+                f"agentry_tokens_saved_total {summary.get('total_tokens_saved', 0)}",
+                "",
+                "# HELP agentry_cost_saved_usd_total Total estimated API cost saved in USD.",
+                "# TYPE agentry_cost_saved_usd_total counter",
+                f"agentry_cost_saved_usd_total {summary.get('total_cost_saved_usd', 0.0):.4f}",
+                "",
+                "# HELP agentry_fleet_budget_daily_usd Daily configured budget ceiling in USD.",
+                "# TYPE agentry_fleet_budget_daily_usd gauge",
+                f"agentry_fleet_budget_daily_usd {budget.daily_budget_usd:.2f}",
+                "",
+                "# HELP agentry_fleet_spend_current_usd Current fleet expenditure in the last 24h in USD.",
+                "# TYPE agentry_fleet_spend_current_usd gauge",
+                f"agentry_fleet_spend_current_usd {budget.current_fleet_spend_usd:.4f}",
+                "",
+                "# HELP agentry_fleet_budget_utilization_ratio Ratio of daily budget consumed (0.0 to 1.0+).",
+                "# TYPE agentry_fleet_budget_utilization_ratio gauge",
+                f"agentry_fleet_budget_utilization_ratio {budget.utilization_pct / 100.0:.3f}",
+                "",
+                "# HELP agentry_tabpfn_cloud_mode 1 if TabPFN Cloud is active, 0 for local offline mode.",
+                "# TYPE agentry_tabpfn_cloud_mode gauge",
+                f"agentry_tabpfn_cloud_mode {1 if guard.engine.is_cloud_tabpfn else 0}",
+                ""
+            ]
+            self._send_plain_text(200, "\n".join(lines))
+            return
+
+        # 3. OpenAI-Compatible Models Endpoint: GET /v1/models
         if path == "/v1/models":
             self._send_json(200, {
                 "object": "list",
@@ -108,13 +169,19 @@ class AgentryHTTPRequestHandler(BaseHTTPRequestHandler):
             })
             return
 
-        # 3. Fleet Summary & Metrics
+        # 4. Fleet Summary & JSON Metrics: GET /v1/fleet or /v1/metrics
         if path in ("/v1/fleet", "/v1/metrics"):
             summary = guard.storage.get_fleet_summary()
             self._send_json(200, summary)
             return
 
-        # 4. Human-in-the-Loop (HITL) Queue: GET /v1/approvals
+        # 5. Fleet Budget Quota Status: GET /v1/budget
+        if path == "/v1/budget":
+            status = budget_governor.check_fleet_budget()
+            self._send_json(200, asdict(status))
+            return
+
+        # 6. Human-in-the-Loop (HITL) Queue: GET /v1/approvals
         if path == "/v1/approvals":
             status_filter = query.get("status", [None])[0]
             requests = hitl_gateway.list_requests(status=status_filter)
@@ -259,12 +326,30 @@ class AgentryHTTPRequestHandler(BaseHTTPRequestHandler):
                 self._send_json(404, {"error": f"HITL request '{request_id}' not found."})
             return
 
-        # 4. Reset session endpoint: POST /v1/sessions/<session_id>/reset
-        if path.startswith("/v1/sessions/") and path.endswith("/reset"):
-            parts = path.split("/")
-            session_id = parts[3]
-            guard.reset_session(session_id)
-            self._send_json(200, {"status": "ok", "message": f"Session '{session_id}' reset successfully"})
+        # 5. Trajectory Rewind & Self-Healing: POST /v1/healing/rewind
+        if path == "/v1/healing/rewind":
+            session_id = str(payload.get("session_id", "default_session"))
+            current_step = _safe_int(payload.get("current_step", 1), default=1)
+            failed_tool = str(payload.get("failed_tool", "tool"))
+            error_streak = _safe_int(payload.get("error_streak", 1), default=1)
+            reason = str(payload.get("reason", "Anomalous failure loop detected"))
+            prescription = trajectory_healer.diagnose_and_prescribe(
+                session_id=session_id,
+                current_step=current_step,
+                failed_tool=failed_tool,
+                error_streak=error_streak,
+                reason=reason,
+                storage=guard.storage
+            )
+            self._send_json(200, asdict(prescription))
+            return
+
+        # 6. Session Budget Check: POST /v1/budget/check
+        if path == "/v1/budget/check":
+            session_id = str(payload.get("session_id", "default_session"))
+            accumulated_cost = _safe_float(payload.get("accumulated_cost", 0.0), default=0.0)
+            status = budget_governor.check_session_budget(session_id, accumulated_cost)
+            self._send_json(200, asdict(status))
             return
 
         self._send_json(404, {"error": f"Endpoint not found: {self.path}"})
@@ -278,12 +363,15 @@ def start_server(host: str = "127.0.0.1", port: int = 8787):
     server_address = (host, port)
     httpd = ThreadingHTTPServer(server_address, AgentryHTTPRequestHandler)
     print(f"🚀 Agentry HTTP Sentry Gateway & OpenAI Proxy running on http://{host}:{port}")
-    print(f"   • Health Check:     http://{host}:{port}/health")
-    print(f"   • OpenAI Proxy:     POST http://{host}:{port}/v1/chat/completions")
-    print(f"   • Audit API:        POST http://{host}:{port}/v1/audit")
-    print(f"   • HITL Approvals:   http://{host}:{port}/v1/approvals")
-    print(f"   • Incident Reports: http://{host}:{port}/v1/reports/<session_id>?format=html")
-    print(f"   • Fleet Metrics:    http://{host}:{port}/v1/fleet")
+    print(f"   • Health Check:       http://{host}:{port}/health")
+    print(f"   • OpenAI Proxy:       POST http://{host}:{port}/v1/chat/completions")
+    print(f"   • Prometheus Metrics: http://{host}:{port}/metrics")
+    print(f"   • Fleet Budget:       http://{host}:{port}/v1/budget")
+    print(f"   • Trajectory Rewind:  POST http://{host}:{port}/v1/healing/rewind")
+    print(f"   • Audit API:          POST http://{host}:{port}/v1/audit")
+    print(f"   • HITL Approvals:     http://{host}:{port}/v1/approvals")
+    print(f"   • Incident Reports:   http://{host}:{port}/v1/reports/<session_id>?format=html")
+    print(f"   • Fleet Metrics:      http://{host}:{port}/v1/fleet")
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:

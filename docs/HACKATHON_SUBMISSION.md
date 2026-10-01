@@ -132,6 +132,16 @@ Agentry is engineered from day one for enterprise production deployments:
    * Full MCP 2.x support over `stdio` and `sse` exposing tools (`agentry_audit_step`, `agentry_get_fleet_status`, `agentry_escalate_hitl`) and resources (`fleet://metrics`, `hitl://queue`).
 6. **Containerization & Cloud Orchestration:**
    * Production `Dockerfile` and `docker-compose.yml` orchestrating the Streamlit Command Center (8501), API/Proxy Gateway (8787), and MCP Server (8788).
+7. **Autonomic Trajectory Rewind & Self-Healing (`agentry.healing`):**
+   * Computes trajectory divergence inflection points and generates self-healing context pruning recipes.
+   * Injects counterfactual recovery directives so trapped agents complete their tasks instead of being terminated.
+8. **Fleet Budget Autopilot & Quota Governor (`agentry.budget`):**
+   * Multi-agent financial governance with daily and single-session cost ceilings.
+   * Projects day-end spend using TabPFN cost forecasts and recommends dynamic throttling before overruns occur.
+9. **Observability: Prometheus / OpenTelemetry Exposition (`GET /metrics`):**
+   * Standard text exposition format (`text/plain; version=0.0.4`) exposing real-time audit counters, latency, and budget metrics for Grafana / Datadog.
+10. **Interactive What-If Counterfactual Policy Simulator:**
+   * Interactive sensitivity curves and Pareto frontier sliders in the Streamlit Command Center.
 
 ---
 
@@ -154,14 +164,16 @@ Agentry is engineered from day one for enterprise production deployments:
                       │
           +-----------+-----------+
           │                       │
-      [CONTINUE]              [HALT / HITL / REROUTE]
+      [CONTINUE]              [HALT / REWIND / HITL / REROUTE]
   (Nominal telemetry)     (P(runaway) >= 85% &
                            Expected Waste > Recovery Value)
                                   │
                                   ▼
+                     [Autonomic Self-Healing Rewind]
                      [Save Wasted Tokens & Budget]
                      [Emit Slack/Discord Webhook]
                      [Log to SQLite WAL Audit Trail]
+                     [Prometheus Metrics Exposition]
                      [Generate Incident Post-Mortem]
 ```
 
@@ -171,8 +183,8 @@ Agentry is engineered from day one for enterprise production deployments:
 
 * **100% Real-World Data (Zero Synthetic Mocks):** Built and validated strictly on 1,156 genuine steps across 55 developer sessions from Hugging Face `nebius/SWE-agent-trajectories`.
 * **Rigorous Unseen Trajectory Split:** Fully addressed data-leakage concerns with 5-fold group-based session partitioning.
-* **Production Engineering Complete:** 37/37 passing unit, integration, and adversarial chaos tests passing in CI (100% test integrity across multithreaded concurrency, SSE streaming proxy, and cloud outage fallback).
-* **Full-Stack Enterprise Governance:** Streamlit Web UI, SQLite WAL storage, HITL queue, Webhook notifications, and OpenAI Reverse Proxy.
+* **Production Engineering Complete:** 43/43 passing unit, integration, and adversarial chaos tests passing in CI (100% test integrity across multithreaded concurrency, SSE streaming proxy, trajectory rewind, budget governor, and cloud outage fallback).
+* **Full-Stack Enterprise Governance:** Streamlit Web UI, SQLite WAL storage, HITL queue, Webhook notifications, Prometheus `/metrics`, Budget Autopilot, and OpenAI Reverse Proxy.
 * **Single-Command Multi-Service Deployment:** `docker-compose up` launches the entire fleet governance ecosystem.
 
 ---

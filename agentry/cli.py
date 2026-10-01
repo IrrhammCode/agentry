@@ -445,12 +445,86 @@ def hitl_resolve_cli(request_id: str, resolution: str, comment: str = "", direct
         console.print(f"Operator Comment: [dim]{req.operator_comment}[/]")
 
 
+def rewind_session_cli(session_id: str):
+    """Diagnoses an agent trajectory and outputs an Autonomic Self-Healing Rewind Prescription."""
+    print_banner()
+    from agentry.healing import trajectory_healer
+    from agentry.storage import AuditStorage
+
+    storage = AuditStorage()
+    events = storage.get_session_events(session_id)
+    if not events:
+        console.print(f"[bold yellow]No local audit events found for session '{session_id}'. Checking historical dataset...[/]")
+        real_csv = ROOT_DIR / "data" / "real_swe_telemetry.csv"
+        df = pd.read_csv(real_csv) if real_csv.exists() else None
+        if df is not None and session_id in df["session_id"].values:
+            sess_df = df[df["session_id"] == session_id]
+            current_step = int(sess_df["step_index"].max())
+            last_row = sess_df.iloc[-1]
+            failed_tool = str(last_row.get("tool_name", "bash"))
+            streak = int(last_row.get("error_streak", 1))
+        else:
+            current_step = 6
+            failed_tool = "bash"
+            streak = 3
+    else:
+        current_step = events[-1]["step_index"]
+        failed_tool = events[-1].get("predicted_failure_mode", "bash")
+        streak = 3
+
+    prescription = trajectory_healer.diagnose_and_prescribe(
+        session_id=session_id,
+        current_step=current_step,
+        failed_tool=failed_tool,
+        error_streak=streak,
+        storage=storage
+    )
+
+    content = (
+        f"[bold cyan]Session ID:[/]           {prescription.session_id}\n"
+        f"[bold red]Current Fatal Step:[/]   Step {prescription.current_step}\n"
+        f"[bold green]Target Checkpoint:[/]    Step {prescription.target_step} (Optimal recovery inflection point)\n"
+        f"[bold yellow]Poisoned Turns Pruned:[/] {prescription.pruned_steps_count} steps stripped from LLM context\n"
+        f"[bold cyan]Tokens Recovered:[/]     ~{prescription.estimated_tokens_saved:,} tokens\n"
+        f"[bold green]Estimated Cost Saved:[/]  ${prescription.estimated_cost_saved_usd:.4f} USD\n\n"
+        f"[bold magenta]Counterfactual Steering Directive:[/] \n"
+        f"[italic white]\"{prescription.counterfactual_directive}\"[/]"
+    )
+    console.print(Panel(content, title="[bold green]🛡️ Autonomic Trajectory Rewind Prescription[/]", border_style="green"))
+
+
+def budget_status_cli():
+    """Displays current fleet budget quotas, 24h spend, and burn rate forecasts."""
+    print_banner()
+    from agentry.budget import budget_governor
+
+    status = budget_governor.check_fleet_budget()
+    rec_style = "bold green" if status.action_recommendation == "PROCEED" else ("bold yellow" if status.action_recommendation in ("WARN", "THROTTLE") else "bold red")
+
+    content = (
+        f"[bold cyan]Daily Budget Cap:[/]      ${status.daily_budget_usd:.2f} USD\n"
+        f"[bold white]Current Fleet Spend (24h):[/] ${status.current_fleet_spend_usd:.4f} USD\n"
+        f"[bold white]Remaining Budget:[/]      ${status.remaining_daily_budget_usd:.4f} USD\n"
+        f"[bold yellow]Quota Utilization:[/]     {status.utilization_pct:.1f}%\n"
+        f"[bold magenta]Status Recommendation:[/] [{rec_style}]{status.action_recommendation}[/]\n"
+        f"[bold white]Diagnostic Reason:[/]     {status.reason}"
+    )
+    console.print(Panel(content, title="[bold cyan]💰 Agentry Fleet Budget Autopilot[/]", border_style="cyan"))
+
+
 def main():
     """Main CLI entrypoint."""
     parser = argparse.ArgumentParser(
         description="Agentry: Autonomous Tabular Guardrail & Sentry for AI Agents (TabPFN-3.5)"
     )
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
+
+    # Rewind (Self-Healing Recovery)
+    rewind_parser = subparsers.add_parser("rewind", help="Diagnose and prescribe trajectory rewind & self-healing")
+    rewind_parser.add_argument("session_id", nargs="?", default="demo_rewind_session", help="Session ID to heal")
+
+    # Budget (Fleet Budget Governor)
+    subparsers.add_parser("budget", help="Inspect fleet budget utilization and token quota status")
 
     # Demo
     demo_parser = subparsers.add_parser("demo", help="Run live multi-agent fleet monitoring demo")
@@ -501,7 +575,11 @@ def main():
 
     args = parser.parse_args()
 
-    if args.command == "demo" or args.command is None:
+    if args.command == "rewind":
+        rewind_session_cli(args.session_id)
+    elif args.command == "budget":
+        budget_status_cli()
+    elif args.command == "demo" or args.command is None:
         run_live_fleet_demo(
             num_steps=getattr(args, "steps", 16),
             speed_s=getattr(args, "speed", 0.4),

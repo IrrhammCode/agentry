@@ -39,11 +39,15 @@ Agentry is an enterprise-grade predictive runtime control layer and tabular safe
 3. Cost-Aware Economic Policy: Intervenes using an Economic Loss Formulation:
    Expected Waste = P(runaway) * Projected Remaining Cost
    Halting occurs only when expected waste exceeds the value of recovery, slashing the false-stop rate to 2.0% while preserving productive task completion.
-4. Human-in-the-Loop (HITL) Supervisor Control: Automatically pauses suspicious executions into an escalation queue, allowing human operators to review tabular telemetry and inject live steering directives (`hitl_gateway.resolve`).
-5. Multi-Channel Webhook Alerts: Emits non-blocking HTTP webhooks with rich formatting to Slack, Discord, and PagerDuty for critical interventions.
-6. Automated Incident Post-Mortems: Generates audit-ready forensic post-mortem reports in Markdown and HTML for enterprise AI safety compliance and AgentOps governance.
-7. Zero-Code-Change OpenAI Reverse Proxy: Drop-in proxy (`http://localhost:8787/v1`) that guards any existing agent framework (LangChain, AutoGen, CrewAI) without changing application logic.
-8. Model Context Protocol (MCP) Server: Exposes standardized MCP tools (`agentry_audit_step`, `agentry_get_fleet_status`) and resources (`fleet://metrics`) over stdio and SSE for native integration with Claude Desktop, Cursor IDE, and Windsurf.
+4. Autonomic Trajectory Rewind & Self-Healing Engine: When an agent diverges, Agentry locates the exact divergence inflection point (t*), computes a RewindPrescription, prunes poisoned turns from context history, and injects counterfactual recovery directives to steer the agent back on course.
+5. Enterprise Fleet Budget Autopilot & Quota Governor: Tracks 24-hour spend velocity across agent roles, computes budget utilization percentage, warns before depletion, and enforces hard single-session ($2.50) and daily fleet ($50.00) cost ceilings.
+6. Prometheus / OpenTelemetry Metrics Exposition: Built-in `/metrics` endpoint exporting real-time scrapeable metrics (step latency histograms, budget spend, failure rate gauges, and rewind intervention counters) for Grafana/Datadog.
+7. Interactive What-If Counterfactual Policy Simulator: Web UI module allowing operators to drag decision thresholds, inspect ROC & Pareto trade-offs, and simulate autonomic rewind recovery on historical SWE-bench sessions.
+8. Human-in-the-Loop (HITL) Supervisor Control: Automatically pauses suspicious executions into an escalation queue, allowing human operators to review tabular telemetry and inject live steering directives (`hitl_gateway.resolve`).
+9. Multi-Channel Webhook Alerts: Emits non-blocking HTTP webhooks with rich formatting to Slack, Discord, and PagerDuty for critical interventions.
+10. Automated Incident Post-Mortems: Generates audit-ready forensic post-mortem reports in Markdown and HTML for enterprise AI safety compliance and AgentOps governance.
+11. Zero-Code-Change OpenAI Reverse Proxy: Drop-in proxy (`http://localhost:8787/v1`) that guards any existing agent framework (LangChain, AutoGen, CrewAI) without changing application logic.
+12. Model Context Protocol (MCP) Server: Exposes standardized MCP tools (`agentry_audit_step`, `agentry_get_fleet_status`) and resources (`fleet://metrics`) over stdio and SSE for native integration with Claude Desktop, Cursor IDE, and Windsurf.
 ```
 
 ---
@@ -52,11 +56,12 @@ Agentry is an enterprise-grade predictive runtime control layer and tabular safe
 ```text
 • Tabular Foundation Model: Prior Labs TabPFN-3.5 (`tabpfn-client`, Thinking Mode) trained on multimodal agent features and grouped session dynamics.
 • Dataset & Ground Truth: 1,156 real-world coding agent steps from Hugging Face `nebius/SWE-agent-trajectories` (SWE-bench benchmark) across 55 developer sessions (15 successful, 40 failing).
+• Autonomic Healing & Budget: Divergence inflection point analysis, context history rewind, and multi-tenant financial quota governors.
 • Control & Storage: SQLite Write-Ahead Logging (WAL) audit trail for ACID-compliant enterprise governance and forensic telemetry replay.
-• Developer Protocols: Drop-in Python SDK (`@guard.protect`), LangChain/LangGraph callbacks, CrewAI hooks, HTTP REST Gateway daemon, OpenAI Reverse Proxy, and standardized Model Context Protocol (MCP) Server.
+• Developer Protocols: Drop-in Python SDK (`@guard.protect`), LangChain/LangGraph callbacks, CrewAI hooks, HTTP REST Gateway daemon, OpenAI Reverse Proxy, Prometheus `/metrics` exposition, and standardized Model Context Protocol (MCP) Server.
 • Enterprise Operations: Human-in-the-Loop (HITL) approval gateway, Slack/Discord webhooks, and automated HTML/Markdown incident post-mortem generator.
 • Containerization: Production Dockerfile and docker-compose.yml orchestrating Web UI (port 8501), Gateway (port 8787), and MCP Server (port 8788).
-• Interfaces: Streamlit Command Center with live fleet radar, forensic session inspector, interactive MCP step simulator, and Rich terminal visualizer.
+• Interfaces: Streamlit Command Center with live fleet radar, forensic session inspector, interactive What-If Simulator, Fleet Budget Autopilot, interactive MCP step simulator, and Rich terminal visualizer.
 ```
 
 ---
@@ -71,6 +76,8 @@ Agentry is an enterprise-grade predictive runtime control layer and tabular safe
    Classical ML baselines (XGBoost, Random Forest) struggled on held-out trajectory cost regression. TabPFN-3.5's native support for grouped temporal relationships enabled it to achieve an R^2 of 0.782–0.961 and ROC-AUC of 0.950.
 4. Preserving Enterprise Privacy in AI Safety:
    Cloud LLM judges require sending raw code diffs and prompts to third parties. We proved mathematically via permutation importance that 71.0% of predictive power comes from 5 non-sensitive tabular metadata features (`error_streak`, `prompt_tokens`, `step_latency_ms`, `thought_has_error`, `tool_call_count`), achieving complete runtime protection with zero proprietary code exposure.
+5. Safe Autonomic Context Pruning:
+   Rolling an agent backward requires identifying the exact divergence point without discarding productive setup steps. Our divergence inflection point locator identifies the highest step index before fatal error cascades began, surgically stripping poisoned tool outputs while preserving environment state.
 ```
 
 ---
@@ -80,9 +87,9 @@ Agentry is an enterprise-grade predictive runtime control layer and tabular safe
 • 100% Real-World Data: Validated strictly against 1,156 genuine SWE-bench developer steps across 55 sessions from Hugging Face with zero synthetic mocks.
 • Sub-Step Early Detection: Empirical research proved Agentry intercepts runaway failures at a median of Step 5.0, eliminating 53.3% of wasted trajectory length (569 steps and 162,339 tokens saved across failing sessions).
 • 155.2x Faster & 99.998% Cheaper than Cloud LLMs: TabPFN-3.5 evaluates steps in 14.5ms and costs $21.90/year for 500,000 daily steps, compared to GPT-4o's 2,250ms and $1,368,750.00/year.
-• 4 Full Enterprise Capabilities: Shipped Human-in-the-Loop (HITL) escalation, Slack/Discord webhooks, automated post-mortem reporting (Markdown/HTML), and OpenAI reverse proxy.
+• 8 Full Enterprise Capabilities: Autonomic Trajectory Rewind, Fleet Budget Governor, Prometheus Observability, What-If Policy Simulator, Human-in-the-Loop (HITL) escalation, Slack/Discord webhooks, automated post-mortem reporting (Markdown/HTML), and OpenAI reverse proxy.
 • Model Context Protocol (MCP) Native Support: Built a fully compliant MCP Server allowing Claude Desktop and Cursor users to guard their agents with TabPFN out-of-the-box.
-• 100% Passing Test Suite: 37 comprehensive unit, integration, and adversarial chaos tests passing in CI (validating multithreaded concurrency, SSE streaming proxy, and cloud outage fallback).
+• 100% Passing Test Suite: 43 comprehensive unit, integration, and adversarial chaos tests passing in CI (validating multithreaded concurrency, SSE streaming proxy, autonomic rewind, budget governor, Prometheus endpoint, and cloud outage fallback).
 • One-Command Deployment: Complete Docker & Docker Compose configuration orchestrating Web UI, Reverse Proxy Gateway, and MCP Server.
 ```
 
@@ -102,5 +109,6 @@ Agentry is an enterprise-grade predictive runtime control layer and tabular safe
 ```text
 • Distributed Kubernetes Envoy Sidecar: Deploying Agentry as an Envoy-style proxy sidecar for multi-agent Kubernetes clusters.
 • TabPFN Fine-Tuning on 100,000+ Multimodal Traces: Expanding our telemetry database across Devin, AutoGPT, and open-source SWE-bench Docker trajectories.
-• Autonomic Patch Rerouting: Expanding TabPFN's predictive guidance into real-time syntactic patch generation to rescue trapped agents autonomously.
+• Automated Multi-Agent Co-Ordination Recovery: Extending trajectory rewind across DAG-based multi-agent swarms (CrewAI/LangGraph) with distributed rollbacks.
 ```
+
