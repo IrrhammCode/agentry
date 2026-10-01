@@ -13,7 +13,10 @@ Dokumen ini dirancang secara komprehensif agar dapat digunakan oleh:
 2. **AI Code Generation Engines** (v0.dev, Cursor IDE, Windsurf, Bolt.new, Claude 3.7 Sonnet) sebagai *mega-prompt* dengan konteks penuh arsitektur, tema visual, komponen, dan interaktivitas.
 3. **Product & SecOps Teams** sebagai standar desain antarmuka command center AI safety & fleet governance.
 
----
+> [!NOTE]
+> Untuk spesifikasi dan master prompt pembuatan **Public Landing Page & Marketing Showcase Website**, silakan merujuk pada:
+> **[`docs/LANDING_PAGE_DESIGN_PROMPT.md`](file:///C:/Users/Irham/Documents/code/tabfpn/docs/LANDING_PAGE_DESIGN_PROMPT.md)**.
+
 
 ## 🏛️ 1. Executive Vision & Atmosphere (The "Vibe")
 
