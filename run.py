@@ -1,10 +1,14 @@
 """
 Agentry main entrypoint script.
 Run with:
-    python run.py demo       # Live terminal multi-agent fleet guardrail demo
-    python run.py benchmark  # Run TabPFN benchmark vs classical ML baselines
-    python run.py audit      # Forensic audit on an agent session
-    python run.py web        # Launch Streamlit web dashboard
+    python run.py demo                  # Live terminal multi-agent fleet guardrail demo
+    python run.py benchmark             # Run TabPFN benchmark vs classical ML baselines
+    python run.py audit [session_id]    # Forensic audit on an agent session
+    python run.py report [session_id]   # Export forensic incident post-mortem (MD/HTML)
+    python run.py hitl list/resolve     # Manage Human-in-the-Loop approval queue
+    python run.py serve                 # Start REST API & OpenAI reverse proxy gateway
+    python run.py mcp                   # Launch Model Context Protocol (MCP) server
+    python run.py web                   # Launch Streamlit web command center
 """
 
 import sys

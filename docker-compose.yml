@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  agentry-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: agentry-web
+    command: ["python", "run.py", "web"]
+    ports:
+      - "8501:8501"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TABPFN_API_KEY=${TABPFN_API_KEY:-}
+      - AGENTRY_GATEWAY_URL=http://agentry-gateway:8787
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  agentry-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: agentry-gateway
+    command: ["python", "run.py", "serve", "--host", "0.0.0.0", "--port", "8787"]
+    ports:
+      - "8787:8787"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TABPFN_API_KEY=${TABPFN_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8787/v1/models"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  agentry-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: agentry-mcp
+    command: ["python", "run.py", "mcp"]
+    ports:
+      - "8788:8788"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TABPFN_API_KEY=${TABPFN_API_KEY:-}
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+    profiles:
+      - mcp
