@@ -337,10 +337,11 @@ Agentry provides a unified CLI entrypoint via `python run.py`:
 
 | Command | Usage | Description |
 | :--- | :--- | :--- |
+| **`landing`** | `python run.py landing` | Launches standalone high-converting Cyber-Sentry Showcase & Mission Control SPA (`http://localhost:3000`). |
+| **`web`** | `python run.py web` | Starts interactive Streamlit Command Center with Product Showcase on `http://localhost:8501`. |
 | **`doctor`** | `python run.py doctor` | Validates environment, dependencies, TabPFN API token, local Ollama model, and SQLite WAL database. |
 | **`e2e`** | `python run.py e2e` | Runs complete end-to-end multi-agent fleet simulation with autonomic self-healing verification. |
 | **`demo`** | `python run.py demo` | Launches interactive rich terminal simulation of 4 concurrent autonomous agents. |
-| **`web`** | `python run.py web` | Starts the Streamlit Command Center on `http://localhost:8501`. |
 | **`mcp`** | `python run.py mcp` | Starts the Model Context Protocol (MCP) server for Claude Desktop / Cursor (`stdio` or `sse`). |
 | **`proxy`** | `python run.py proxy` | Starts the Zero-Code OpenAI-Compatible Reverse Proxy Gateway on port `8787`. |
 | **`hitl`** | `python run.py hitl list` | Lists or resolves pending Human-in-the-Loop operator approval requests. |

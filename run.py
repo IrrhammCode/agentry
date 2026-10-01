@@ -13,6 +13,7 @@ Run with:
     python run.py serve                 # Start REST API, OpenAI reverse proxy & Prometheus metrics
     python run.py mcp                   # Launch Model Context Protocol (MCP) server
     python run.py web                   # Launch Streamlit web command center
+    python run.py landing               # Launch standalone Cyber-Sentry Landing Page & Mission Control
 """
 
 import sys

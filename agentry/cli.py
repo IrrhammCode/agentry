@@ -514,12 +514,63 @@ def budget_status_cli():
     console.print(Panel(content, title="[bold cyan]💰 Agentry Fleet Budget Autopilot[/]", border_style="cyan"))
 
 
+def launch_landing_cli(port: int = 3000, no_browser: bool = False):
+    """Launches standalone high-converting cyber-sentry landing page and mission control UI."""
+    import http.server
+    import socketserver
+    import webbrowser
+    import threading
+    from agentry.config import ROOT_DIR
+
+    frontend_dir = ROOT_DIR / "frontend"
+    html_file = frontend_dir / "index.html"
+    if not html_file.exists():
+        console.print(f"[red]Error: {html_file} does not exist.[/red]")
+        return
+
+    url = f"http://localhost:{port}/index.html"
+
+    class QuietHandler(http.server.SimpleHTTPRequestHandler):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, directory=str(frontend_dir), **kwargs)
+
+        def log_message(self, format, *args):
+            pass
+
+    print_banner()
+    console.print(Panel(
+        f"[bold green]Agentry Standalone Cyber-Sentry Showcase & Mission Control[/bold green]\n\n"
+        f"  URL:       [bold cyan]{url}[/bold cyan]\n"
+        f"  File:      [dim]{html_file}[/dim]\n"
+        f"  Features:  [cyan]Interactive Attack Simulator • TabPFN-3.5 Radar • HITL War Room • ROI Calc[/cyan]",
+        title="[bold cyan]Frontend Server[/bold cyan]",
+        border_style="cyan"
+    ))
+
+    try:
+        with socketserver.TCPServer(("", port), QuietHandler) as httpd:
+            if not no_browser:
+                threading.Timer(0.5, lambda: webbrowser.open(url)).start()
+            console.print("[dim]Press Ctrl+C to terminate the UI server.[/dim]")
+            httpd.serve_forever()
+    except KeyboardInterrupt:
+        console.print("\n[yellow]Frontend UI server stopped.[/yellow]")
+    except OSError:
+        console.print(f"[yellow]Port {port} busy, opening file directly in default browser:[/yellow] [cyan]{html_file}[/cyan]")
+        webbrowser.open(html_file.as_uri())
+
+
 def main():
     """Main CLI entrypoint."""
     parser = argparse.ArgumentParser(
         description="Agentry: Autonomous Tabular Guardrail & Sentry for AI Agents (TabPFN-3.5)"
     )
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
+
+    # Landing & Showcase (Modern Standalone Cyber-Sentry UI)
+    landing_parser = subparsers.add_parser("landing", help="Open standalone Cyber-Sentry Landing Page & Mission Control in browser")
+    landing_parser.add_argument("--port", type=int, default=3000, help="Port to listen on (default: 3000)")
+    landing_parser.add_argument("--no-browser", action="store_true", help="Do not automatically launch web browser")
 
     # Rewind (Self-Healing Recovery)
     rewind_parser = subparsers.add_parser("rewind", help="Diagnose and prescribe trajectory rewind & self-healing")
@@ -584,7 +635,12 @@ def main():
 
     args = parser.parse_args()
 
-    if args.command == "doctor":
+    if args.command == "landing":
+        launch_landing_cli(
+            port=getattr(args, "port", 3000),
+            no_browser=getattr(args, "no_browser", False)
+        )
+    elif args.command == "doctor":
         from agentry.doctor import run_system_doctor
         ok = run_system_doctor()
         sys.exit(0 if ok else 1)
