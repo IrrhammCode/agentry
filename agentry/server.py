@@ -53,7 +53,7 @@ class AgentryHTTPRequestHandler(BaseHTTPRequestHandler):
     """HTTP request dispatcher for Agentry guardrail daemon and OpenAI proxy."""
 
     def _send_json(self, status_code: int, data: dict, extra_headers: Optional[Dict[str, str]] = None):
-        body = json.dumps(data, indent=2).encode("utf-8")
+        body = json.dumps(data, indent=2, default=str).encode("utf-8")
         self.send_response(status_code)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
@@ -217,11 +217,14 @@ class AgentryHTTPRequestHandler(BaseHTTPRequestHandler):
         path = parsed.path.rstrip("/")
         guard = get_guard()
 
-        # Read JSON body
-        content_length = int(self.headers.get("Content-Length", 0))
+        # Read JSON body safely
+        content_length = _safe_int(self.headers.get("Content-Length", 0), default=0, min_val=0)
         post_data = self.rfile.read(content_length)
         try:
             payload = json.loads(post_data.decode("utf-8")) if post_data else {}
+            if not isinstance(payload, dict):
+                self._send_json(400, {"error": "JSON body must be an object"})
+                return
         except Exception:
             self._send_json(400, {"error": "Invalid JSON body"})
             return

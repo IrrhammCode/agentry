@@ -15,6 +15,7 @@ from sklearn.preprocessing import LabelEncoder
 
 from agentry.config import settings
 from agentry.telemetry import AgentStepTelemetry
+from agentry.utils import safe_int, safe_float, safe_str
 
 logger = logging.getLogger("agentry.engine")
 
@@ -209,23 +210,23 @@ class TabPFNGuardrailEngine:
         if not self.is_fitted:
             raise RuntimeError("TabPFNGuardrailEngine must be fitted before evaluating steps.")
 
-        # Convert step to DataFrame
+        # Convert step to DataFrame with strict NaN/Inf-immune type protection
         row_dict = {
-            "session_id": str(step.session_id or "default_session"),
-            "step_index": int(step.step_index or 0),
-            "agent_role": str(step.agent_role or "Agent"),
-            "model_name": str(step.model_name or "default-model"),
-            "tool_name": str(step.tool_name or "tool"),
-            "step_latency_ms": max(0.0, float(step.step_latency_ms or 0.0)),
-            "prompt_tokens": max(0, int(step.prompt_tokens or 0)),
-            "completion_tokens": max(0, int(step.completion_tokens or 0)),
-            "total_tokens": max(0, int(step.total_tokens or 0)),
-            "tool_call_count": max(0, int(step.tool_call_count or 0)),
-            "error_streak": max(0, int(step.error_streak or 0)),
-            "repetition_score": min(1.0, max(0.0, float(step.repetition_score or 0.0))),
-            "thought_length": max(0, int(step.thought_length or 0)),
-            "accumulated_cost_usd": max(0.0, float(step.accumulated_cost_usd or 0.0)),
-            "thought_trace": str(step.thought_trace or ""),
+            "session_id": safe_str(step.session_id, default="default_session"),
+            "step_index": safe_int(step.step_index, default=0, min_val=0),
+            "agent_role": safe_str(step.agent_role, default="Agent"),
+            "model_name": safe_str(step.model_name, default="default-model"),
+            "tool_name": safe_str(step.tool_name, default="tool"),
+            "step_latency_ms": safe_float(step.step_latency_ms, default=0.0, min_val=0.0),
+            "prompt_tokens": safe_int(step.prompt_tokens, default=0, min_val=0),
+            "completion_tokens": safe_int(step.completion_tokens, default=0, min_val=0),
+            "total_tokens": safe_int(step.total_tokens, default=0, min_val=0),
+            "tool_call_count": safe_int(step.tool_call_count, default=0, min_val=0),
+            "error_streak": safe_int(step.error_streak, default=0, min_val=0),
+            "repetition_score": safe_float(step.repetition_score, default=0.0, min_val=0.0, max_val=1.0),
+            "thought_length": safe_int(step.thought_length, default=0, min_val=0),
+            "accumulated_cost_usd": safe_float(step.accumulated_cost_usd, default=0.0, min_val=0.0),
+            "thought_trace": safe_str(step.thought_trace, default=""),
         }
         df_step = pd.DataFrame([row_dict])
         processed_step = self._extract_tabular_features(df_step, fit=False)
@@ -273,15 +274,17 @@ class TabPFNGuardrailEngine:
         max_entropy = np.log(max(2, len(classes)))
         normalized_uncertainty = round(float(np.clip(entropy / max_entropy, 0.0, 1.0)), 3)
 
-        # Regress final projected cost
-        projected_cost = round(max(max(0.0, step.accumulated_cost_usd), pred_cost), 4)
+        # Regress final projected cost safely
+        cost_so_far = row_dict["accumulated_cost_usd"]
+        sanitized_pred = safe_float(pred_cost, default=cost_so_far, min_val=0.0)
+        projected_cost = round(max(cost_so_far, sanitized_pred), 4)
 
         # Identify primary risk driver
         risk_driver = self._determine_primary_risk_driver(step, failure_prob, predicted_mode)
 
         return StepRiskAssessment(
-            session_id=step.session_id,
-            step_index=step.step_index,
+            session_id=row_dict["session_id"],
+            step_index=row_dict["step_index"],
             failure_probability=failure_prob,
             predicted_failure_mode=predicted_mode,
             mode_probabilities=mode_probs,
@@ -296,16 +299,21 @@ class TabPFNGuardrailEngine:
         if failure_prob < settings.risk_threshold_pause:
             return "Nominal operational parameters."
 
+        rep = safe_float(step.repetition_score, default=0.0)
+        err = safe_int(step.error_streak, default=0)
+        lat = safe_float(step.step_latency_ms, default=0.0)
+        cost = safe_float(step.accumulated_cost_usd, default=0.0)
+
         drivers = []
-        if step.repetition_score >= 0.70:
-            drivers.append(f"High repetition score ({step.repetition_score:.2f})")
-        if step.error_streak >= 3:
-            drivers.append(f"Unbroken error streak ({step.error_streak} consecutive errors)")
-        if step.step_latency_ms > 4000:
-            drivers.append(f"High step latency ({step.step_latency_ms:.0f}ms)")
-        if step.accumulated_cost_usd > settings.cost_threshold_warning_usd:
-            drivers.append(f"High token cost burn (${step.accumulated_cost_usd:.4f})")
-        thought_lower = str(step.thought_trace or "").lower()
+        if rep >= 0.70:
+            drivers.append(f"High repetition score ({rep:.2f})")
+        if err >= 3:
+            drivers.append(f"Unbroken error streak ({err} consecutive errors)")
+        if lat > 4000:
+            drivers.append(f"High step latency ({lat:.0f}ms)")
+        if cost > settings.cost_threshold_warning_usd:
+            drivers.append(f"High token cost burn (${cost:.4f})")
+        thought_lower = safe_str(step.thought_trace).lower()
         if "retry" in thought_lower or "again" in thought_lower:
             drivers.append("Thought trace indicates repetitive retries")
         if "not found" in thought_lower or "unrecognized" in thought_lower:

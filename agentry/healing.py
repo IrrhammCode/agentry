@@ -11,6 +11,7 @@ from dataclasses import dataclass, asdict
 from typing import List, Dict, Any, Optional
 
 from agentry.storage import AuditStorage
+from agentry.utils import safe_int, safe_float, safe_str
 
 logger = logging.getLogger("agentry.healing")
 
@@ -50,13 +51,20 @@ class TrajectoryHealer:
 
         # Traverse backwards from the step before current
         for event in reversed(session_events[:-1]):
-            action = event.get("action", "PASS")
-            risk_prob = float(event.get("failure_probability", 0.0))
+            if not isinstance(event, dict):
+                continue
+            action = safe_str(event.get("action"), default="PASS")
+            risk_prob = safe_float(event.get("failure_probability"), default=0.0)
             if action == "PASS" and risk_prob < 0.40:
-                return max(0, int(event.get("step_index", 0)))
+                return safe_int(event.get("step_index"), default=0, min_val=0)
 
         # Fallback: rollback at least 3 steps or to step 0
-        current_step = int(session_events[-1].get("step_index", len(session_events) - 1))
+        last_event = session_events[-1]
+        current_step = safe_int(
+            last_event.get("step_index") if isinstance(last_event, dict) else len(session_events) - 1,
+            default=0,
+            min_val=0
+        )
         return max(0, current_step - 3)
 
     def diagnose_and_prescribe(
@@ -74,7 +82,8 @@ class TrajectoryHealer:
         """
         store = storage or self.storage
         events = store.get_session_events(session_id)
-        target_step = self.find_inflection_point(events)
+        raw_inflection = self.find_inflection_point(events)
+        target_step = min(max(0, current_step), max(0, raw_inflection))
         pruned_count = max(1, current_step - target_step)
 
         # Token savings: ~1,800 tokens per poisoned step pruned
@@ -119,13 +128,19 @@ class TrajectoryHealer:
         if not messages:
             return []
 
+        # Defensively filter and normalize non-dict messages
+        valid_messages = [m for m in messages if isinstance(m, dict)]
+        if not valid_messages:
+            return []
+
         # Always preserve system prompt (first message if system)
-        has_system = messages[0].get("role") == "system"
-        system_msg = [messages[0]] if has_system else []
-        conversation_turns = messages[1:] if has_system else messages
+        has_system = valid_messages[0].get("role") == "system"
+        system_msg = [valid_messages[0]] if has_system else []
+        conversation_turns = valid_messages[1:] if has_system else valid_messages
 
         # Each user-assistant-tool exchange is roughly 2-3 messages
-        keep_count = max(1, target_step * 2)
+        clamped_step = max(0, target_step)
+        keep_count = max(1, clamped_step * 2)
         pruned_turns = conversation_turns[:keep_count]
 
         result = list(system_msg) + list(pruned_turns)
@@ -134,7 +149,7 @@ class TrajectoryHealer:
         if directive:
             result.append({
                 "role": "system",
-                "content": directive
+                "content": str(directive)
             })
 
         return result

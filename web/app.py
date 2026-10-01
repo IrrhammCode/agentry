@@ -912,6 +912,8 @@ elif page == "🔌 Model Context Protocol (MCP)":
     st.markdown("""
     **Exposed MCP Tools & Resources:**
     - `agentry_audit_step`: Real-time TabPFN risk classification and runaway cost estimation.
+    - `agentry_prescribe_rewind`: Autonomic trajectory rewind and context pruning prescription.
+    - `agentry_check_budget`: Fleet and session financial quota and spend velocity governor.
     - `agentry_get_fleet_status`: Enterprise fleet metrics and total cost/token savings.
     - `agentry_inspect_session_history`: Chronological audit trail for forensics.
     - `agentry_reset_session`: Resets telemetry state for an agent task.
@@ -921,6 +923,7 @@ elif page == "🔌 Model Context Protocol (MCP)":
     - `fleet://metrics`: Live fleet governance metrics resource.
     - `fleet://recent-interventions`: Recent SQLite WAL audit log resource.
     - `fleet://hitl-queue`: Real-time pending HITL queue resource.
+    - `fleet://budget`: Real-time fleet financial quota utilization resource.
     """)
 
     st.markdown("---")

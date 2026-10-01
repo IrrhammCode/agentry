@@ -21,6 +21,8 @@ from agentry.guard import AgentryGuard, SentryDecision, _safe_int, _safe_float
 from agentry.telemetry import AgentStepTelemetry
 from agentry.report import generate_incident_report, export_incident_report_to_file
 from agentry.hitl import hitl_gateway
+from agentry.healing import trajectory_healer
+from agentry.budget import budget_governor
 
 logger = logging.getLogger("agentry.mcp")
 
@@ -301,6 +303,65 @@ def resolve_hitl_approval(
     }
 
 
+@mcp.tool(
+    name="agentry_prescribe_rewind",
+    description=(
+        "Computes an autonomic self-healing RewindPrescription for a looping or stuck agent session. "
+        "Locates the divergence inflection point (t*), computes poisoned turns to prune, "
+        "and synthesizes counterfactual steering directives."
+    )
+)
+def prescribe_trajectory_rewind(
+    session_id: str,
+    current_step: int = 1,
+    failed_tool: str = "tool",
+    error_streak: int = 1,
+    reason: str = "Anomalous failure loop detected"
+) -> Dict[str, Any]:
+    """Computes trajectory rewind and recovery prescription."""
+    from dataclasses import asdict
+    guard = get_guard()
+    c_step = _safe_int(current_step, default=1, min_val=0)
+    e_streak = _safe_int(error_streak, default=1, min_val=0)
+    prescription = trajectory_healer.diagnose_and_prescribe(
+        session_id=str(session_id),
+        current_step=c_step,
+        failed_tool=str(failed_tool or "tool"),
+        error_streak=e_streak,
+        reason=str(reason or "Repetitive failure loop detected"),
+        storage=guard.storage
+    )
+    return {
+        "status": "ok",
+        "prescription": asdict(prescription)
+    }
+
+
+@mcp.tool(
+    name="agentry_check_budget",
+    description=(
+        "Checks current financial quota status across the agent fleet or for a specific session. "
+        "Returns 24h spend, utilization %, remaining budget, and autonomic action recommendation (PROCEED, WARN, THROTTLE, HALT)."
+    )
+)
+def check_fleet_and_session_budget(
+    session_id: Optional[str] = None,
+    accumulated_cost: float = 0.0
+) -> Dict[str, Any]:
+    """Queries budget governor for fleet and optional session quota."""
+    from dataclasses import asdict
+    fleet_status = budget_governor.check_fleet_budget()
+    result: Dict[str, Any] = {
+        "status": "ok",
+        "fleet": asdict(fleet_status)
+    }
+    if session_id:
+        s_cost = _safe_float(accumulated_cost, default=0.0, min_val=0.0)
+        session_status = budget_governor.check_session_budget(session_id, s_cost)
+        result["session"] = asdict(session_status)
+    return result
+
+
 # ============================================================================
 # MCP Resources
 # ============================================================================
@@ -326,6 +387,14 @@ def fleet_hitl_queue_resource() -> str:
     """Exposes all pending HITL approval requests."""
     requests = hitl_gateway.list_requests(status="PENDING")
     return json.dumps(requests, indent=2)
+
+
+@mcp.resource("fleet://budget")
+def fleet_budget_resource() -> str:
+    """Exposes real-time fleet financial budget and quota utilization."""
+    from dataclasses import asdict
+    status = budget_governor.check_fleet_budget()
+    return json.dumps(asdict(status), indent=2)
 
 
 # ============================================================================

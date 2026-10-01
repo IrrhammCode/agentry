@@ -183,7 +183,7 @@ Agentry is engineered from day one for enterprise production deployments:
 
 * **100% Real-World Data (Zero Synthetic Mocks):** Built and validated strictly on 1,156 genuine steps across 55 developer sessions from Hugging Face `nebius/SWE-agent-trajectories`.
 * **Rigorous Unseen Trajectory Split:** Fully addressed data-leakage concerns with 5-fold group-based session partitioning.
-* **Production Engineering Complete:** 43/43 passing unit, integration, and adversarial chaos tests passing in CI (100% test integrity across multithreaded concurrency, SSE streaming proxy, trajectory rewind, budget governor, and cloud outage fallback).
+* **Production Engineering Complete:** 54/54 passing unit, integration, deep resilience, and adversarial chaos tests passing in CI (100% test integrity across multithreaded concurrency, SSE streaming proxy, trajectory rewind, budget governor, zero SQLite leaks, and cloud outage fallback).
 * **Full-Stack Enterprise Governance:** Streamlit Web UI, SQLite WAL storage, HITL queue, Webhook notifications, Prometheus `/metrics`, Budget Autopilot, and OpenAI Reverse Proxy.
 * **Single-Command Multi-Service Deployment:** `docker-compose up` launches the entire fleet governance ecosystem.
 

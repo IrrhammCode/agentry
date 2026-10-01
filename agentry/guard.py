@@ -23,38 +23,13 @@ from agentry.alerts import default_notifier, WebhookNotifier
 from agentry.hitl import hitl_gateway, HITLManager
 import math
 from agentry.swe_telemetry import compute_string_overlap, is_error_output
+from agentry.utils import safe_int, safe_float, safe_str
 
 logger = logging.getLogger("agentry.guard")
 
-
-def _safe_int(val: Any, default: int = 0, min_val: Optional[int] = 0) -> int:
-    """Safely converts any input into an integer with NaN/Inf protection."""
-    try:
-        f = float(val)
-        if math.isnan(f) or math.isinf(f):
-            i = default
-        else:
-            i = int(f)
-    except (ValueError, TypeError):
-        i = default
-    if min_val is not None:
-        i = max(min_val, i)
-    return i
-
-
-def _safe_float(val: Any, default: float = 0.0, min_val: Optional[float] = 0.0, max_val: Optional[float] = None) -> float:
-    """Safely converts any input into a bounded float with NaN/Inf protection."""
-    try:
-        f = float(val)
-        if math.isnan(f) or math.isinf(f):
-            f = default
-    except (ValueError, TypeError):
-        f = default
-    if min_val is not None:
-        f = max(min_val, f)
-    if max_val is not None:
-        f = min(max_val, f)
-    return f
+# Backwards-compatible aliases
+_safe_int = safe_int
+_safe_float = safe_float
 
 
 class AgentHaltException(Exception):
@@ -368,6 +343,8 @@ class AgentryGuard:
                 logger.warning("Attempted execution on halted session: %s", session_id)
                 if self.raise_on_kill and state.last_decision:
                     raise AgentHaltException(state.last_decision)
+                if state.last_decision:
+                    return state.last_decision
 
             # Defensive normalization
             prompt_tokens = _safe_int(prompt_tokens, default=0, min_val=0)

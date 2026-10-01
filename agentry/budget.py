@@ -11,6 +11,7 @@ from typing import Dict, Any, Optional
 
 from agentry.config import settings
 from agentry.storage import AuditStorage
+from agentry.utils import safe_int, safe_float, safe_str
 
 logger = logging.getLogger("agentry.budget")
 
@@ -45,9 +46,11 @@ class FleetBudgetGovernor:
         warning_threshold_pct: float = 80.0,
         storage: Optional[AuditStorage] = None
     ):
-        self.daily_budget_usd = daily_budget_usd or float(settings.cost_threshold_kill_usd * 20.0)  # Default: $50.00
-        self.session_budget_usd = session_budget_usd or float(settings.cost_threshold_kill_usd)    # Default: $2.50
-        self.warning_threshold_pct = warning_threshold_pct
+        raw_daily = daily_budget_usd if daily_budget_usd is not None else float(settings.cost_threshold_kill_usd * 20.0)
+        raw_session = session_budget_usd if session_budget_usd is not None else float(settings.cost_threshold_kill_usd)
+        self.daily_budget_usd = max(0.01, safe_float(raw_daily, default=50.0, min_val=0.01))
+        self.session_budget_usd = max(0.01, safe_float(raw_session, default=2.50, min_val=0.01))
+        self.warning_threshold_pct = safe_float(warning_threshold_pct, default=80.0, min_val=1.0, max_val=100.0)
         self.storage = storage or AuditStorage()
 
     def check_fleet_budget(self, active_session_projected_delta: float = 0.0) -> BudgetStatus:
@@ -55,16 +58,19 @@ class FleetBudgetGovernor:
         Evaluates current fleet expenditure against daily budget quotas.
         Integrates TabPFN terminal cost projections across active sessions.
         """
-        summary = self.storage.get_fleet_summary()
-        current_spend = summary.get("total_cost_saved_usd", 0.0)  # Total spend tracked
+        delta = safe_float(active_session_projected_delta, default=0.0, min_val=0.0)
+        current_spend = 0.0
 
-        # Query actual current spend from SQLite database
+        # Query actual current spend from SQLite database (taking max cost per session)
         try:
             with self.storage._get_connection() as conn:
                 row = conn.execute("""
-                    SELECT COALESCE(SUM(projected_final_cost_usd), 0.0)
-                    FROM audit_events
-                    WHERE timestamp >= ?
+                    SELECT COALESCE(SUM(session_spend), 0.0) FROM (
+                        SELECT session_id, MAX(projected_final_cost_usd) AS session_spend
+                        FROM audit_events
+                        WHERE timestamp >= ?
+                        GROUP BY session_id
+                    )
                 """, (time.time() - 86400,)).fetchone()
                 current_spend = float(row[0]) if row else 0.0
         except Exception as e:
@@ -102,28 +108,41 @@ class FleetBudgetGovernor:
 
     def check_session_budget(self, session_id: str, accumulated_cost: float) -> BudgetStatus:
         """Evaluates an individual agent session against single-task quota."""
-        utilization = (accumulated_cost / max(0.001, self.session_budget_usd)) * 100.0
-        is_exceeded = accumulated_cost >= self.session_budget_usd
+        s_id = safe_str(session_id, default="default_session")
+        import math
+        try:
+            raw_f = float(accumulated_cost)
+            if math.isnan(raw_f):
+                cost = 0.0
+            elif math.isinf(raw_f) and raw_f > 0:
+                cost = float(self.session_budget_usd * 10.0)
+            else:
+                cost = max(0.0, raw_f)
+        except (ValueError, TypeError):
+            cost = 0.0
+
+        utilization = (cost / max(0.001, self.session_budget_usd)) * 100.0
+        is_exceeded = cost >= self.session_budget_usd
         is_warning = utilization >= self.warning_threshold_pct
 
         if is_exceeded:
             rec = "HALT"
-            reason = f"Session '{session_id}' exceeded budget cap of ${self.session_budget_usd:.2f} USD (spent ${accumulated_cost:.4f})."
+            reason = f"Session '{s_id}' exceeded budget cap of ${self.session_budget_usd:.2f} USD (spent ${cost:.4f})."
         elif is_warning:
             rec = "THROTTLE"
-            reason = f"Session '{session_id}' at {utilization:.1f}% of cost budget."
+            reason = f"Session '{s_id}' at {utilization:.1f}% of cost budget."
         else:
             rec = "PROCEED"
-            reason = f"Session cost nominal (${accumulated_cost:.4f}/${self.session_budget_usd:.2f})."
+            reason = f"Session cost nominal (${cost:.4f}/${self.session_budget_usd:.2f})."
 
         return BudgetStatus(
             is_exceeded=is_exceeded,
             is_warning=is_warning,
             daily_budget_usd=self.daily_budget_usd,
             session_budget_usd=self.session_budget_usd,
-            current_fleet_spend_usd=round(accumulated_cost, 4),
-            projected_day_end_spend_usd=round(accumulated_cost, 4),
-            remaining_daily_budget_usd=round(max(0.0, self.session_budget_usd - accumulated_cost), 4),
+            current_fleet_spend_usd=round(cost, 4),
+            projected_day_end_spend_usd=round(cost, 4),
+            remaining_daily_budget_usd=round(max(0.0, self.session_budget_usd - cost), 4),
             utilization_pct=round(utilization, 1),
             action_recommendation=rec,
             reason=reason
