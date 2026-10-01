@@ -6,6 +6,7 @@ for AI safety compliance, AgentOps post-mortems, and engineering analysis.
 
 import time
 import json
+import html
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 
@@ -178,7 +179,12 @@ def _render_html_report(
     sentry_provider: str
 ) -> str:
     timestamp_str = time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime(last_event.get("timestamp", time.time())))
-    
+    clean_session = html.escape(str(session_id))
+    clean_status = html.escape(str(status))
+    clean_reason = html.escape(str(primary_reason))
+    clean_directive = html.escape(str(reroute_directive))
+    clean_provider = html.escape(str(sentry_provider))
+
     rows_html = ""
     for e in events:
         badge_class = "badge-pass"
@@ -189,15 +195,17 @@ def _render_html_report(
         elif e["action"] == "PAUSE":
             badge_class = "badge-pause"
 
+        esc_mode = html.escape(str(e.get("predicted_failure_mode", "")))
+        esc_reason = html.escape(str(e.get("reason", "")))
         rows_html += f"""
         <tr>
             <td style="text-align:center;">{e['step_index']}</td>
             <td style="text-align:center;"><span class="badge {badge_class}">{e['action']}</span></td>
             <td style="text-align:center;">{e['risk_level']}</td>
             <td style="text-align:center;">{e['failure_probability']*100:.1f}%</td>
-            <td style="text-align:center;"><code>{e['predicted_failure_mode']}</code></td>
+            <td style="text-align:center;"><code>{esc_mode}</code></td>
             <td style="text-align:right;">${e['projected_final_cost_usd']:.4f}</td>
-            <td>{e['reason']}</td>
+            <td>{esc_reason}</td>
         </tr>
         """
 
@@ -205,7 +213,7 @@ def _render_html_report(
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Agentry Post-Mortem Report: {session_id}</title>
+    <title>Agentry Post-Mortem Report: {clean_session}</title>
     <style>
         body {{
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -307,8 +315,8 @@ def _render_html_report(
 <body>
     <div class="container">
         <h1>🛡️ Agentry Forensic Incident Report</h1>
-        <div class="status-badge">{status}</div>
-        <p><strong>Incident Reference:</strong> <code>INC-{session_id}</code> | <strong>Timestamp:</strong> {timestamp_str} | <strong>Engine:</strong> {sentry_provider}</p>
+        <div class="status-badge">{clean_status}</div>
+        <p><strong>Incident Reference:</strong> <code>INC-{clean_session}</code> | <strong>Timestamp:</strong> {timestamp_str} | <strong>Engine:</strong> {clean_provider}</p>
 
         <div class="kpi-grid">
             <div class="kpi-card">
@@ -331,11 +339,11 @@ def _render_html_report(
 
         <div class="alert-box">
             <h3 style="margin-top:0; color:#F8FAFC;">Forensic Summary</h3>
-            <p style="margin-bottom:0;">{primary_reason}</p>
+            <p style="margin-bottom:0;">{clean_reason}</p>
         </div>
 
         <h3>Steering Directive & Recommendations</h3>
-        <p><strong>Injected Steering Directive:</strong> <code>{reroute_directive}</code></p>
+        <p><strong>Injected Steering Directive:</strong> <code>{clean_directive}</code></p>
 
         <h3>Chronological Step Audit Trail</h3>
         <table>

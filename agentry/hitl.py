@@ -45,9 +45,22 @@ class HITLManager:
         self._events: Dict[str, threading.Event] = {}
         self._lock = threading.RLock()
 
+    def _prune_old_requests(self):
+        """Prunes resolved requests older than 24 hours if queue size exceeds 1,000."""
+        if len(self._requests) > 1000:
+            cutoff = time.time() - 86400
+            stale_keys = [
+                k for k, v in self._requests.items()
+                if v.status != "PENDING" and (v.resolved_at or v.created_at) < cutoff
+            ]
+            for k in stale_keys:
+                self._requests.pop(k, None)
+                self._events.pop(k, None)
+
     def create_escalation(self, decision: SentryDecision, tool_name: str = "tool") -> HITLRequest:
         """Enqueues an agent step for human review and creates a synchronization event."""
         with self._lock:
+            self._prune_old_requests()
             req_id = f"hitl_{uuid.uuid4().hex[:8]}"
             req = HITLRequest(
                 request_id=req_id,

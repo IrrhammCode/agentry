@@ -99,8 +99,11 @@ def parse_swe_trajectory_session(row: Dict[str, Any], session_idx: int = 0) -> L
     i = 0
     while i < len(turns):
         turn = turns[i]
+        if not isinstance(turn, dict):
+            i += 1
+            continue
         role = turn.get("role", "")
-        text = turn.get("text") or ""
+        text = str(turn.get("text") or "")
 
         # Assistant step represents agent decision / thought / tool
         if role == "ai" or role == "assistant":
@@ -118,7 +121,7 @@ def parse_swe_trajectory_session(row: Dict[str, Any], session_idx: int = 0) -> L
             has_error = False
             if i + 1 < len(turns):
                 next_turn = turns[i + 1]
-                next_text = next_turn.get("text") or ""
+                next_text = str(next_turn.get("text") or "") if isinstance(next_turn, dict) else ""
                 if is_error_output(next_text):
                     has_error = True
                     error_streak += 1

@@ -9,7 +9,7 @@ import time
 import json
 import logging
 import threading
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 from typing import Optional, Dict, Any
 import httpx
 
@@ -32,7 +32,7 @@ class WebhookAlertPayload:
     reroute_instruction: Optional[str]
     tokens_saved: int
     cost_saved_usd: float
-    timestamp: float = time.time()
+    timestamp: float = field(default_factory=time.time)
 
 
 class WebhookNotifier:

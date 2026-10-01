@@ -7,6 +7,7 @@ live guardrail monitoring, forensic audits, and benchmarks.
 import sys
 import time
 import argparse
+import subprocess
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 from rich.console import Console
@@ -448,6 +449,7 @@ def hitl_resolve_cli(request_id: str, resolution: str, comment: str = "", direct
 def rewind_session_cli(session_id: str):
     """Diagnoses an agent trajectory and outputs an Autonomic Self-Healing Rewind Prescription."""
     print_banner()
+    import pandas as pd
     from agentry.healing import trajectory_healer
     from agentry.storage import AuditStorage
 

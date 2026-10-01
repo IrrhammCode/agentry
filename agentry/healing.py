@@ -7,7 +7,7 @@ TabPFN-guided counterfactual steering directives to achieve task completion.
 
 import time
 import logging
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 from typing import List, Dict, Any, Optional
 
 from agentry.storage import AuditStorage
@@ -28,7 +28,7 @@ class RewindPrescription:
     counterfactual_directive: str
     estimated_tokens_saved: int
     estimated_cost_saved_usd: float
-    created_at: float = time.time()
+    created_at: float = field(default_factory=time.time)
 
 
 class TrajectoryHealer:
