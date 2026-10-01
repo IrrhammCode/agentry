@@ -514,36 +514,55 @@ def budget_status_cli():
     console.print(Panel(content, title="[bold cyan]💰 Agentry Fleet Budget Autopilot[/]", border_style="cyan"))
 
 
-def launch_landing_cli(port: int = 3000, no_browser: bool = False):
-    """Launches standalone high-converting cyber-sentry landing page and mission control UI."""
+def launch_landing_cli(port: int = 3000, no_browser: bool = False, dev: bool = False):
+    """Launches React + Vite Cyber-Sentry landing page and mission control UI."""
     import http.server
     import socketserver
     import webbrowser
     import threading
+    import subprocess
     from agentry.config import ROOT_DIR
 
     frontend_dir = ROOT_DIR / "frontend"
-    html_file = frontend_dir / "index.html"
-    if not html_file.exists():
-        console.print(f"[red]Error: {html_file} does not exist.[/red]")
+    dist_dir = frontend_dir / "dist"
+
+    print_banner()
+
+    if dev:
+        console.print(Panel(
+            f"[bold green]Starting React + Vite HMR Dev Server...[/bold green]\n\n"
+            f"  Directory: [dim]{frontend_dir}[/dim]\n"
+            f"  Command:   [bold cyan]npm run dev[/bold cyan]",
+            title="[bold cyan]Vite Dev Server[/bold cyan]",
+            border_style="cyan"
+        ))
+        npm_cmd = "npm.cmd" if sys.platform == "win32" else "npm"
+        subprocess.run([npm_cmd, "run", "dev"], cwd=str(frontend_dir))
         return
 
-    url = f"http://localhost:{port}/index.html"
+    # Check if dist exists, if not build it with Vite
+    if not dist_dir.exists():
+        console.print("[yellow]Building React production bundle with Vite...[/yellow]")
+        npm_cmd = "npm.cmd" if sys.platform == "win32" else "npm"
+        subprocess.run([npm_cmd, "run", "build"], cwd=str(frontend_dir))
+
+    serve_dir = dist_dir if dist_dir.exists() else frontend_dir
+    url = f"http://localhost:{port}/"
 
     class QuietHandler(http.server.SimpleHTTPRequestHandler):
         def __init__(self, *args, **kwargs):
-            super().__init__(*args, directory=str(frontend_dir), **kwargs)
+            super().__init__(*args, directory=str(serve_dir), **kwargs)
 
         def log_message(self, format, *args):
             pass
 
-    print_banner()
     console.print(Panel(
-        f"[bold green]Agentry Standalone Cyber-Sentry Showcase & Mission Control[/bold green]\n\n"
+        f"[bold green]Agentry React + Vite Cyber-Sentry Showcase & Mission Control[/bold green]\n\n"
         f"  URL:       [bold cyan]{url}[/bold cyan]\n"
-        f"  File:      [dim]{html_file}[/dim]\n"
+        f"  Bundle:    [dim]{serve_dir}[/dim]\n"
+        f"  Stack:     [cyan]React 18 • Vite 6 • TypeScript • Tailwind CSS • Lucide[/cyan]\n"
         f"  Features:  [cyan]Interactive Attack Simulator • TabPFN-3.5 Radar • HITL War Room • ROI Calc[/cyan]",
-        title="[bold cyan]Frontend Server[/bold cyan]",
+        title="[bold cyan]React + Vite Frontend Server[/bold cyan]",
         border_style="cyan"
     ))
 
@@ -556,8 +575,8 @@ def launch_landing_cli(port: int = 3000, no_browser: bool = False):
     except KeyboardInterrupt:
         console.print("\n[yellow]Frontend UI server stopped.[/yellow]")
     except OSError:
-        console.print(f"[yellow]Port {port} busy, opening file directly in default browser:[/yellow] [cyan]{html_file}[/cyan]")
-        webbrowser.open(html_file.as_uri())
+        console.print(f"[yellow]Port {port} busy, opening in browser:[/yellow] [cyan]{url}[/cyan]")
+        webbrowser.open(url)
 
 
 def main():
@@ -568,9 +587,10 @@ def main():
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
     # Landing & Showcase (Modern Standalone Cyber-Sentry UI)
-    landing_parser = subparsers.add_parser("landing", help="Open standalone Cyber-Sentry Landing Page & Mission Control in browser")
+    landing_parser = subparsers.add_parser("landing", help="Open React + Vite Cyber-Sentry Landing Page & Mission Control in browser")
     landing_parser.add_argument("--port", type=int, default=3000, help="Port to listen on (default: 3000)")
     landing_parser.add_argument("--no-browser", action="store_true", help="Do not automatically launch web browser")
+    landing_parser.add_argument("--dev", action="store_true", help="Launch Vite HMR dev server instead of production bundle")
 
     # Rewind (Self-Healing Recovery)
     rewind_parser = subparsers.add_parser("rewind", help="Diagnose and prescribe trajectory rewind & self-healing")
@@ -638,7 +658,8 @@ def main():
     if args.command == "landing":
         launch_landing_cli(
             port=getattr(args, "port", 3000),
-            no_browser=getattr(args, "no_browser", False)
+            no_browser=getattr(args, "no_browser", False),
+            dev=getattr(args, "dev", False)
         )
     elif args.command == "doctor":
         from agentry.doctor import run_system_doctor

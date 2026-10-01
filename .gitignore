@@ -58,3 +58,8 @@ data/reports/*.md
 data/reports/*.html
 data/snapshots/
 data/*.jsonl
+
+# Node.js & Frontend
+node_modules/
+frontend/node_modules/
+frontend/dist/

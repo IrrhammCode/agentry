@@ -1,0 +1,127 @@
+import React from 'react';
+import { ShieldCheck, Globe, Activity, ShieldAlert, Wallet, Terminal } from 'lucide-react';
+
+interface NavbarProps {
+  currentView: 'showcase' | 'console' | 'defense';
+  onViewChange: (view: 'showcase' | 'console' | 'defense') => void;
+}
+
+export const Navbar: React.FC<NavbarProps> = ({ currentView, onViewChange }) => {
+  return (
+    <header className="sticky top-0 z-50 w-full glass-card border-b border-white/10 px-4 lg:px-8 py-3 transition-all duration-300">
+      <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+        
+        {/* Brand & View Switcher */}
+        <div className="flex items-center gap-6">
+          <button 
+            onClick={() => onViewChange('showcase')}
+            className="flex items-center gap-2.5 group text-left"
+          >
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-sentry-cyan via-emerald-500 to-sentry-emerald p-0.5 glow-cyan transition-transform group-hover:scale-105">
+              <div className="w-full h-full bg-void rounded-[10px] flex items-center justify-center">
+                <ShieldCheck className="w-5 h-5 text-sentry-cyan" />
+              </div>
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="font-display font-bold text-xl tracking-tight text-white">Agentry</span>
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-sentry-emerald font-semibold border border-emerald-500/30">
+                  v0.1.0
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-400 font-mono hidden sm:block">TabPFN-3.5 Autonomous Sentry</p>
+            </div>
+          </button>
+
+          {/* Primary View Toggle Navigation */}
+          <nav className="hidden md:flex items-center p-1 bg-surface-1/80 rounded-xl border border-white/10">
+            <button 
+              onClick={() => onViewChange('showcase')}
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                currentView === 'showcase'
+                  ? 'text-white bg-surface-2 border border-white/10'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Globe className="w-3.5 h-3.5 text-sentry-cyan" />
+              <span>Public Showcase</span>
+            </button>
+
+            <button 
+              onClick={() => onViewChange('console')}
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                currentView === 'console'
+                  ? 'text-white bg-surface-2 border border-white/10'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Activity className="w-3.5 h-3.5 text-sentry-emerald" />
+              <span>Mission Control</span>
+              <span className="w-2 h-2 rounded-full bg-sentry-emerald animate-pulse"></span>
+            </button>
+
+            <button 
+              onClick={() => onViewChange('defense')}
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                currentView === 'defense'
+                  ? 'text-white bg-surface-2 border border-white/10'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <ShieldAlert className="w-3.5 h-3.5 text-sentry-red" />
+              <span>Active Defense</span>
+            </button>
+          </nav>
+        </div>
+
+        {/* Live Engine Telemetry & Actions */}
+        <div className="flex items-center gap-3">
+          {/* Engine Status Badge */}
+          <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-1/90 border border-white/10 font-mono text-xs">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sentry-emerald opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-sentry-emerald"></span>
+            </span>
+            <span className="text-slate-300">TabPFN-3.5:</span>
+            <span className="text-sentry-emerald font-bold">14.8 ms</span>
+            <span className="text-slate-500">• 100% Local</span>
+          </div>
+
+          {/* 24h Spend Pill */}
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-1/90 border border-white/10 font-mono text-xs">
+            <Wallet className="w-3.5 h-3.5 text-sentry-cyan" />
+            <span className="text-slate-400">24h Spend:</span>
+            <span className="text-white font-bold">$4.12</span>
+            <span className="text-slate-500">/ $25</span>
+          </div>
+
+          {/* GitHub Repo Link */}
+          <a 
+            href="https://github.com/IrrhammCode/agentry" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-2 hover:bg-surface-3 border border-white/10 text-xs font-medium text-slate-200 transition-colors"
+          >
+            <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+              <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+            </svg>
+            <span>Star</span>
+            <span className="px-1.5 py-0.2 rounded bg-black/40 text-[10px] text-sentry-cyan font-mono border border-cyan-500/20">
+              79 Pass
+            </span>
+          </a>
+
+          {/* Primary View Switcher Button */}
+          <button 
+            onClick={() => onViewChange(currentView === 'showcase' ? 'console' : 'showcase')}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-sentry-cyan to-sentry-emerald text-void font-bold text-xs glow-cyan hover:scale-[1.02] active:scale-[0.98] transition-all"
+          >
+            <Terminal className="w-4 h-4" />
+            <span>{currentView === 'showcase' ? 'Launch Console' : 'Back to Showcase'}</span>
+          </button>
+        </div>
+
+      </div>
+    </header>
+  );
+};
