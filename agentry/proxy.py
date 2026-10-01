@@ -82,6 +82,37 @@ class OpenAIProxyHandler:
                 last_user_msg = str(m.get("content") or "")
                 break
 
+        # 1. Pre-execution Blast-Radius Interception on inbound command prompts
+        blast_inbound = blast_radius_evaluator.evaluate("bash", last_user_msg, session_id=session_id)
+        if blast_inbound.is_critical:
+            state.is_halted = True
+            logger.critical("Proxy intercepted CRITICAL blast radius in prompt for session '%s': %s", session_id, blast_inbound.reason)
+            return 403, {
+                "error": {
+                    "message": f"AGENTRY SENTRY CIRCUIT BREAKER: Blocked catastrophic command: {blast_inbound.reason}",
+                    "type": "circuit_breaker_blast_radius",
+                    "code": "BLAST_RADIUS_VIOLATION",
+                    "blast_radius_score": blast_inbound.score,
+                    "session_id": session_id
+                }
+            }, {"X-Agentry-Action": "KILL"}
+
+        # 2. In-flight DLP Secret Masking before external transmission
+        sanitized_messages = []
+        for m in messages:
+            content = m.get("content")
+            if isinstance(content, str):
+                redacted, _ = secret_redactor.redact_secrets(content)
+                sanitized_messages.append({**m, "content": redacted})
+            else:
+                sanitized_messages.append(m)
+        request_body["messages"] = sanitized_messages
+
+        # 3. Model compatibility fallback
+        req_model = request_body.get("model", "")
+        if not req_model or req_model in ("gpt-4", "gpt-4o", "gpt-3.5-turbo", "llama-3.3-70b-versatile"):
+            request_body["model"] = settings.groq_model
+
         auth_header = self._resolve_auth_header(client_headers)
         upstream_target = f"{self.upstream_url}/chat/completions"
         headers_to_forward = {

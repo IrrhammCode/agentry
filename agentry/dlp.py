@@ -110,6 +110,9 @@ class SecretRedactionEngine:
 
         return RedactionResult(sanitized, total_redacted, detected)
 
+    # Alias for API ergonomics
+    redact_secrets = redact
+
 
 
 # Global singleton instance

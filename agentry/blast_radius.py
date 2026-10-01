@@ -33,6 +33,10 @@ class BlastRadiusAssessment:
         return self.category
 
     @property
+    def reason(self) -> str:
+        return self.violation_reason or ""
+
+    @property
     def remediation(self) -> str:
         return self.violation_reason or "No remediation required."
 

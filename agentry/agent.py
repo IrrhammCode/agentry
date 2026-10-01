@@ -195,6 +195,10 @@ class AgentrySentry:
         """
         provider_pref = settings.sentry_provider
 
+        # Fast-path nominal steps: no external LLM query needed for safe/nominal executions
+        if action == "PASS" and assessment.failure_probability < 0.5:
+            return self._rule_based_sentry_brain(step, assessment, action)
+
         # 1. Groq Ultra-Fast Cloud Engine (with multi-key rotation)
         if provider_pref in ("groq", "auto") and self.groq_rotator.keys:
             groq_result = self._query_groq(step, assessment, action)
@@ -220,20 +224,25 @@ class AgentrySentry:
         if not self.groq_rotator.keys:
             return None
 
+        rep_val = round(step.repetition_score, 2)
+        cost_val = round(step.accumulated_cost_usd, 4)
+        prob_val = round(assessment.failure_probability * 100, 1)
+        proj_val = round(assessment.projected_final_cost_usd, 4)
+
         prompt = f"""You are Agentry, an autonomous AI Sentry safeguarding an agent fleet.
 A monitored agent '{step.agent_role}' running '{step.model_name}' produced telemetry:
 - Step: {step.step_index}
 - Tool: {step.tool_name}
 - Error Streak: {step.error_streak}
-- Repetition Score: {step.repetition_score:.2f}
-- Accumulated Cost: ${step.accumulated_cost_usd:.4f}
+- Repetition Score: {rep_val}
+- Accumulated Cost: ${cost_val}
 - Thought: "{step.thought_trace}"
 
 TabPFN-3.5 Tabular Assessment:
-- Failure Risk Probability: {assessment.failure_probability:.1%}
+- Failure Risk Probability: {prob_val}%
 - Failure Mode: {assessment.predicted_failure_mode}
 - Driver: {assessment.primary_risk_driver}
-- Projected Cost: ${assessment.projected_final_cost_usd:.4f}
+- Projected Cost: ${proj_val}
 
 Recommended Action: {action}
 
@@ -287,22 +296,26 @@ Respond strictly in JSON with two keys:
         assessment: StepRiskAssessment,
         action: str
     ) -> Optional[Tuple[str, Optional[str]]]:
-        """Tries to query local Ollama LLM endpoint with a short timeout."""
+        rep_val = round(step.repetition_score, 2)
+        cost_val = round(step.accumulated_cost_usd, 4)
+        prob_val = round(assessment.failure_probability * 100, 1)
+        proj_val = round(assessment.projected_final_cost_usd, 4)
+
         try:
             prompt = f"""You are Agentry, an autonomous AI Sentry safeguarding an agent fleet.
 A monitored agent '{step.agent_role}' running '{step.model_name}' produced telemetry:
 - Step: {step.step_index}
 - Tool: {step.tool_name}
 - Error Streak: {step.error_streak}
-- Repetition Score: {step.repetition_score:.2f}
-- Accumulated Cost: ${step.accumulated_cost_usd:.4f}
+- Repetition Score: {rep_val}
+- Accumulated Cost: ${cost_val}
 - Thought: "{step.thought_trace}"
 
 TabPFN-3.5 Tabular Assessment:
-- Failure Risk Probability: {assessment.failure_probability:.1%}
+- Failure Risk Probability: {prob_val}%
 - Failure Mode: {assessment.predicted_failure_mode}
 - Driver: {assessment.primary_risk_driver}
-- Projected Cost: ${assessment.projected_final_cost_usd:.4f}
+- Projected Cost: ${proj_val}
 
 Recommended Action: {action}
 
