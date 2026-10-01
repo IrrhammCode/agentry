@@ -124,6 +124,32 @@ class HITLManager:
                 event.set()
 
             logger.info("Resolved HITL request '%s' with outcome: %s", request_id, req.status)
+
+            # Record human-verified incident into Active In-Context Memory for TabPFN adaptation
+            try:
+                from agentry.active_memory import active_exemplar_memory, VerifiedIncidentExemplar
+                is_fail = 1 if req.status in ("REROUTED", "REJECTED_ABORT") else 0
+                active_exemplar_memory.record_exemplar(VerifiedIncidentExemplar(
+                    session_id=req.session_id,
+                    step_index=req.step_index,
+                    tool_name=req.tool_name,
+                    step_latency_ms=850.0,
+                    prompt_tokens=1500,
+                    completion_tokens=250,
+                    total_tokens=1750,
+                    tool_call_count=req.step_index + 1,
+                    error_streak=2 if is_fail else 0,
+                    repetition_score=0.75 if is_fail else 0.1,
+                    thought_length=100,
+                    accumulated_cost_usd=0.015,
+                    failure_status=req.predicted_failure_mode if is_fail else "NORMAL",
+                    is_failure=is_fail,
+                    resolution_source=f"HITL_{req.status}",
+                    timestamp=time.time()
+                ))
+            except Exception as e:
+                logger.debug("Non-fatal: failed to buffer active exemplar: %s", e)
+
             return req
 
     def wait_for_resolution(self, request_id: str, timeout_s: float = 30.0) -> HITLRequest:

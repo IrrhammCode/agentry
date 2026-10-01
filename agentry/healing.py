@@ -12,6 +12,7 @@ from typing import List, Dict, Any, Optional
 
 from agentry.storage import AuditStorage
 from agentry.utils import safe_int, safe_float, safe_str
+from agentry.checkpoint import state_checkpointer, StateCheckpointer
 
 logger = logging.getLogger("agentry.healing")
 
@@ -29,6 +30,8 @@ class RewindPrescription:
     estimated_tokens_saved: int
     estimated_cost_saved_usd: float
     created_at: float = field(default_factory=time.time)
+    filesystem_reverted_count: int = 0
+    reverted_files: List[str] = field(default_factory=list)
 
 
 class TrajectoryHealer:
@@ -37,8 +40,13 @@ class TrajectoryHealer:
     pruning recipes for autonomous agent recovery.
     """
 
-    def __init__(self, storage: Optional[AuditStorage] = None):
+    def __init__(
+        self,
+        storage: Optional[AuditStorage] = None,
+        checkpointer: Optional[StateCheckpointer] = None
+    ):
         self.storage = storage or AuditStorage()
+        self.checkpointer = checkpointer or state_checkpointer
 
     def find_inflection_point(self, session_events: List[Dict[str, Any]]) -> int:
         """
@@ -74,11 +82,13 @@ class TrajectoryHealer:
         failed_tool: str = "tool",
         error_streak: int = 1,
         reason: str = "Repetitive failure loop detected",
-        storage: Optional[AuditStorage] = None
+        storage: Optional[AuditStorage] = None,
+        rollback_filesystem: bool = True
     ) -> RewindPrescription:
         """
         Diagnoses an agent trajectory failure and synthesizes an actionable
-        RewindPrescription with counterfactual steering directives.
+        RewindPrescription with counterfactual steering directives and physical
+        filesystem rollback.
         """
         store = storage or self.storage
         events = store.get_session_events(session_id)
@@ -89,6 +99,17 @@ class TrajectoryHealer:
         # Token savings: ~1,800 tokens per poisoned step pruned
         tokens_saved = pruned_count * 1800
         cost_saved = round((tokens_saved / 1000.0) * 0.002, 4)
+
+        # Revert physical filesystem mutations if any file modifications occurred
+        reverted_count = 0
+        reverted_files = []
+        if rollback_filesystem and self.checkpointer:
+            try:
+                fs_res = self.checkpointer.rollback_filesystem(session_id=session_id, target_step=target_step)
+                reverted_count = fs_res.get("files_reverted", 0)
+                reverted_files = fs_res.get("reverted_paths", [])
+            except Exception as exc:
+                logger.warning("Filesystem rollback error during healing: %s", exc)
 
         directive = (
             f"SYSTEM RECOVERY DIRECTIVE: Autonomic self-healing engaged. "
@@ -107,11 +128,13 @@ class TrajectoryHealer:
             failed_tool=failed_tool,
             counterfactual_directive=directive,
             estimated_tokens_saved=tokens_saved,
-            estimated_cost_saved_usd=cost_saved
+            estimated_cost_saved_usd=cost_saved,
+            filesystem_reverted_count=reverted_count,
+            reverted_files=reverted_files
         )
         logger.info(
-            "Synthesized RewindPrescription for '%s': step %d -> %d (pruned %d steps, saved %d tokens)",
-            session_id, current_step, target_step, pruned_count, tokens_saved
+            "Synthesized RewindPrescription for '%s': step %d -> %d (pruned %d steps, saved %d tokens, reverted %d files)",
+            session_id, current_step, target_step, pruned_count, tokens_saved, reverted_count
         )
         return prescription
 

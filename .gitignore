@@ -53,6 +53,8 @@ Thumbs.db
 *.sqlite
 data/*.db
 
-# Generated incident reports
+# Generated incident reports & snapshots
 data/reports/*.md
 data/reports/*.html
+data/snapshots/
+data/*.jsonl

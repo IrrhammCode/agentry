@@ -16,7 +16,7 @@ from typing import Dict, Any, List, Optional, Callable, Union
 
 from agentry.config import ROOT_DIR, settings
 from agentry.telemetry import AgentStepTelemetry, load_telemetry_data
-from agentry.engine import TabPFNGuardrailEngine
+from agentry.engine import TabPFNGuardrailEngine, StepRiskAssessment
 from agentry.agent import AgentrySentry, SentryDecision
 from agentry.storage import AuditStorage
 from agentry.alerts import default_notifier, WebhookNotifier
@@ -251,6 +251,50 @@ class AgentryGuard:
                     input_snippet = str(args) if args else str(kwargs)
                     thought = thought_getter(*args, **kwargs) if thought_getter else ""
 
+                    # Pre-execution Blast Radius Inspection (halt before destructive mutation)
+                    from agentry.blast_radius import blast_radius_evaluator
+                    blast_eval = blast_radius_evaluator.evaluate(resolved_tool, input_snippet)
+                    if blast_eval.is_blocked:
+                        state = self.get_or_create_session(resolved_session_id)
+                        state.is_halted = True
+                        halt_dec = SentryDecision(
+                            session_id=resolved_session_id,
+                            step_index=state.step_index,
+                            action="KILL",
+                            risk_level="CRITICAL",
+                            confidence=1.0,
+                            reason=blast_eval.violation_reason or "Blocked destructive blast-radius action",
+                            reroute_instruction="DO NOT execute destructive commands.",
+                            estimated_tokens_saved=18000,
+                            estimated_cost_saved_usd=0.036,
+                            sentry_provider="blast-radius-evaluator",
+                            tabpfn_assessment=StepRiskAssessment(
+                                session_id=resolved_session_id,
+                                step_index=state.step_index,
+                                failure_probability=1.0,
+                                predicted_failure_mode="COST_RUNAWAY",
+                                mode_probabilities={"COST_RUNAWAY": 1.0},
+                                uncertainty_score=0.0,
+                                projected_final_cost_usd=0.50,
+                                primary_risk_driver="blast_radius",
+                                is_cloud_tabpfn=False
+                            )
+                        )
+                        state.last_decision = halt_dec
+                        raise AgentHaltException(halt_dec)
+
+                    # Pre-edit file snapshotting
+                    from agentry.checkpoint import state_checkpointer
+                    state = self.get_or_create_session(resolved_session_id)
+                    if resolved_tool.lower() in ("edit_file", "write_file", "replace_file_content"):
+                        for arg in list(args) + list(kwargs.values()):
+                            if isinstance(arg, (str, Path)) and ("." in Path(str(arg)).name):
+                                try:
+                                    state_checkpointer.capture_file_before_edit(resolved_session_id, state.step_index, arg)
+                                except Exception:
+                                    pass
+                                break
+
                     t0 = time.time()
                     output_str = ""
                     try:
@@ -290,6 +334,50 @@ class AgentryGuard:
                     resolved_tool = tool_name or func.__name__
                     input_snippet = str(args) if args else str(kwargs)
                     thought = thought_getter(*args, **kwargs) if thought_getter else ""
+
+                    # Pre-execution Blast Radius Inspection (halt before destructive mutation)
+                    from agentry.blast_radius import blast_radius_evaluator
+                    blast_eval = blast_radius_evaluator.evaluate(resolved_tool, input_snippet)
+                    if blast_eval.is_blocked:
+                        state = self.get_or_create_session(resolved_session_id)
+                        state.is_halted = True
+                        halt_dec = SentryDecision(
+                            session_id=resolved_session_id,
+                            step_index=state.step_index,
+                            action="KILL",
+                            risk_level="CRITICAL",
+                            confidence=1.0,
+                            reason=blast_eval.violation_reason or "Blocked destructive blast-radius action",
+                            reroute_instruction="DO NOT execute destructive commands.",
+                            estimated_tokens_saved=18000,
+                            estimated_cost_saved_usd=0.036,
+                            sentry_provider="blast-radius-evaluator",
+                            tabpfn_assessment=StepRiskAssessment(
+                                session_id=resolved_session_id,
+                                step_index=state.step_index,
+                                failure_probability=1.0,
+                                predicted_failure_mode="COST_RUNAWAY",
+                                mode_probabilities={"COST_RUNAWAY": 1.0},
+                                uncertainty_score=0.0,
+                                projected_final_cost_usd=0.50,
+                                primary_risk_driver="blast_radius",
+                                is_cloud_tabpfn=False
+                            )
+                        )
+                        state.last_decision = halt_dec
+                        raise AgentHaltException(halt_dec)
+
+                    # Pre-edit file snapshotting
+                    from agentry.checkpoint import state_checkpointer
+                    state = self.get_or_create_session(resolved_session_id)
+                    if resolved_tool.lower() in ("edit_file", "write_file", "replace_file_content"):
+                        for arg in list(args) + list(kwargs.values()):
+                            if isinstance(arg, (str, Path)) and ("." in Path(str(arg)).name):
+                                try:
+                                    state_checkpointer.capture_file_before_edit(resolved_session_id, state.step_index, arg)
+                                except Exception:
+                                    pass
+                                break
 
                     t0 = time.time()
                     output_str = ""
@@ -347,12 +435,13 @@ class AgentryGuard:
                 if state.last_decision:
                     return state.last_decision
 
-            # Defensive normalization
+            # Defensive normalization & in-flight secret redaction (DLP)
+            from agentry.dlp import secret_redactor
+            input_text, _ = secret_redactor.redact(str(input_text or ""))
+            output_text, _ = secret_redactor.redact(str(output_text or ""))
+            thought_trace, _ = secret_redactor.redact(str(thought_trace or ""))
             prompt_tokens = _safe_int(prompt_tokens, default=0, min_val=0)
             completion_tokens = _safe_int(completion_tokens, default=0, min_val=0)
-            input_text = str(input_text or "")
-            output_text = str(output_text or "")
-            thought_trace = str(thought_trace or "")
             tool_name = str(tool_name or "tool")
 
             # 1. Update token metrics
@@ -405,8 +494,42 @@ class AgentryGuard:
                 remaining_cost_usd=0.0
             )
 
-            # 6. Audit via Sentry & TabPFN
-            decision = self.sentry.audit_step(telemetry)
+            # 6. Audit via Sentry & TabPFN + Blast Radius Assessment
+            from agentry.blast_radius import blast_radius_evaluator
+            blast_eval = blast_radius_evaluator.evaluate(tool_name, input_text)
+
+            if blast_eval.is_blocked:
+                # Immediate CRITICAL blast radius KILL
+                decision = SentryDecision(
+                    session_id=str(session_id),
+                    step_index=state.step_index,
+                    action="KILL",
+                    risk_level="CRITICAL",
+                    confidence=1.0,
+                    reason=blast_eval.violation_reason or "Blocked destructive blast-radius action",
+                    reroute_instruction="DO NOT execute destructive commands.",
+                    estimated_tokens_saved=18000,
+                    estimated_cost_saved_usd=0.036,
+                    sentry_provider="blast-radius-evaluator",
+                    tabpfn_assessment=StepRiskAssessment(
+                        session_id=str(session_id),
+                        step_index=state.step_index,
+                        failure_probability=1.0,
+                        predicted_failure_mode="COST_RUNAWAY",
+                        mode_probabilities={"COST_RUNAWAY": 1.0},
+                        uncertainty_score=0.0,
+                        projected_final_cost_usd=0.50,
+                        primary_risk_driver="blast_radius",
+                        is_cloud_tabpfn=False
+                    )
+                )
+            else:
+                decision = self.sentry.audit_step(telemetry)
+                if blast_eval.category == "HIGH" and decision.action == "PASS":
+                    decision.action = "PAUSE"
+                    decision.risk_level = "HIGH"
+                    decision.reason = f"{decision.reason} | {blast_eval.violation_reason}"
+
             state.last_decision = decision
             state.step_index += 1
 

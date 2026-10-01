@@ -68,6 +68,10 @@ class AuditStorage:
 
     def record_decision(self, decision: SentryDecision) -> int:
         """Persists a single SentryDecision to the audit database with retry on lock."""
+        from agentry.dlp import secret_redactor
+        clean_reason, _ = secret_redactor.redact(decision.reason or "")
+        clean_reroute, _ = secret_redactor.redact(decision.reroute_instruction or "")
+
         for attempt in range(3):
             try:
                 with self._get_connection() as conn:
@@ -98,8 +102,8 @@ class AuditStorage:
                         decision.tabpfn_assessment.predicted_failure_mode,
                         decision.tabpfn_assessment.projected_final_cost_usd,
                         decision.confidence,
-                        decision.reason,
-                        decision.reroute_instruction or "",
+                        clean_reason,
+                        clean_reroute,
                         decision.estimated_tokens_saved,
                         decision.estimated_cost_saved_usd,
                         decision.sentry_provider
