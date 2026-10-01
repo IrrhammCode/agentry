@@ -8,6 +8,7 @@ import sys
 import time
 import argparse
 from pathlib import Path
+from typing import Optional, List, Dict, Any
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
@@ -347,6 +348,103 @@ def audit_session_cli(session_id: str):
     console.print(table)
 
 
+def generate_report_cli(session_id: str = "", html: bool = False, output_file: Optional[str] = None):
+    """Generates and prints/exports an incident post-mortem report."""
+    from agentry.report import generate_incident_report, export_incident_report_to_file
+    from agentry.storage import AuditStorage
+    from rich.markdown import Markdown
+
+    storage = AuditStorage()
+    fmt = "html" if html else "markdown"
+
+    target_session = session_id
+    if not target_session:
+        events = storage.get_all_events(limit=1)
+        if events:
+            target_session = events[0]["session_id"]
+        else:
+            console.print("[bold red]No recorded agent sessions found in database to report on.[/]")
+            return
+
+    console.print(f"[bold cyan]Generating {fmt.upper()} Incident Report for session:[/] [bold white]{target_session}[/]")
+
+    if output_file:
+        out_p = Path(output_file)
+        content = generate_incident_report(target_session, format=fmt, storage=storage)
+        out_p.parent.mkdir(parents=True, exist_ok=True)
+        out_p.write_text(content, encoding="utf-8")
+        console.print(f"[bold green]Report saved successfully to:[/] [underline]{out_p.resolve()}[/]")
+    else:
+        out_p = export_incident_report_to_file(target_session, format=fmt, storage=storage)
+        console.print(f"[bold green]Report exported to disk:[/] [underline]{out_p.resolve()}[/]")
+        if not html:
+            md_content = generate_incident_report(target_session, format="markdown", storage=storage)
+            console.print(Panel(Markdown(md_content), title=f"Incident Audit: {target_session}", border_style="cyan"))
+
+
+def hitl_list_cli(status: Optional[str] = None):
+    """Displays active or past Human-in-the-Loop approval requests in a rich table."""
+    from agentry.hitl import hitl_gateway
+
+    filter_val = None if not status or status.upper() == "ALL" else status.upper()
+    reqs = hitl_gateway.list_requests(status=filter_val)
+
+    table = Table(title=f"Agentry HITL Escalation Queue ({filter_val or 'ALL'})", box=box.ROUNDED)
+    table.add_column("Request ID", style="bold cyan", width=14)
+    table.add_column("Session ID", style="white", width=20)
+    table.add_column("Step", justify="center", width=6)
+    table.add_column("Tool", width=12)
+    table.add_column("Risk Prob", justify="center", width=10)
+    table.add_column("Failure Mode", width=18)
+    table.add_column("Status", justify="center", width=16)
+    table.add_column("Reason / Notes", style="dim")
+
+    if not reqs:
+        console.print(f"[yellow]No HITL requests found with status '{filter_val or 'ALL'}'.[/]")
+        return
+
+    for r in reqs:
+        st = r["status"]
+        st_style = "bold yellow" if st == "PENDING" else ("bold green" if "RESUME" in st else "bold red")
+        prob = r["failure_probability"]
+        p_style = "bold red" if prob >= 0.8 else ("bold yellow" if prob >= 0.5 else "green")
+
+        table.add_row(
+            r["request_id"],
+            r["session_id"][:18],
+            str(r["step_index"]),
+            r["tool_name"],
+            f"[{p_style}]{prob * 100:.1f}%[/]",
+            r["predicted_failure_mode"],
+            f"[{st_style}]{st}[/]",
+            r["reason"][:45]
+        )
+    console.print(table)
+
+
+def hitl_resolve_cli(request_id: str, resolution: str, comment: str = "", directive: str = ""):
+    """Resolves an escalation request directly from the terminal."""
+    from agentry.hitl import hitl_gateway
+
+    req = hitl_gateway.resolve(
+        request_id=request_id,
+        resolution=resolution,
+        comment=comment or None,
+        custom_directive=directive or None
+    )
+    if not req:
+        console.print(f"[bold red]Error:[/] HITL Request '{request_id}' not found.")
+        return
+
+    res_style = "bold green" if req.status == "APPROVED_RESUME" else ("bold yellow" if req.status == "REROUTED" else "bold red")
+    console.print(f"[bold green]Successfully updated request:[/] [cyan]{request_id}[/]")
+    console.print(f"Status: [{res_style}]{req.status}[/]")
+    if req.custom_directive:
+        console.print(f"Steering Directive: [bold italic cyan]{req.custom_directive}[/]")
+    if req.operator_comment:
+        console.print(f"Operator Comment: [dim]{req.operator_comment}[/]")
+
+
 def main():
     """Main CLI entrypoint."""
     parser = argparse.ArgumentParser(
@@ -367,6 +465,25 @@ def main():
     # Audit
     audit_parser = subparsers.add_parser("audit", help="Audit a specific agent session")
     audit_parser.add_argument("session_id", nargs="?", default="", help="Session ID to inspect")
+
+    # Report (Enterprise Incident Exporter)
+    report_parser = subparsers.add_parser("report", help="Generate and export incident post-mortem audit report")
+    report_parser.add_argument("session_id", nargs="?", default="", help="Session ID to generate report for")
+    report_parser.add_argument("--html", action="store_true", help="Generate HTML report instead of Markdown")
+    report_parser.add_argument("--output", "-o", type=str, default=None, help="Custom output file destination")
+
+    # HITL (Human-in-the-Loop Gateway)
+    hitl_parser = subparsers.add_parser("hitl", help="Manage Human-in-the-Loop approval queue")
+    hitl_subparsers = hitl_parser.add_subparsers(dest="hitl_cmd", help="HITL commands")
+
+    hitl_list = hitl_subparsers.add_parser("list", help="List escalation requests")
+    hitl_list.add_argument("--status", default="PENDING", help="Filter by status (PENDING, ALL, APPROVED_RESUME, etc.)")
+
+    hitl_resolve = hitl_subparsers.add_parser("resolve", help="Resolve an escalation request")
+    hitl_resolve.add_argument("request_id", help="Request ID (e.g. hitl_abc123)")
+    hitl_resolve.add_argument("resolution", choices=["RESUME", "resume", "REROUTE", "reroute", "ABORT", "abort", "KILL", "kill"], help="Action to take")
+    hitl_resolve.add_argument("--comment", "-c", default="", help="Operator rationale")
+    hitl_resolve.add_argument("--directive", "-d", default="", help="Custom steering directive for agent")
 
     # Web
     subparsers.add_parser("web", help="Launch interactive Streamlit Command Center")
@@ -394,6 +511,22 @@ def main():
         run_benchmark_cli(use_real=not getattr(args, "synthetic", False))
     elif args.command == "audit":
         audit_session_cli(args.session_id)
+    elif args.command == "report":
+        generate_report_cli(
+            session_id=args.session_id,
+            html=getattr(args, "html", False),
+            output_file=getattr(args, "output", None)
+        )
+    elif args.command == "hitl":
+        if args.hitl_cmd == "resolve":
+            hitl_resolve_cli(
+                request_id=args.request_id,
+                resolution=args.resolution,
+                comment=getattr(args, "comment", ""),
+                directive=getattr(args, "directive", "")
+            )
+        else:
+            hitl_list_cli(status=getattr(args, "status", "PENDING"))
     elif args.command == "web":
         import subprocess
         console.print("[bold green]Launching Agentry Streamlit Web Dashboard...[/]")

@@ -23,6 +23,9 @@ from agentry.telemetry import TelemetrySimulator, load_telemetry_data, AgentStep
 from agentry.engine import TabPFNGuardrailEngine
 from agentry.agent import AgentrySentry
 from agentry.benchmark import GuardrailBenchmarkSuite
+from agentry.hitl import hitl_gateway
+from agentry.report import generate_incident_report, export_incident_report_to_file
+from agentry.storage import AuditStorage
 
 # Streamlit Page Config
 st.set_page_config(
@@ -135,6 +138,7 @@ page = st.sidebar.radio(
     "Navigation",
     [
         "🚀 Live Fleet Simulation",
+        "⏸️ HITL Approval Gateway",
         "🔍 Forensic Session Inspector",
         "📊 TabPFN Benchmark Suite",
         "📂 Historical Telemetry Data",
@@ -327,6 +331,102 @@ if page == "🚀 Live Fleet Simulation":
     st.dataframe(pd.DataFrame(timeline_rows), use_container_width=True, hide_index=True)
 
 
+# PAGE: HITL APPROVAL GATEWAY
+elif page == "⏸️ HITL Approval Gateway":
+    st.markdown('<div class="main-title">Human-in-the-Loop (HITL) Approval Gateway</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sub-title">Real-time supervision and escalation control for paused and high-risk autonomous agents</div>', unsafe_allow_html=True)
+
+    pending_reqs = hitl_gateway.list_requests(status="PENDING")
+    all_reqs = hitl_gateway.list_requests(status=None)
+
+    col_h1, col_h2, col_h3, col_h4 = st.columns(4)
+    with col_h1:
+        st.markdown(f"""
+        <div class="metric-box">
+            <div class="metric-label">Pending Escalations</div>
+            <div class="metric-value" style="color: {'#EF4444' if pending_reqs else '#10B981'};">{len(pending_reqs)}</div>
+        </div>
+        """, unsafe_allow_html=True)
+    with col_h2:
+        approved_cnt = sum(1 for r in all_reqs if r['status'] == 'APPROVED_RESUME')
+        st.markdown(f"""
+        <div class="metric-box">
+            <div class="metric-label">Approved (Resumed)</div>
+            <div class="metric-value" style="color: #10B981;">{approved_cnt}</div>
+        </div>
+        """, unsafe_allow_html=True)
+    with col_h3:
+        rerouted_cnt = sum(1 for r in all_reqs if r['status'] == 'REROUTED')
+        st.markdown(f"""
+        <div class="metric-box">
+            <div class="metric-label">Rerouted (Steered)</div>
+            <div class="metric-value" style="color: #F59E0B;">{rerouted_cnt}</div>
+        </div>
+        """, unsafe_allow_html=True)
+    with col_h4:
+        aborted_cnt = sum(1 for r in all_reqs if r['status'] in ('REJECTED_ABORT', 'RESOLVED_KILL'))
+        st.markdown(f"""
+        <div class="metric-box">
+            <div class="metric-label">Aborted / Killed</div>
+            <div class="metric-value" style="color: #EF4444;">{aborted_cnt}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # Active Pending Approvals
+    st.subheader("🚨 Pending Agent Escalations Requiring Intervention")
+    if not pending_reqs:
+        st.success("✅ No pending agent escalations. Fleet is operating within nominal safety thresholds.")
+    else:
+        for req in pending_reqs:
+            with st.container(border=True):
+                c_title, c_prob = st.columns([3, 1])
+                with c_title:
+                    st.markdown(f"#### Escalation `{req['request_id']}` — Session: `{req['session_id']}` (Step {req['step_index']})")
+                with c_prob:
+                    st.markdown(f"<span class='badge-kill' style='font-size:1rem;'>Risk: {req['failure_probability']*100:.1f}%</span>", unsafe_allow_html=True)
+
+                st.markdown(f"**Tool Invoked:** `{req['tool_name']}` | **Predicted Failure Mode:** `{req['predicted_failure_mode']}` | **Initial Sentry Action:** `{req['action']}`")
+                st.info(f"**TabPFN Attribution Reason:**\n\n{req['reason']}")
+
+                with st.form(key=f"form_{req['request_id']}"):
+                    st.markdown("##### Operator Action & Directive:")
+                    custom_directive = st.text_input("Corrective Steering Directive (Optional, for Reroute):", placeholder="e.g. Do not retry bash command. Read file first.")
+                    comment = st.text_input("Operator Comment / Audit Log Note:", placeholder="e.g. Inspected tool parameters; loop broken manually.")
+
+                    b_col1, b_col2, b_col3 = st.columns(3)
+                    with b_col1:
+                        approve_btn = st.form_submit_button("🟢 Approve & Resume Execution", use_container_width=True)
+                    with b_col2:
+                        reroute_btn = st.form_submit_button("🟡 Reroute with Directive", use_container_width=True)
+                    with b_col3:
+                        abort_btn = st.form_submit_button("🔴 Abort Session (Kill)", use_container_width=True)
+
+                    if approve_btn:
+                        hitl_gateway.resolve(req['request_id'], resolution="RESUME", comment=comment)
+                        st.success(f"Request {req['request_id']} APPROVED. Agent resumed.")
+                        st.rerun()
+                    elif reroute_btn:
+                        hitl_gateway.resolve(req['request_id'], resolution="REROUTE", comment=comment, custom_directive=custom_directive)
+                        st.warning(f"Request {req['request_id']} REROUTED with steering directive.")
+                        st.rerun()
+                    elif abort_btn:
+                        hitl_gateway.resolve(req['request_id'], resolution="ABORT", comment=comment)
+                        st.error(f"Request {req['request_id']} ABORTED.")
+                        st.rerun()
+
+    # Historical Escalation Log
+    st.markdown("---")
+    st.subheader("📜 Historical Escalation Audit Log")
+    if all_reqs:
+        hist_df = pd.DataFrame(all_reqs)
+        cols_to_show = [c for c in ["request_id", "session_id", "step_index", "tool_name", "failure_probability", "predicted_failure_mode", "status", "operator_comment", "custom_directive"] if c in hist_df.columns]
+        st.dataframe(hist_df[cols_to_show], use_container_width=True, hide_index=True)
+    else:
+        st.caption("No historical escalation records found.")
+
+
 # PAGE 2: FORENSIC SESSION INSPECTOR
 elif page == "🔍 Forensic Session Inspector":
     st.markdown('<div class="main-title">Forensic Session Inspector</div>', unsafe_allow_html=True)
@@ -369,6 +469,36 @@ elif page == "🔍 Forensic Session Inspector":
         with st.expander(f"Step {r['step_index']} — Tool: {r['tool_name']} | Repetition: {r['repetition_score']:.2f} | Error Streak: {r['error_streak']}"):
             st.markdown(f"**Thought Trace:** `{r['thought_trace']}`")
             st.markdown(f"**Prompt Tokens:** {r['prompt_tokens']:,} | **Completion Tokens:** {r['completion_tokens']:,} | **Cost:** ${r['accumulated_cost_usd']:.4f}")
+
+    # Forensic Post-Mortem Exporter Section
+    st.markdown("---")
+    st.markdown("### 📋 Enterprise Forensic Post-Mortem Incident Report")
+    st.markdown("Generate and export an audit-ready compliance report with TabPFN tabular forensic metrics, token/dollar savings, and root-cause steering advice.")
+
+    rep_fmt = st.radio("Report Format:", ["Markdown", "HTML"], horizontal=True, key=f"rep_fmt_{selected_sid}")
+    report_content = generate_incident_report(selected_sid, format=rep_fmt.lower())
+
+    rep_col1, rep_col2 = st.columns([1, 3])
+    with rep_col1:
+        ext = "html" if rep_fmt == "HTML" else "md"
+        mime = "text/html" if rep_fmt == "HTML" else "text/markdown"
+        st.download_button(
+            label=f"📥 Download {rep_fmt} Report",
+            data=report_content,
+            file_name=f"incident_report_{selected_sid}.{ext}",
+            mime=mime,
+            use_container_width=True
+        )
+    with rep_col2:
+        if st.button("💾 Export Report to Server Disk (`data/reports/`)"):
+            p = export_incident_report_to_file(selected_sid, format=rep_fmt.lower())
+            st.success(f"Report exported to disk: `{p.resolve()}`")
+
+    with st.expander(f"👁️ Preview Generated {rep_fmt} Report", expanded=False):
+        if rep_fmt == "HTML":
+            st.components.v1.html(report_content, height=600, scrolling=True)
+        else:
+            st.markdown(report_content)
 
 
 # PAGE 3: BENCHMARK SUITE
@@ -597,9 +727,35 @@ elif page == "🔌 Model Context Protocol (MCP)":
     - `agentry_get_fleet_status`: Enterprise fleet metrics and total cost/token savings.
     - `agentry_inspect_session_history`: Chronological audit trail for forensics.
     - `agentry_reset_session`: Resets telemetry state for an agent task.
+    - `agentry_export_incident_report`: Generates and exports audit post-mortems in MD or HTML.
+    - `agentry_list_hitl_approvals`: Lists Human-in-the-Loop approval requests.
+    - `agentry_resolve_hitl_approval`: Resolves approvals (Resume, Reroute with directive, or Abort).
     - `fleet://metrics`: Live fleet governance metrics resource.
     - `fleet://recent-interventions`: Recent SQLite WAL audit log resource.
+    - `fleet://hitl-queue`: Real-time pending HITL queue resource.
     """)
+
+    st.markdown("---")
+    st.subheader("🌐 Zero-Code OpenAI-Compatible Reverse Proxy Middleware")
+    st.markdown("""
+    Govern **any** autonomous agent framework (CrewAI, AutoGen, LangChain, or direct OpenAI SDK) with zero code modifications:
+    Simply point your agent's LLM client to Agentry's proxy gateway:
+    """)
+    st.code("""from openai import OpenAI
+
+# Route completions through Agentry Sentry Guardrail
+client = OpenAI(
+    base_url="http://127.0.0.1:8787/v1",
+    api_key="your-upstream-api-key",
+    default_headers={"X-Agent-Session": "my_autonomous_agent_01"}
+)
+
+response = client.chat.completions.create(
+    model="llama-3.3-70b-versatile",
+    messages=[{"role": "user", "content": "Execute deployment pipeline"}]
+)
+# Circuit-breaker returns HTTP 429 if TabPFN detects an infinite loop or runaway cost!
+""", language="python")
 
 
 # PAGE 6: ARCHITECTURE & PRIVACY

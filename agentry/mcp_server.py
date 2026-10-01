@@ -19,6 +19,8 @@ from mcp.server.mcpserver import MCPServer
 from agentry import __version__
 from agentry.guard import AgentryGuard, SentryDecision
 from agentry.telemetry import AgentStepTelemetry
+from agentry.report import generate_incident_report, export_incident_report_to_file
+from agentry.hitl import hitl_gateway
 
 logger = logging.getLogger("agentry.mcp")
 
@@ -136,6 +138,20 @@ def audit_agent_step(
     except Exception as exc:
         logger.warning("MCP failed to record audit event to SQLite: %s", exc)
 
+    # Trigger real-time webhook alert if configured
+    try:
+        if guard.notifier and decision.action in ("KILL", "PAUSE", "REROUTE"):
+            guard.notifier.send_alert(decision, background=True)
+    except Exception as exc:
+        logger.debug("Failed sending webhook alert: %s", exc)
+
+    # Enqueue for HITL review if PAUSE
+    if decision.action == "PAUSE":
+        try:
+            hitl_gateway.create_escalation(decision, tool_name=tool_name)
+        except Exception as exc:
+            logger.debug("Failed enqueueing HITL escalation: %s", exc)
+
     return {
         "session_id": session_id,
         "step_index": step_index,
@@ -209,6 +225,82 @@ def reset_session(session_id: str) -> Dict[str, Any]:
     }
 
 
+@mcp.tool(
+    name="agentry_export_incident_report",
+    description=(
+        "Generates and exports an audit-ready, forensic incident post-mortem report "
+        "for an agent session in Markdown or HTML format. Includes TabPFN risk telemetry, "
+        "step chronological audit table, token/cost savings, and remediation recommendations."
+    )
+)
+def export_incident_report(session_id: str, format: str = "markdown", save_to_disk: bool = True) -> Dict[str, Any]:
+    """Generates an audit incident report for an agent session."""
+    guard = get_guard()
+    report_content = generate_incident_report(session_id, format=format, storage=guard.storage)
+    file_path = None
+    if save_to_disk:
+        p = export_incident_report_to_file(session_id, format=format, storage=guard.storage)
+        file_path = str(p)
+    return {
+        "session_id": session_id,
+        "format": format,
+        "file_path": file_path,
+        "report_length": len(report_content),
+        "report_content": report_content if len(report_content) < 15000 else report_content[:15000] + "\n...[truncated for MCP response]"
+    }
+
+
+@mcp.tool(
+    name="agentry_list_hitl_approvals",
+    description=(
+        "Lists Human-in-the-Loop (HITL) escalation requests requiring operator intervention. "
+        "Can filter by status ('PENDING', 'APPROVED_RESUME', 'REROUTED', 'REJECTED_ABORT', or 'ALL')."
+    )
+)
+def list_hitl_approvals(status: str = "PENDING") -> Dict[str, Any]:
+    """Lists HITL escalation requests."""
+    filter_status = None if status.upper() == "ALL" else status
+    requests = hitl_gateway.list_requests(status=filter_status)
+    return {
+        "status": "ok",
+        "filter": status,
+        "count": len(requests),
+        "requests": requests
+    }
+
+
+@mcp.tool(
+    name="agentry_resolve_hitl_approval",
+    description=(
+        "Resolves a pending Human-in-the-Loop (HITL) approval request. "
+        "Applies resolution ('RESUME', 'REROUTE', 'ABORT'), optional operator comment, "
+        "and optional steering directive."
+    )
+)
+def resolve_hitl_approval(
+    request_id: str,
+    resolution: str = "RESUME",
+    comment: str = "",
+    custom_directive: str = ""
+) -> Dict[str, Any]:
+    """Resolves a pending HITL escalation request."""
+    from dataclasses import asdict
+    req = hitl_gateway.resolve(
+        request_id=request_id,
+        resolution=resolution,
+        comment=comment or None,
+        custom_directive=custom_directive or None
+    )
+    if not req:
+        return {"status": "error", "message": f"HITL request '{request_id}' not found."}
+    return {
+        "status": "ok",
+        "request_id": request_id,
+        "resolution": req.status,
+        "details": asdict(req)
+    }
+
+
 # ============================================================================
 # MCP Resources
 # ============================================================================
@@ -227,6 +319,13 @@ def fleet_recent_interventions_resource() -> str:
     guard = get_guard()
     events = guard.storage.get_all_events(limit=20)
     return json.dumps(events, indent=2)
+
+
+@mcp.resource("fleet://hitl-queue")
+def fleet_hitl_queue_resource() -> str:
+    """Exposes all pending HITL approval requests."""
+    requests = hitl_gateway.list_requests(status="PENDING")
+    return json.dumps(requests, indent=2)
 
 
 # ============================================================================

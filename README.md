@@ -234,8 +234,56 @@ agentry mcp --transport sse --port 8788
 | `agentry_get_fleet_status` | **Tool** | Fleet-wide governance metrics (total audited steps, tokens/dollars saved, intervention distribution). |
 | `agentry_inspect_session_history` | **Tool** | Detailed chronological audit logs and tabular telemetry for a specific agent session. |
 | `agentry_reset_session` | **Tool** | Resets the in-memory telemetry tracker and circuit breaker for a given session ID. |
+| `agentry_export_incident_report` | **Tool** | Generates audit-ready forensic post-mortem incident reports in Markdown or HTML. |
+| `agentry_list_hitl_approvals` | **Tool** | Lists pending Human-in-the-Loop escalation requests for operator review. |
+| `agentry_resolve_hitl_approval` | **Tool** | Resolves an escalation (`RESUME`, `REROUTE`, `ABORT`) with operator directives. |
 | `fleet://metrics` | **Resource** | Live JSON resource showing fleet statistics and cumulative cost/token savings. |
 | `fleet://recent-interventions` | **Resource** | Live JSON resource with recent SQLite WAL audit trail records for compliance forensics. |
+| `fleet://hitl-queue` | **Resource** | Live JSON resource showing pending Human-in-the-Loop requests. |
+
+---
+
+## 🏢 Enterprise Capabilities
+
+### 1. 📋 Enterprise Incident Post-Mortem Exporter
+Generate executive-ready forensic incident reports complete with TabPFN tabular risk metrics, token and budget savings, chronological step-by-step audit tables, and corrective steering recommendations:
+```bash
+# Terminal view + Markdown export
+python run.py report <session_id>
+
+# Export as stylized HTML report
+python run.py report <session_id> --html --output incident_report.html
+```
+
+### 2. 🚨 Real-Time Webhook Alerting (Slack, Discord, JSON)
+Agentry automatically fires asynchronous, non-blocking webhook notifications whenever an autonomous circuit breaker trips (`KILL`, `PAUSE`, `REROUTE`):
+- **Slack:** Rich Block Kit cards with header badges, risk scores, and token savings.
+- **Discord:** Embed cards formatted with severity-specific colors and structured fields.
+- **Generic:** Structured JSON payload for PagerDuty, Datadog, or custom webhooks.
+
+### 3. ⏸️ Human-in-the-Loop (HITL) Web Approval Gateway
+When high uncertainty or cost spikes trigger a `PAUSE`, the agent execution is queued in the thread-safe HITL Gateway. Operators can inspect and resolve turns directly from:
+- **Interactive Web Dashboard:** Dedicated `⏸️ HITL Approval Gateway` page.
+- **Terminal CLI:** `python run.py hitl list` and `python run.py hitl resolve <req_id> RESUME`.
+- **MCP Server:** `agentry_list_hitl_approvals` and `agentry_resolve_hitl_approval`.
+
+### 4. 🌐 Zero-Code OpenAI-Compatible Reverse Proxy
+Govern any agent framework (CrewAI, AutoGen, LangChain, or direct OpenAI SDK) with zero code changes:
+```python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="http://127.0.0.1:8787/v1",
+    api_key="upstream-api-key",
+    default_headers={"X-Agent-Session": "my_agent_01"}
+)
+
+response = client.chat.completions.create(
+    model="llama-3.3-70b-versatile",
+    messages=[{"role": "user", "content": "Analyze repository"}]
+)
+# Returns HTTP 429 Circuit-Breaker Halt if an infinite loop or runaway spend is detected!
+```
 
 ---
 
@@ -275,7 +323,8 @@ streamlit run web/app.py
 ### Features in the Web Command Center:
 - **Radar & Live Fleet Simulation:** Scrub through steps or test simulated anomaly attacks (Loop Trap, Tool Hallucination, Context Window Explosion).
 - **TabPFN Multiclass Probabilities & Risk Radar:** Interactive Plotly donut charts and trajectory graphs.
-- **Forensic Session Inspector:** Deep-dive into individual agent sessions, inspect thought traces, and examine tabular risk decomposition.
+- **⏸️ HITL Approval Gateway:** Real-time queue to supervise paused sessions, inject steering directives, or abort rogue runs.
+- **Forensic Session Inspector & Report Exporter:** Deep-dive into individual agent sessions, inspect thought traces, and download audit post-mortems in Markdown or HTML.
 - **Empirical Benchmark Suite:** Run live side-by-side comparisons of TabPFN vs classical ML baselines with custom sample sizes.
 - **Telemetry Data Explorer:** Filter and download CSV agent telemetry logs.
 
@@ -297,9 +346,11 @@ Ensure system reliability with the automated test suite:
 pytest tests/
 ```
 ```text
-tests/test_agentry.py ....                                               [ 44%]
-tests/test_guard_sdk.py .....                                            [100%]
-======================== 9 passed in 11.86s =========================
+tests/test_agentry.py ....                                               [ 14%]
+tests/test_enterprise_features.py .........                             [ 46%]
+tests/test_guard_sdk.py .........                                        [ 78%]
+tests/test_mcp.py ......                                                 [100%]
+============================= 28 passed in 8.87s ==============================
 ```
 
 ---

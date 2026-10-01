@@ -19,6 +19,8 @@ from agentry.telemetry import AgentStepTelemetry, load_telemetry_data
 from agentry.engine import TabPFNGuardrailEngine
 from agentry.agent import AgentrySentry, SentryDecision
 from agentry.storage import AuditStorage
+from agentry.alerts import default_notifier, WebhookNotifier
+from agentry.hitl import hitl_gateway, HITLManager
 from agentry.swe_telemetry import compute_string_overlap, is_error_output
 
 logger = logging.getLogger("agentry.guard")
@@ -120,6 +122,9 @@ class StepContext:
         return False
 
 
+_shared_engine: Optional[TabPFNGuardrailEngine] = None
+
+
 class AgentryGuard:
     """
     The Agentry Drop-in SDK & Guardrail Middleware.
@@ -147,18 +152,28 @@ class AgentryGuard:
         engine: Optional[TabPFNGuardrailEngine] = None,
         sentry: Optional[AgentrySentry] = None,
         storage: Optional[AuditStorage] = None,
+        notifier: Optional[WebhookNotifier] = None,
         auto_fit: bool = True,
         raise_on_kill: bool = True,
         cost_per_1k_tokens: float = 0.002
     ):
-        self.engine = engine or TabPFNGuardrailEngine()
-        if auto_fit and not self.engine.is_fitted:
-            real_csv = ROOT_DIR / "data" / "real_swe_telemetry.csv"
-            training_data = load_telemetry_data(str(real_csv) if real_csv.exists() else None)
-            self.engine.fit(training_data)
+        global _shared_engine
+        if engine is not None:
+            self.engine = engine
+        elif _shared_engine is not None and _shared_engine.is_fitted:
+            self.engine = _shared_engine
+        else:
+            self.engine = TabPFNGuardrailEngine()
+            if auto_fit and not self.engine.is_fitted:
+                real_csv = ROOT_DIR / "data" / "real_swe_telemetry.csv"
+                training_data = load_telemetry_data(str(real_csv) if real_csv.exists() else None)
+                self.engine.fit(training_data)
+            if self.engine.is_fitted:
+                _shared_engine = self.engine
 
         self.sentry = sentry or AgentrySentry(self.engine)
         self.storage = storage or AuditStorage()
+        self.notifier = notifier or default_notifier
         self.raise_on_kill = raise_on_kill
         self.cost_per_1k = cost_per_1k_tokens
         self._sessions: Dict[str, SessionState] = {}
@@ -391,6 +406,20 @@ class AgentryGuard:
                 self.storage.record_decision(decision)
             except Exception as e:
                 logger.debug("Failed recording audit event: %s", e)
+
+            # Trigger non-blocking real-time webhook alert (Slack/Discord/Webhook)
+            try:
+                if self.notifier and decision.action in ("KILL", "PAUSE", "REROUTE"):
+                    self.notifier.send_alert(decision, background=True)
+            except Exception as e:
+                logger.debug("Failed dispatching incident alert: %s", e)
+
+            # Enqueue for Human-in-the-Loop operator review if action is PAUSE
+            if decision.action == "PAUSE":
+                try:
+                    hitl_gateway.create_escalation(decision, tool_name=tool_name)
+                except Exception as e:
+                    logger.debug("Failed enqueueing HITL request: %s", e)
 
             # 7. Execute Halt if required
             if decision.action == "KILL":

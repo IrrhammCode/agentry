@@ -96,8 +96,8 @@ class TabPFNGuardrailEngine:
 
     def _init_tabpfn_client(self):
         """Attempts to connect to Prior Labs TabPFN-3.5 cloud API."""
-        if not self.token:
-            logger.info("No TABPFN_TOKEN found. Engine will run in Local Emulated Fallback Mode.")
+        if not self.token or os.getenv("TABPFN_OFFLINE_MODE", "").lower() in ("1", "true", "yes"):
+            logger.info("No TABPFN_TOKEN found or TABPFN_OFFLINE_MODE active. Engine will run in Local Emulated Fallback Mode.")
             return
 
         try:
