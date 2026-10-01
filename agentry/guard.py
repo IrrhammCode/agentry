@@ -64,6 +64,7 @@ class SessionState:
     recent_inputs: List[str] = field(default_factory=list)
     is_halted: bool = False
     last_decision: Optional[SentryDecision] = None
+    rewind_count: int = 0
 
 
 class StepContext:

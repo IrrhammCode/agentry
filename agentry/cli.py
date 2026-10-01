@@ -575,9 +575,23 @@ def main():
     mcp_parser.add_argument("--host", default="127.0.0.1", help="Host interface for SSE/HTTP")
     mcp_parser.add_argument("--port", type=int, default=8788, help="Port for SSE/HTTP")
 
+    # Doctor (System Readiness Diagnostics)
+    subparsers.add_parser("doctor", help="Run comprehensive pre-flight health diagnostic check")
+
+    # E2E (Closed-Loop Autonomic Simulator)
+    e2e_parser = subparsers.add_parser("e2e", help="Run live end-to-end autonomic closed-loop recovery simulation")
+    e2e_parser.add_argument("--speed", type=float, default=0.25, help="Step delay in seconds (default: 0.25)")
+
     args = parser.parse_args()
 
-    if args.command == "rewind":
+    if args.command == "doctor":
+        from agentry.doctor import run_system_doctor
+        ok = run_system_doctor()
+        sys.exit(0 if ok else 1)
+    elif args.command == "e2e":
+        from agentry.e2e_sim import run_e2e_simulation
+        run_e2e_simulation(speed_s=getattr(args, "speed", 0.25))
+    elif args.command == "rewind":
         rewind_session_cli(args.session_id)
     elif args.command == "budget":
         budget_status_cli()

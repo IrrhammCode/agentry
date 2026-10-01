@@ -2,6 +2,8 @@
 Agentry main entrypoint script.
 Run with:
     python run.py demo                  # Live terminal multi-agent fleet guardrail demo
+    python run.py e2e                   # Live end-to-end closed-loop autonomic recovery simulation
+    python run.py doctor                # Pre-flight environment & subsystem health diagnostic
     python run.py benchmark             # Run TabPFN benchmark vs classical ML baselines
     python run.py audit [session_id]    # Forensic audit on an agent session
     python run.py rewind [session_id]   # Autonomic trajectory rewind & self-healing prescription

@@ -11,6 +11,7 @@ from typing import Dict, Any, Optional, Tuple, Iterator
 import httpx
 
 from agentry.guard import AgentryGuard, AgentHaltException, SentryDecision
+from agentry.healing import trajectory_healer
 from agentry.config import settings
 
 logger = logging.getLogger("agentry.proxy")
@@ -47,7 +48,7 @@ class OpenAIProxyHandler:
         self,
         request_body: Dict[str, Any],
         client_headers: Dict[str, str],
-        guard: AgentryGuard
+        guard: Optional[AgentryGuard] = None
     ) -> Tuple[int, Dict[str, Any], Dict[str, str]]:
         """
         Handles a non-streaming /v1/chat/completions request:
@@ -57,9 +58,10 @@ class OpenAIProxyHandler:
         4. Audits completion with AgentryGuard.
         5. Returns response with X-Agentry governance headers, or circuit-breaker halt error.
         """
+        active_guard = guard or self.guard or AgentryGuard()
         session_id = self._resolve_session_id(request_body, client_headers)
 
-        state = guard.get_or_create_session(session_id)
+        state = active_guard.get_or_create_session(session_id)
         if state.is_halted:
             return 429, {
                 "error": {
@@ -124,7 +126,7 @@ class OpenAIProxyHandler:
             completion_tokens = max(20, len(completion_text) // 4)
 
         # Audit turn via TabPFN Sentry
-        decision = guard.audit(
+        decision = active_guard.audit(
             session_id=session_id,
             tool_name=tool_name,
             input_text=last_user_msg[:200],
@@ -147,7 +149,50 @@ class OpenAIProxyHandler:
         if decision.reroute_instruction:
             response_headers["X-Agentry-Reroute"] = decision.reroute_instruction
 
-        # If KILL triggered, return circuit-breaker HTTP 429
+        # Closed-Loop Autonomic Self-Healing Rewind
+        # If the agent is about to be terminated, attempt to prune poisoned context and heal transparently
+        auto_rewind = (
+            client_headers.get("x-agentry-auto-rewind", "true").lower() in ("true", "1", "yes")
+            and bool(request_body.get("auto_rewind", True))
+        )
+        if decision.action == "KILL" and auto_rewind and getattr(state, "rewind_count", 0) < 2:
+            try:
+                prescription = trajectory_healer.diagnose_and_prescribe(
+                    session_id=session_id,
+                    current_step=decision.step_index,
+                    failed_tool=tool_name,
+                    error_streak=state.error_streak,
+                    reason=decision.reason,
+                    storage=active_guard.storage
+                )
+                pruned_msgs = trajectory_healer.prune_conversation(
+                    messages=messages,
+                    target_step=prescription.target_step,
+                    directive=prescription.counterfactual_directive
+                )
+                retry_payload = dict(request_body)
+                retry_payload["messages"] = pruned_msgs
+                with httpx.Client(timeout=45.0) as retry_client:
+                    retry_res = retry_client.post(upstream_target, json=retry_payload, headers=headers_to_forward)
+                    if retry_res.status_code == 200:
+                        state.is_halted = False
+                        state.rewind_count = getattr(state, "rewind_count", 0) + 1
+                        state.error_streak = 0
+                        state.step_index = prescription.target_step + 1
+                        healed_data = retry_res.json()
+                        response_headers["X-Agentry-Action"] = "HEALED"
+                        response_headers["X-Agentry-Auto-Healed"] = "true"
+                        response_headers["X-Agentry-Rewound-Target"] = str(prescription.target_step)
+                        response_headers["X-Agentry-Tokens-Saved"] = str(prescription.estimated_tokens_saved)
+                        logger.info(
+                            "Autonomous self-healing rewind succeeded for session '%s': pruned back to step %d",
+                            session_id, prescription.target_step
+                        )
+                        return 200, healed_data, response_headers
+            except Exception as heal_exc:
+                logger.warning("Auto-rewind attempt failed: %s", heal_exc)
+
+        # If KILL triggered and cannot be healed, return circuit-breaker HTTP 429
         if decision.action == "KILL":
             return 429, {
                 "error": {
@@ -175,14 +220,15 @@ class OpenAIProxyHandler:
         self,
         request_body: Dict[str, Any],
         client_headers: Dict[str, str],
-        guard: AgentryGuard
+        guard: Optional[AgentryGuard] = None
     ) -> Iterator[bytes]:
         """
         Streams chat completion tokens from upstream LLM to client via SSE.
         Intercepts stream, tracks token generation & latency, and records audit telemetry.
         """
+        active_guard = guard or self.guard or AgentryGuard()
         session_id = self._resolve_session_id(request_body, client_headers)
-        state = guard.get_or_create_session(session_id)
+        state = active_guard.get_or_create_session(session_id)
         if state.is_halted:
             err_payload = {
                 "error": {
@@ -254,7 +300,7 @@ class OpenAIProxyHandler:
         comp_tokens = max(10, len(full_completion) // 4)
 
         try:
-            guard.audit(
+            active_guard.audit(
                 session_id=session_id,
                 tool_name=tool_name,
                 input_text=last_user_msg[:200],
