@@ -12,9 +12,12 @@ import httpx
 
 from agentry.guard import AgentryGuard, AgentHaltException, SentryDecision
 from agentry.healing import trajectory_healer
+from agentry.blast_radius import blast_radius_evaluator
+from agentry.dlp import secret_redactor
 from agentry.config import settings
 
 logger = logging.getLogger("agentry.proxy")
+
 
 
 class OpenAIProxyHandler:
@@ -125,19 +128,53 @@ class OpenAIProxyHandler:
         if completion_tokens is None:
             completion_tokens = max(20, len(completion_text) // 4)
 
+        # 1. Semantic Blast-Radius Interception on proposed tool call
+        if tool_calls and isinstance(tool_calls, list):
+            first_tool = tool_calls[0] if isinstance(tool_calls[0], dict) else {}
+            func_info = first_tool.get("function", {}) if isinstance(first_tool, dict) else {}
+            raw_args = str(func_info.get("arguments", ""))
+            blast = blast_radius_evaluator.evaluate(tool_name, raw_args, session_id=session_id)
+            if blast.is_critical:
+                state.is_halted = True
+                logger.critical(
+                    "Proxy intercepted CRITICAL blast radius in tool call '%s' for session '%s': %s",
+                    tool_name, session_id, blast.violation_reason
+                )
+                return 429, {
+                    "error": {
+                        "message": f"AGENTRY GATEWAY INTERCEPTION: Critical destructive blast radius blocked.\n{blast.violation_reason}",
+                        "type": "circuit_breaker_kill",
+                        "code": "CRITICAL_BLAST_RADIUS_BLOCKED",
+                        "tool_name": tool_name,
+                        "remediation": blast.remediation
+                    }
+                }, {
+                    "X-Agentry-Action": "KILL",
+                    "X-Agentry-Blast-Radius": "CRITICAL",
+                    "X-Agentry-Session-ID": session_id
+                }
+
+        # 2. In-Flight DLP Secret Masking for completion and tool arguments
+        masked_completion, secrets_count = secret_redactor.redact(completion_text)
+        if secrets_count > 0:
+            logger.info("Proxy DLP: Masked %d secret(s) in completion for session '%s'", secrets_count, session_id)
+            if raw_content is not None:
+                completion_msg["content"] = masked_completion
+
         # Audit turn via TabPFN Sentry
         decision = active_guard.audit(
             session_id=session_id,
             tool_name=tool_name,
             input_text=last_user_msg[:200],
-            output_text=completion_text[:200],
+            output_text=masked_completion[:200],
             prompt_tokens=prompt_tokens,
             completion_tokens=completion_tokens,
-            thought_trace=completion_text[:100],
+            thought_trace=masked_completion[:100],
             agent_role="Proxy-Agent",
             model_name=str(request_body.get("model", "unknown-model")),
             latency_ms=latency_ms
         )
+
 
         response_headers = {
             "X-Agentry-Action": decision.action,

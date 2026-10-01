@@ -231,6 +231,12 @@ agentry mcp --transport sse --port 8788
 | Tool / Resource | Type | Description |
 | :--- | :--- | :--- |
 | `agentry_audit_step` | **Tool** | Real-time TabPFN-3.5 failure risk audit, predicted mode, projected cost, and intervention (`PASS`, `REROUTE`, `PAUSE`, `KILL`). |
+| `agentry_evaluate_blast_radius` | **Tool** | Pre-execution semantic blast radius check blocking catastrophic commands (`rm -rf /`, `DROP DATABASE`, unconstrained deletes, reverse shells). |
+| `agentry_redact_secrets` | **Tool** | In-flight Data Loss Prevention (DLP) scanner masking API keys (OpenAI, Anthropic, Groq, GitHub, AWS, GCP), SSH keys, and DB URIs. |
+| `agentry_check_swarm_deadlock` | **Tool** | Multi-agent coordination watchdog detecting circular delegation cycles ($A \rightarrow B \rightarrow A \rightarrow B$) and swarm deadlocks. |
+| `agentry_rollback_filesystem` | **Tool** | Physical filesystem rollback restoring mutated files and deleting poisoned new files after an incident. |
+| `agentry_prescribe_rewind` | **Tool** | Closed-loop self-healing prescription calculating divergence inflection point ($t^*$) and poisoned context pruning. |
+| `agentry_check_budget` | **Tool** | Real-time fleet and session financial budget checking with runaway quota governance. |
 | `agentry_get_fleet_status` | **Tool** | Fleet-wide governance metrics (total audited steps, tokens/dollars saved, intervention distribution). |
 | `agentry_inspect_session_history` | **Tool** | Detailed chronological audit logs and tabular telemetry for a specific agent session. |
 | `agentry_reset_session` | **Tool** | Resets the in-memory telemetry tracker and circuit breaker for a given session ID. |
@@ -240,8 +246,11 @@ agentry mcp --transport sse --port 8788
 | `fleet://metrics` | **Resource** | Live JSON resource showing fleet statistics and cumulative cost/token savings. |
 | `fleet://recent-interventions` | **Resource** | Live JSON resource with recent SQLite WAL audit trail records for compliance forensics. |
 | `fleet://hitl-queue` | **Resource** | Live JSON resource showing pending Human-in-the-Loop requests. |
+| `fleet://budget` | **Resource** | Real-time fleet financial quota utilization and 24h spend metrics. |
+| `fleet://active-exemplars` | **Resource** | In-context incident exemplars actively calibrating TabPFN test-time reasoning. |
 
 ---
+
 
 ## 🏢 Enterprise Capabilities
 
@@ -286,6 +295,60 @@ response = client.chat.completions.create(
 ```
 
 ---
+
+## 🛡️ Multi-Layer Active Defense & Operational Security
+
+Agentry features an enterprise defense-in-depth architecture combining pre-execution determinism with test-time TabPFN statistical reasoning:
+
+```mermaid
+flowchart TD
+    subgraph Layer1 ["Layer 1: Pre-Execution Interception & DLP"]
+        BR["💣 Semantic Blast-Radius Evaluator<br/>(rm -rf, DROP TABLE, mkfs, reverse shells)"]
+        DLP["🔒 In-Flight DLP & Secret Masking<br/>(OpenAI, Anthropic, AWS, GCP, DB passwords)"]
+        SW["🔄 Swarm Deadlock Watchdog<br/>(Ping-pong cycles A -> B -> A -> B)"]
+    end
+
+    subgraph Layer2 ["Layer 2: Foundation Model Tabular Sentry"]
+        Tab["Prior Labs TabPFN-3.5 Engine<br/>(Failure Classifier + Cost Regressor)"]
+        AM["🧠 Active In-Context Exemplar Memory<br/>(Dynamic calibration from verified incidents)"]
+    end
+
+    subgraph Layer3 ["Layer 3: Closed-Loop Autonomic Healing"]
+        FS["💾 Physical Filesystem Checkpointer<br/>(Pre-edit snapshots & differential rollback)"]
+        TH["🔄 Trajectory Context Pruner<br/>(Inflection point t* counterfactual directive)"]
+        BG["💰 Fleet Budget Governor<br/>(24h spend cap & automatic session throttling)"]
+    end
+
+    Layer1 --> Layer2
+    Layer2 --> Layer3
+```
+
+1. **💣 Semantic Blast-Radius Evaluator ([`agentry/blast_radius.py`](file:///C:/Users/Irham/Documents/code/tabfpn/agentry/blast_radius.py)):** Intercepts destructive commands before they touch system or cloud resources.
+2. **🔒 In-Flight Data Loss Prevention ([`agentry/dlp.py`](file:///C:/Users/Irham/Documents/code/tabfpn/agentry/dlp.py)):** Automatically sanitizes credentials, private keys, and connection strings from tool calls and logs.
+3. **🔄 Swarm Deadlock Detector ([`agentry/swarm.py`](file:///C:/Users/Irham/Documents/code/tabfpn/agentry/swarm.py)):** Prevents multi-agent delegation loops ($A \rightarrow B \rightarrow A \rightarrow B$) from burning infinite tokens.
+4. **💾 Physical Filesystem Checkpointer ([`agentry/checkpoint.py`](file:///C:/Users/Irham/Documents/code/tabfpn/agentry/checkpoint.py)):** Takes pre-mutation disk snapshots, reverting poisoned modifications and deleting newly created toxic files upon failure.
+5. **🧠 Active In-Context Learning ([`agentry/active_memory.py`](file:///C:/Users/Irham/Documents/code/tabfpn/agentry/active_memory.py)):** Buffers human-verified resolutions and autonomic healing events, dynamically calibrating TabPFN test-time probabilities without offline model retraining.
+
+---
+
+## 🛠️ Complete CLI Command Reference
+
+Agentry provides a unified CLI entrypoint via `python run.py`:
+
+| Command | Usage | Description |
+| :--- | :--- | :--- |
+| **`doctor`** | `python run.py doctor` | Validates environment, dependencies, TabPFN API token, local Ollama model, and SQLite WAL database. |
+| **`e2e`** | `python run.py e2e` | Runs complete end-to-end multi-agent fleet simulation with autonomic self-healing verification. |
+| **`demo`** | `python run.py demo` | Launches interactive rich terminal simulation of 4 concurrent autonomous agents. |
+| **`web`** | `python run.py web` | Starts the Streamlit Command Center on `http://localhost:8501`. |
+| **`mcp`** | `python run.py mcp` | Starts the Model Context Protocol (MCP) server for Claude Desktop / Cursor (`stdio` or `sse`). |
+| **`proxy`** | `python run.py proxy` | Starts the Zero-Code OpenAI-Compatible Reverse Proxy Gateway on port `8787`. |
+| **`hitl`** | `python run.py hitl list` | Lists or resolves pending Human-in-the-Loop operator approval requests. |
+| **`report`** | `python run.py report <session_id>` | Exports audit-ready forensic post-mortem incident report (Markdown or HTML). |
+| **`audit`** | `python run.py audit <session_id>` | Terminal forensic deep-dive into past agent step execution and risk telemetry. |
+
+---
+
 
 ## 🖥️ Live Fleet Simulation (CLI)
 

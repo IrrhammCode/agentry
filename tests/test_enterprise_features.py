@@ -313,9 +313,90 @@ def test_proxy_chat_completion_circuit_breaker(tmp_path):
     assert "CIRCUIT BREAKER" in body["error"]["message"]
 
 
+def test_proxy_blocks_critical_blast_radius(tmp_path):
+    """Test that the reverse proxy intercepts dangerous commands in tool_calls before execution."""
+    guard = AgentryGuard(
+        storage=AuditStorage(db_path=tmp_path / "proxy_blast.db"),
+        auto_fit=False,
+        raise_on_kill=False
+    )
+    proxy = OpenAIProxyHandler(guard=guard)
+
+    mock_resp = MagicMock()
+    mock_resp.status_code = 200
+    mock_resp.json.return_value = {
+        "id": "chatcmpl-test-blast",
+        "choices": [{
+            "message": {
+                "role": "assistant",
+                "content": None,
+                "tool_calls": [{
+                    "id": "call_1",
+                    "type": "function",
+                    "function": {
+                        "name": "bash",
+                        "arguments": '{"command": "rm -rf /"}'
+                    }
+                }]
+            }
+        }],
+        "usage": {"prompt_tokens": 100, "completion_tokens": 20}
+    }
+
+    with patch("httpx.Client.post", return_value=mock_resp):
+        status, body, headers = proxy.handle_chat_completion(
+            request_body={"model": "gpt-4o", "messages": [{"role": "user", "content": "Clean up"}]},
+            client_headers={"x-session-id": "blast_proxy_session"},
+            guard=guard
+        )
+
+    assert status == 429
+    assert headers.get("X-Agentry-Action") == "KILL"
+    assert headers.get("X-Agentry-Blast-Radius") == "CRITICAL"
+    assert "Critical destructive blast radius blocked" in body["error"]["message"]
+
+
+def test_proxy_redacts_secrets_in_completion(tmp_path):
+    """Test that the reverse proxy automatically masks API credentials in completions."""
+    guard = AgentryGuard(
+        storage=AuditStorage(db_path=tmp_path / "proxy_dlp.db"),
+        auto_fit=True,
+        raise_on_kill=False
+    )
+
+    proxy = OpenAIProxyHandler(guard=guard)
+
+    secret_key = "sk-proj-1234567890123456789012345678901234567890"
+    mock_resp = MagicMock()
+    mock_resp.status_code = 200
+    mock_resp.json.return_value = {
+        "id": "chatcmpl-test-dlp",
+        "choices": [{
+            "message": {
+                "role": "assistant",
+                "content": f"Here is your new key: {secret_key}"
+            }
+        }],
+        "usage": {"prompt_tokens": 100, "completion_tokens": 20}
+    }
+
+    with patch("httpx.Client.post", return_value=mock_resp):
+        status, body, headers = proxy.handle_chat_completion(
+            request_body={"model": "gpt-4o", "messages": [{"role": "user", "content": "Fetch key"}]},
+            client_headers={"x-session-id": "dlp_proxy_session"},
+            guard=guard
+        )
+
+    assert status == 200
+    returned_content = body["choices"][0]["message"]["content"]
+    assert secret_key not in returned_content
+    assert "[REDACTED_" in returned_content
+
+
 # ============================================================================
 # 5. Extended MCP Tools Tests
 # ============================================================================
+
 
 @pytest.mark.anyio
 async def test_mcp_extended_tools_registration():

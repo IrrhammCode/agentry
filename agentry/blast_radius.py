@@ -24,6 +24,19 @@ class BlastRadiusAssessment:
     violation_reason: Optional[str] = None
     matched_pattern: Optional[str] = None
 
+    @property
+    def is_critical(self) -> bool:
+        return self.category == "CRITICAL" or self.is_blocked
+
+    @property
+    def severity(self) -> str:
+        return self.category
+
+    @property
+    def remediation(self) -> str:
+        return self.violation_reason or "No remediation required."
+
+
 
 class BlastRadiusEvaluator:
     """
@@ -66,7 +79,7 @@ class BlastRadiusEvaluator:
         (r"(?i)\bDROP\s+VIEW\s+", "Dropping database view"),
     ]
 
-    def evaluate(self, tool_name: str, action_input: str) -> BlastRadiusAssessment:
+    def evaluate(self, tool_name: str, action_input: str, session_id: Optional[str] = None) -> BlastRadiusAssessment:
         """
         Evaluates a prospective tool action input to assess blast radius.
         """

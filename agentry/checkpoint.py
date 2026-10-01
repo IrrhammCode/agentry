@@ -168,6 +168,34 @@ class StateCheckpointer:
             "status": "SUCCESS" if not errors else "PARTIAL_SUCCESS"
         }
 
+    def snapshot(self, session_id: str, step_index: int, files: Sequence[Union[str, Path]]):
+        """Convenience alias to capture pre-edit snapshots for multiple files."""
+        snaps = []
+        for f in files:
+            snaps.append(self.capture_file_before_edit(session_id, step_index, f))
+        return snaps
+
+    def rollback(self, session_id: str, target_step: int):
+        """Rollback helper returning structured object with restored/deleted files."""
+        res = self.rollback_filesystem(session_id, target_step)
+        restored = [p for p in res["reverted_paths"] if not p.startswith("[DELETED_NEW_FILE]")]
+        deleted = [p.replace("[DELETED_NEW_FILE] ", "") for p in res["reverted_paths"] if p.startswith("[DELETED_NEW_FILE]")]
+        
+        class RollbackResult:
+            def __init__(self, success: bool, restored_files: list, deleted_files: list, errors: list):
+                self.success = success
+                self.restored_files = restored_files
+                self.deleted_files = deleted_files
+                self.errors = errors
+
+        return RollbackResult(
+            success=(len(res["errors"]) == 0),
+            restored_files=restored,
+            deleted_files=deleted,
+            errors=res["errors"]
+        )
+
+
     def cleanup_session(self, session_id: str):
         """Frees all snapshots and memory associated with a completed session."""
         if session_id in self._checkpoints:
@@ -176,3 +204,5 @@ class StateCheckpointer:
 
 # Global singleton instance
 state_checkpointer = StateCheckpointer()
+physical_checkpointer = state_checkpointer
+

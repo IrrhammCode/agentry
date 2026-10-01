@@ -11,10 +11,11 @@ from agentry.engine import TabPFNGuardrailEngine, StepRiskAssessment
 from agentry.agent import AgentrySentry, SentryDecision
 from agentry.guard import AgentryGuard, AgentHaltException, StepContext
 from agentry.healing import TrajectoryHealer, RewindPrescription, trajectory_healer
-from agentry.checkpoint import StateCheckpointer, state_checkpointer
+from agentry.checkpoint import StateCheckpointer, state_checkpointer, physical_checkpointer
 from agentry.blast_radius import BlastRadiusEvaluator, blast_radius_evaluator, BlastRadiusAssessment
-from agentry.dlp import SecretRedactionEngine, secret_redactor
-from agentry.swarm import SwarmDeadlockDetector, swarm_detector, SwarmDeadlockAlert
+from agentry.dlp import SecretRedactionEngine, secret_redactor, RedactionResult
+from agentry.swarm import SwarmDeadlockDetector, swarm_detector, swarm_deadlock_detector, SwarmDeadlockAlert
+
 from agentry.active_memory import ActiveExemplarBuffer, active_exemplar_memory, VerifiedIncidentExemplar
 from agentry.integrations import AgentryLangChainCallback, AgentryCrewHook
 
@@ -33,6 +34,7 @@ __all__ = [
     "trajectory_healer",
     "StateCheckpointer",
     "state_checkpointer",
+    "physical_checkpointer",
     "BlastRadiusEvaluator",
     "blast_radius_evaluator",
     "BlastRadiusAssessment",
@@ -40,6 +42,7 @@ __all__ = [
     "secret_redactor",
     "SwarmDeadlockDetector",
     "swarm_detector",
+    "swarm_deadlock_detector",
     "SwarmDeadlockAlert",
     "ActiveExemplarBuffer",
     "active_exemplar_memory",
@@ -47,3 +50,4 @@ __all__ = [
     "AgentryLangChainCallback",
     "AgentryCrewHook",
 ]
+

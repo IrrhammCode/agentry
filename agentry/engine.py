@@ -16,6 +16,8 @@ from sklearn.preprocessing import LabelEncoder
 from agentry.config import settings
 from agentry.telemetry import AgentStepTelemetry
 from agentry.utils import safe_int, safe_float, safe_str
+from agentry.active_memory import active_exemplar_memory
+
 
 logger = logging.getLogger("agentry.engine")
 
@@ -266,6 +268,24 @@ class TabPFNGuardrailEngine:
         else:
             failure_prob = round(float(np.max(probs)), 4)
 
+        # Calibrate with Active Exemplar In-Context Memory if available
+        exemplar_driver = None
+        try:
+            exemplars_df = active_exemplar_memory.get_exemplars_df()
+            if exemplars_df is not None and not exemplars_df.empty:
+                tool_matches = exemplars_df[exemplars_df["tool_name"] == str(step.tool_name)]
+                if not tool_matches.empty and "is_failure" in tool_matches.columns:
+                    active_fail_rate = float(tool_matches["is_failure"].mean())
+                    # Dynamic calibration: 80% TabPFN prior, 20% active exemplar empirical rate
+                    failure_prob = round(float(np.clip(0.80 * failure_prob + 0.20 * active_fail_rate, 0.0, 1.0)), 4)
+                    if active_fail_rate >= 0.70:
+                        exemplar_driver = f"Active exemplar memory: high historical failure rate ({active_fail_rate * 100:.0f}%) for tool '{step.tool_name}'"
+                elif "is_failure" in exemplars_df.columns:
+                    active_fail_rate = float(exemplars_df["is_failure"].mean())
+                    failure_prob = round(float(np.clip(0.95 * failure_prob + 0.05 * active_fail_rate, 0.0, 1.0)), 4)
+        except Exception as exc:
+            logger.debug("Failed active exemplar calibration: %s", exc)
+
         pred_class_idx = int(model_classes[np.argmax(probs)])
         predicted_mode = str(classes[pred_class_idx]) if pred_class_idx < len(classes) else "NORMAL"
 
@@ -281,6 +301,9 @@ class TabPFNGuardrailEngine:
 
         # Identify primary risk driver
         risk_driver = self._determine_primary_risk_driver(step, failure_prob, predicted_mode)
+        if exemplar_driver and failure_prob >= settings.risk_threshold_pause:
+            risk_driver = f"{risk_driver}; {exemplar_driver}" if risk_driver != "Nominal operational parameters." else exemplar_driver
+
 
         return StepRiskAssessment(
             session_id=row_dict["session_id"],

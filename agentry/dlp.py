@@ -7,9 +7,28 @@ before they are written to disk or sent to downstream LLMs.
 
 import re
 import logging
-from typing import Tuple, List, Dict, Any
+from dataclasses import dataclass, field
+from typing import Tuple, List, Dict, Any, Union
 
 logger = logging.getLogger("agentry.dlp")
+
+
+@dataclass
+class RedactionResult:
+    """Structured result from in-flight secret scanning and redaction."""
+    masked_text: str
+    redaction_count: int
+    detected_secrets: List[Dict[str, Any]] = field(default_factory=list)
+
+    def __iter__(self):
+        yield self.masked_text
+        yield self.redaction_count
+
+    def __getitem__(self, idx: int):
+        return (self.masked_text, self.redaction_count)[idx]
+
+    def __len__(self) -> int:
+        return 2
 
 
 class SecretRedactionEngine:
@@ -18,6 +37,7 @@ class SecretRedactionEngine:
     """
 
     PATTERNS: List[Tuple[str, str, re.Pattern]] = [
+
         # Anthropic API Keys (must precede generic OpenAI sk- pattern)
         ("ANTHROPIC_KEY", r"sk-ant-[a-zA-Z0-9_\-]{32,}", re.compile(r"sk-ant-[a-zA-Z0-9_\-]{32,}")),
         # OpenAI API Keys
@@ -47,22 +67,23 @@ class SecretRedactionEngine:
         ),
     ]
 
-    def redact(self, text: str) -> Tuple[str, int]:
+    def redact(self, text: str) -> RedactionResult:
         """
         Redacts all detected sensitive secrets from the input string.
         Returns:
-            Tuple[sanitized_text, redaction_count]
+            RedactionResult (supports unpacking as (sanitized_text, count))
         """
         if not text or not isinstance(text, str):
-            return text, 0
+            return RedactionResult(str(text or ""), 0, [])
 
         # Fast-path check: if text doesn't contain any secret triggers, skip regex scanning
         triggers = ("sk-", "gsk_", "ghp_", "AKIA", "ASIA", "AIza", "xox", "://", "PRIVATE KEY")
         if not any(t in text for t in triggers):
-            return text, 0
+            return RedactionResult(text, 0, [])
 
         sanitized = text
         total_redacted = 0
+        detected = []
 
         for key_type, _, pattern in self.PATTERNS:
             if key_type == "DB_CONN_STRING":
@@ -75,16 +96,20 @@ class SecretRedactionEngine:
                     rest = match.group(5)
                     return f"{proto}://{user}:[REDACTED_PASSWORD]@{rest}"
                 sanitized = pattern.sub(mask_db_pwd, sanitized)
+                detected.append({"type": key_type, "count": 1})
             else:
                 matches = pattern.findall(sanitized)
                 if matches:
-                    total_redacted += len(matches)
+                    count = len(matches)
+                    total_redacted += count
+                    detected.append({"type": key_type, "count": count})
                     sanitized = pattern.sub(f"[REDACTED_{key_type}]", sanitized)
 
         if total_redacted > 0:
             logger.info("DLP Engine: Redacted %d sensitive secret(s) from in-flight payload", total_redacted)
 
-        return sanitized, total_redacted
+        return RedactionResult(sanitized, total_redacted, detected)
+
 
 
 # Global singleton instance

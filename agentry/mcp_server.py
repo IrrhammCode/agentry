@@ -23,8 +23,14 @@ from agentry.report import generate_incident_report, export_incident_report_to_f
 from agentry.hitl import hitl_gateway
 from agentry.healing import trajectory_healer
 from agentry.budget import budget_governor
+from agentry.blast_radius import blast_radius_evaluator
+from agentry.dlp import secret_redactor
+from agentry.swarm import swarm_deadlock_detector
+from agentry.checkpoint import physical_checkpointer
+from agentry.active_memory import active_exemplar_memory
 
 logger = logging.getLogger("agentry.mcp")
+
 
 # Create MCP Server instance
 mcp = MCPServer(
@@ -362,9 +368,134 @@ def check_fleet_and_session_budget(
     return result
 
 
+@mcp.tool(
+    name="agentry_evaluate_blast_radius",
+    description=(
+        "Evaluates the destructive blast radius of a proposed tool action (e.g. bash commands, "
+        "SQL queries, file deletions) before execution. Detects critical hazards like unconstrained "
+        "rm -rf, DROP DATABASE, mkfs, reverse shells, and unauthorized root mutations."
+    )
+)
+def evaluate_blast_radius(
+    tool_name: str,
+    action_input: str,
+    session_id: str = "default_session"
+) -> Dict[str, Any]:
+    """Evaluates semantic blast radius of an action."""
+    from dataclasses import asdict
+    assessment = blast_radius_evaluator.evaluate(
+        tool_name=str(tool_name or ""),
+        action_input=str(action_input or ""),
+        session_id=str(session_id or "default_session")
+    )
+    return {
+        "status": "ok",
+        "tool_name": tool_name,
+        "is_critical": assessment.is_critical,
+        "severity": assessment.severity,
+        "matched_rules": [assessment.matched_pattern] if assessment.matched_pattern else [],
+        "remediation": assessment.remediation,
+        "assessment": asdict(assessment)
+    }
+
+
+@mcp.tool(
+    name="agentry_redact_secrets",
+    description=(
+        "In-flight Data Loss Prevention (DLP) scanner. Detects and masks credentials, API keys "
+        "(OpenAI, Anthropic, Groq, GitHub PAT, AWS, GCP), SSH private keys, and DB connection URIs."
+    )
+)
+def redact_secrets(text: str) -> Dict[str, Any]:
+    """Redacts high-risk secrets and credentials from prompts or tool outputs."""
+    result = secret_redactor.redact(str(text or ""))
+    return {
+        "status": "ok",
+        "redacted_text": result.masked_text,
+        "secrets_found_count": result.redaction_count,
+        "secret_types": [s["type"] for s in result.detected_secrets],
+        "details": result.detected_secrets
+    }
+
+
+@mcp.tool(
+    name="agentry_check_swarm_deadlock",
+    description=(
+        "Swarm coordination deadlock detector. Evaluates delegation handoffs between autonomous agents "
+        "to prevent infinite ping-pong loops (A -> B -> A -> B) and multi-agent cyclic deadlocks."
+    )
+)
+def check_swarm_deadlock(
+    session_id: str,
+    from_agent: str,
+    to_agent: str,
+    task_snippet: str = ""
+) -> Dict[str, Any]:
+    """Detects multi-agent circular delegation or deadlock."""
+    from dataclasses import asdict
+    sid = str(session_id or "default_session")
+    report = swarm_deadlock_detector.record_delegation(
+        session_id=sid,
+        from_agent=str(from_agent or "agent_a"),
+        to_agent=str(to_agent or "agent_b"),
+        task_snippet=str(task_snippet or "")
+    )
+    if report is not None:
+        return {
+            "status": "ok",
+            "is_deadlocked": report.is_deadlocked,
+            "deadlock_type": "PING_PONG" if report.cycle_length == 2 else "CYCLIC_DEADLOCK",
+            "cycle_path": report.cycle_agents,
+            "hops_count": report.total_delegation_hops,
+            "intervention": report.recommendation,
+            "report": asdict(report)
+        }
+    hops = swarm_deadlock_detector.get_session_hops(sid)
+    return {
+        "status": "ok",
+        "is_deadlocked": False,
+        "deadlock_type": "NONE",
+        "cycle_path": [],
+        "hops_count": hops,
+        "intervention": "PROCEED",
+        "report": None
+    }
+
+
+
+@mcp.tool(
+    name="agentry_rollback_filesystem",
+    description=(
+        "Autonomously rolls back physical filesystem mutations made by an autonomous agent during an incident. "
+        "Restores modified files to their pre-incident state and deletes newly created poisoned files."
+    )
+)
+def rollback_filesystem(
+    session_id: str,
+    target_step: int = 0
+) -> Dict[str, Any]:
+    """Rolls back filesystem to checkpoint before target_step."""
+    res = physical_checkpointer.rollback(
+        session_id=str(session_id),
+        target_step=int(target_step)
+    )
+    return {
+        "status": "ok" if res.success else "error",
+        "session_id": session_id,
+        "target_step": target_step,
+        "success": res.success,
+        "restored_files_count": len(res.restored_files),
+        "deleted_files_count": len(res.deleted_files),
+        "restored_files": res.restored_files,
+        "deleted_files": res.deleted_files,
+        "errors": res.errors
+    }
+
+
 # ============================================================================
 # MCP Resources
 # ============================================================================
+
 
 @mcp.resource("fleet://metrics")
 def fleet_metrics_resource() -> str:
@@ -395,6 +526,16 @@ def fleet_budget_resource() -> str:
     from dataclasses import asdict
     status = budget_governor.check_fleet_budget()
     return json.dumps(asdict(status), indent=2)
+
+
+@mcp.resource("fleet://active-exemplars")
+def fleet_active_exemplars_resource() -> str:
+    """Exposes buffered in-context incident exemplars for TabPFN calibration."""
+    df = active_exemplar_memory.get_exemplars_df()
+    if df is None or df.empty:
+        return json.dumps({"count": 0, "exemplars": []})
+    return json.dumps({"count": len(df), "exemplars": df.to_dict(orient="records")}, indent=2)
+
 
 
 # ============================================================================

@@ -126,3 +126,129 @@ async def test_mcp_resources(shared_guard):
     # read_resource returns list of content items (TextResourceContents or blob)
     text_content = metric_content[0].text if hasattr(metric_content[0], "text") else str(metric_content[0])
     assert "total_audited_steps" in text_content
+
+
+@pytest.mark.anyio
+async def test_mcp_evaluate_blast_radius(shared_guard):
+    """Test evaluating blast radius via MCP tool call."""
+    # Critical command
+    res = await mcp.call_tool("agentry_evaluate_blast_radius", {
+        "tool_name": "bash",
+        "action_input": "rm -rf /"
+    })
+    assert not res.is_error
+    data = res.structured_content
+    if "result" in data:
+        data = data["result"]
+    assert data["is_critical"] is True
+    assert data["severity"] == "CRITICAL"
+
+    # Safe command
+    res_safe = await mcp.call_tool("agentry_evaluate_blast_radius", {
+        "tool_name": "bash",
+        "action_input": "ls -la"
+    })
+    assert not res_safe.is_error
+    data_safe = res_safe.structured_content
+    if "result" in data_safe:
+        data_safe = data_safe["result"]
+    assert data_safe["is_critical"] is False
+    assert data_safe["severity"] in ["NONE", "LOW"]
+
+
+@pytest.mark.anyio
+async def test_mcp_redact_secrets(shared_guard):
+    """Test DLP secret masking via MCP tool call."""
+    raw_prompt = "Export OPENAI_API_KEY=sk-abc123456789012345678901234567890123456789 to run tests"
+    res = await mcp.call_tool("agentry_redact_secrets", {"text": raw_prompt})
+    assert not res.is_error
+    data = res.structured_content
+    if "result" in data:
+        data = data["result"]
+    assert data["secrets_found_count"] >= 1
+    assert "sk-abc123456789" not in data["redacted_text"]
+    assert "[REDACTED_" in data["redacted_text"]
+
+
+@pytest.mark.anyio
+async def test_mcp_check_swarm_deadlock(shared_guard):
+    """Test swarm deadlock watchdog via MCP tool call."""
+    session = "mcp_swarm_test_01"
+    # Hop 1: A -> B
+    res1 = await mcp.call_tool("agentry_check_swarm_deadlock", {
+        "session_id": session,
+        "from_agent": "planner",
+        "to_agent": "coder"
+    })
+    assert not res1.is_error
+
+    # Hop 2: B -> A
+    res2 = await mcp.call_tool("agentry_check_swarm_deadlock", {
+        "session_id": session,
+        "from_agent": "coder",
+        "to_agent": "planner"
+    })
+    assert not res2.is_error
+
+    # Hop 3: A -> B
+    res3 = await mcp.call_tool("agentry_check_swarm_deadlock", {
+        "session_id": session,
+        "from_agent": "planner",
+        "to_agent": "coder"
+    })
+    assert not res3.is_error
+
+    # Hop 4: B -> A (cycle repeated 2 times)
+    res4 = await mcp.call_tool("agentry_check_swarm_deadlock", {
+        "session_id": session,
+        "from_agent": "coder",
+        "to_agent": "planner"
+    })
+    assert not res4.is_error
+    data = res4.structured_content
+    if "result" in data:
+        data = data["result"]
+    assert data["is_deadlocked"] is True
+    assert data["deadlock_type"] == "PING_PONG"
+
+
+@pytest.mark.anyio
+async def test_mcp_rollback_filesystem(shared_guard, tmp_path):
+    """Test physical checkpoint rollback via MCP tool call."""
+    from agentry.checkpoint import physical_checkpointer
+    test_session = "mcp_rollback_test"
+    target_file = tmp_path / "mcp_test.txt"
+    target_file.write_text("v1_original", encoding="utf-8")
+
+    # Snapshot step 1 before mutation
+    physical_checkpointer.snapshot(test_session, step_index=1, files=[target_file])
+
+    # Mutate at step 1
+    target_file.write_text("v2_poisoned", encoding="utf-8")
+
+    # Call rollback tool to target_step 0
+    res = await mcp.call_tool("agentry_rollback_filesystem", {
+        "session_id": test_session,
+        "target_step": 0
+    })
+    assert not res.is_error
+    data = res.structured_content
+    if "result" in data:
+        data = data["result"]
+    assert data["success"] is True
+    assert target_file.read_text(encoding="utf-8") == "v1_original"
+
+
+
+@pytest.mark.anyio
+async def test_mcp_active_exemplars_resource(shared_guard):
+    """Test reading active exemplars MCP resource."""
+    resources = await mcp.list_resources()
+    uris = [str(r.uri) for r in resources]
+    assert "fleet://active-exemplars" in uris
+
+    exemplar_content = await mcp.read_resource("fleet://active-exemplars")
+    assert exemplar_content is not None
+    text_content = exemplar_content[0].text if hasattr(exemplar_content[0], "text") else str(exemplar_content[0])
+    assert "exemplars" in text_content
+

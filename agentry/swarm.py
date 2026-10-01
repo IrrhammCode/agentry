@@ -101,11 +101,17 @@ class SwarmDeadlockDetector:
         """Returns total delegation hops recorded for session."""
         return len(self._delegation_history.get(session_id, []))
 
+    # Alias for API uniformity
+    record_delegation = record_transfer
+
     def reset_session(self, session_id: str):
         """Clears delegation tracking for a completed session."""
         if session_id in self._delegation_history:
             del self._delegation_history[session_id]
 
 
+
 # Global singleton instance
 swarm_detector = SwarmDeadlockDetector()
+swarm_deadlock_detector = swarm_detector
+
