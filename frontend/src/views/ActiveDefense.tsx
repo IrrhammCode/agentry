@@ -49,7 +49,7 @@ export const ActiveDefense: React.FC = () => {
       <div>
         <h2 className="text-2xl font-display font-bold text-white flex items-center gap-2">
           <ShieldAlert className="w-6 h-6 text-sentry-red" />
-          Active Defense, Blast Radius & In-Flight DLP Inspector
+          <span className="animate-text-shimmer">Active Defense, Blast Radius & In-Flight DLP Inspector</span>
         </h2>
         <p className="text-xs text-slate-400 font-mono">
           Pre-Execution Interception Pillars • Zero Cloud Leakage • Swarm Deadlock Prevention
@@ -68,9 +68,10 @@ export const ActiveDefense: React.FC = () => {
           </div>
           <button 
             onClick={handleMask}
-            className="px-4 py-2 rounded-xl bg-sentry-violet/20 hover:bg-violet-500/30 text-sentry-violet border border-violet-500/30 text-xs font-mono font-bold transition-all"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-sentry-violet/20 hover:bg-violet-500/30 text-sentry-violet border border-violet-500/30 text-xs font-mono font-bold transition-all"
           >
-            ⚡ Re-run Sanitizer
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>Re-run Sanitizer</span>
           </button>
         </div>
 
@@ -132,15 +133,15 @@ export const ActiveDefense: React.FC = () => {
             {!deadlockBroken ? (
               <>
                 <CornerDownLeft className="w-6 h-6 text-red-500 animate-pulse" />
-                <div className="p-3 rounded-lg bg-red-950/60 border border-red-500 text-red-300 text-center font-bold">
-                  🛑 CYCLE DETECTED (Length: 2)<br />
-                  Intervention: Force Terminal Finalizer
+                <div className="p-3 rounded-lg bg-red-950/60 border border-red-500 text-red-300 text-center font-bold text-xs flex flex-col items-center gap-1">
+                  <span className="flex items-center gap-1.5"><AlertOctagon className="w-4 h-4 text-red-400" /> CYCLE DETECTED (Length: 2)</span>
+                  <span className="text-[11px] font-normal text-slate-300">Intervention: Force Terminal Finalizer</span>
                 </div>
               </>
             ) : (
-              <div className="p-3 rounded-lg bg-emerald-950/60 border border-emerald-500 text-emerald-300 text-center font-bold">
-                ✓ LOOP BROKEN<br />
-                Directed graph resolved with terminal artifact.
+              <div className="p-3 rounded-lg bg-emerald-950/60 border border-emerald-500 text-emerald-300 text-center font-bold text-xs flex flex-col items-center gap-1">
+                <span className="flex items-center gap-1.5"><Check className="w-4 h-4 text-sentry-emerald" /> LOOP RESOLVED</span>
+                <span className="text-[11px] font-normal text-slate-300">Directed graph resolved with terminal artifact.</span>
               </div>
             )}
           </div>

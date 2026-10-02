@@ -70,7 +70,7 @@ export const FatalTraps: React.FC = () => {
           <span>WHY STATIC HEURISTICS ALWAYS FAIL</span>
         </div>
         <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-white mb-3">
-          The 3 Fatal Traps of Autonomous Agent Fleets
+          <span className="animate-text-shimmer">The 3 Fatal Traps of Autonomous Agent Fleets</span>
         </h2>
         <p className="text-slate-300 max-w-2xl mx-auto text-sm sm:text-base leading-relaxed">
           Autonomous agents operate at machine speed in high-dimensional codebases and APIs. Without a foundation model tabular sentry, small errors spiral into catastrophic failures.

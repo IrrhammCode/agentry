@@ -11,7 +11,10 @@ import {
   Sparkles,
   Zap,
   Terminal,
-  RotateCcw
+  RotateCcw,
+  ShieldAlert,
+  Search,
+  Timer
 } from 'lucide-react';
 
 interface LayerDetail {
@@ -20,6 +23,7 @@ interface LayerDetail {
   badge: string;
   badgeColor: string;
   analogy: string;
+  analogyIcon: 'shield' | 'brain' | 'clock';
   title: string;
   subtitle: string;
   description: string;
@@ -34,7 +38,8 @@ const LAYERS: LayerDetail[] = [
     label: 'LAYER 1',
     badge: 'INSTANT FILTER (<1ms)',
     badgeColor: 'bg-sentry-cyan/20 text-sentry-cyan border-sentry-cyan/30',
-    analogy: '🛡️ "Front Door Sentry"',
+    analogy: 'Front Door Sentry',
+    analogyIcon: 'shield',
     title: 'In-Flight Pre-Execution Interception',
     subtitle: 'Deterministic semantic sandbox & data loss prevention executed before shell spawn',
     description: 'Just like a physical security gate at an airport, Layer 1 inspects incoming commands and outbound payloads deterministically before they execute. Destructive shell actions (like rm -rf or DROP DATABASE) and credential leaks (OpenAI tokens, AWS keys) are blocked in under 1 millisecond before the OS shell ever spawns.',
@@ -51,7 +56,8 @@ const LAYERS: LayerDetail[] = [
     label: 'LAYER 2',
     badge: 'CORE TABPFN-3.5 BRAIN',
     badgeColor: 'bg-emerald-500/20 text-sentry-emerald border-emerald-500/30 glow-emerald',
-    analogy: '🧠 "Tabular AI Detective"',
+    analogy: 'Tabular AI Detective',
+    analogyIcon: 'brain',
     title: 'Prior Labs TabPFN-3.5 Tabular Intelligence',
     subtitle: 'Predicts agent anomalies and runaways in 14.8ms with zero prompt transmission',
     description: 'This is Agentry\'s secret weapon. Rather than relying on slow, expensive cloud LLMs that compromise data privacy, Agentry utilizes Prior Labs TabPFN-3.5 foundation model. TabPFN evaluates 16 numerical telemetry metrics (error streaks, repetition entropy, token burn rate, step velocity) to predict whether an agent is failing or trapped in an unproductive loop.',
@@ -68,7 +74,8 @@ const LAYERS: LayerDetail[] = [
     label: 'LAYER 3',
     badge: 'AUTONOMIC HEALER',
     badgeColor: 'bg-violet-500/20 text-sentry-violet border-violet-500/30',
-    analogy: '⏳ "Autonomous Time Machine"',
+    analogy: 'Autonomous Time Machine',
+    analogyIcon: 'clock',
     title: 'Closed-Loop Autonomic Self-Healing',
     subtitle: 'Rewinds physical disk state, prunes poisoned memory, and guides rogue agents',
     description: 'When an agent spirals into repeated errors, Agentry does more than just kill it — the system automatically rolls back the filesystem to the last known healthy snapshot, prunes hallucinated turns from the agent\'s memory context, and injects counterfactual steering directives so the agent resumes on a healthy trajectory.',
@@ -86,6 +93,14 @@ export const DefenseArchitecture: React.FC = () => {
   const [activeLayerId, setActiveLayerId] = useState<number>(2);
   const currentLayer = LAYERS.find(l => l.id === activeLayerId) || LAYERS[1];
 
+  const renderAnalogyIcon = (icon: 'shield' | 'brain' | 'clock') => {
+    switch (icon) {
+      case 'shield': return <ShieldCheck className="w-4 h-4 text-sentry-cyan" />;
+      case 'brain': return <Cpu className="w-4 h-4 text-sentry-emerald" />;
+      case 'clock': return <History className="w-4 h-4 text-sentry-violet" />;
+    }
+  };
+
   return (
     <section id="architecture" className="py-20 px-4 lg:px-8 border-y border-white/10 bg-surface-1/30 relative">
       <div className="max-w-6xl mx-auto">
@@ -97,10 +112,10 @@ export const DefenseArchitecture: React.FC = () => {
             <span>DEFENSE-IN-DEPTH ARCHITECTURE</span>
           </div>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-white mb-3">
-            The 3-Layer Defense-in-Depth Architecture
+            <span className="animate-text-shimmer">The 3-Layer Defense-in-Depth Architecture</span>
           </h2>
           <p className="text-slate-300 max-w-2xl mx-auto text-sm sm:text-base leading-relaxed">
-            Click each layer below to see how deterministic zero-latency interceptors, Prior Labs <span className="text-sentry-emerald font-semibold">TabPFN-3.5</span> foundation model, and autonomic self-healing work together to safeguard your agent fleet.
+            Click each layer below to inspect how deterministic zero-latency interceptors, Prior Labs <span className="text-sentry-emerald font-semibold">TabPFN-3.5</span> foundation model, and autonomic self-healing work together to safeguard your agent fleet.
           </p>
         </div>
 
@@ -114,10 +129,10 @@ export const DefenseArchitecture: React.FC = () => {
               <button
                 key={layer.id}
                 onClick={() => setActiveLayerId(layer.id)}
-                className={`p-5 rounded-2xl text-left border transition-all relative overflow-hidden group ${
+                className={`p-5 rounded-2xl text-left border transition-all duration-300 relative overflow-hidden group ${
                   isSelected
                     ? 'bg-surface-2 border-sentry-emerald shadow-xl glow-emerald scale-[1.02]'
-                    : 'glass-card hover:bg-surface-2/80 border-white/10 hover:border-white/20'
+                    : 'glass-card hover:bg-surface-2/80 border-white/10 hover:border-white/20 hover:-translate-y-0.5'
                 }`}
               >
                 <div className="flex items-center justify-between mb-3">
@@ -130,7 +145,8 @@ export const DefenseArchitecture: React.FC = () => {
                 </div>
 
                 <div className="text-sm font-mono text-sentry-cyan mb-1 flex items-center gap-1.5">
-                  <span>{layer.analogy}</span>
+                  {renderAnalogyIcon(layer.analogyIcon)}
+                  <span>"{layer.analogy}"</span>
                 </div>
 
                 <h3 className="text-base font-bold text-white mb-2 group-hover:text-sentry-emerald transition-colors">
@@ -157,6 +173,7 @@ export const DefenseArchitecture: React.FC = () => {
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 pb-6 border-b border-white/10">
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-mono text-sentry-cyan mb-2">
+                {renderAnalogyIcon(currentLayer.analogyIcon)}
                 <span>{currentLayer.label} • {currentLayer.analogy}</span>
               </div>
               <h3 className="text-2xl sm:text-3xl font-display font-bold text-white mb-2">
@@ -174,7 +191,7 @@ export const DefenseArchitecture: React.FC = () => {
               </div>
               <div className="text-center px-3">
                 <div className="text-[10px] text-slate-400">CIRCUIT STATUS</div>
-                <div className="text-xs font-bold text-emerald-400 flex items-center gap-1 justify-center">
+                <div className="text-xs font-bold text-emerald-400 flex items-center gap-1.5 justify-center">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
                   ARMED & ACTIVE
                 </div>

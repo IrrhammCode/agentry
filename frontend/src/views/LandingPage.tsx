@@ -45,7 +45,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchConsole }) => 
           {/* Main H1 Headline */}
           <h1 className="text-4xl sm:text-6xl lg:text-7xl font-display font-extrabold tracking-tight text-white mb-6 leading-[1.1]">
             Stop AI Agents from Burning Your <br className="hidden sm:inline" />
-            <span className="text-gradient">Cloud, Code, and Cash.</span>
+            <span className="animate-text-shimmer animate-text-glow">Cloud, Code, and Cash.</span>
           </h1>
 
           {/* Subheadline */}
@@ -162,8 +162,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchConsole }) => 
                   <span className="text-sentry-red">t=5</span>
                   <span>BLAST RADIUS TRIP: run_command("rm -rf /var/cache/*")</span>
                 </div>
-                <span className="text-white bg-red-600 px-2 py-0.5 rounded text-[11px] font-bold">
-                  🛑 CIRCUIT-BREAKER KILL
+                <span className="text-white bg-red-600 px-2 py-0.5 rounded text-[11px] font-bold flex items-center gap-1.5">
+                  <ShieldAlert className="w-3.5 h-3.5" />
+                  <span>CIRCUIT-BREAKER KILL</span>
                 </span>
               </div>
             </div>
@@ -175,8 +176,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchConsole }) => 
                 <span>Autonomic Healer Engaged:</span>
                 <span className="text-slate-300 font-normal">Physical snapshot rollback to t=2 • Injected counterfactual prompt directive</span>
               </div>
-              <div className="font-mono text-[11px] text-sentry-cyan font-bold">
-                ⚡ Recovery Time: 12ms • Cost Saved: $1.42
+              <div className="font-mono text-[11px] text-sentry-cyan font-bold flex items-center gap-1.5">
+                <Zap className="w-3.5 h-3.5 text-sentry-cyan" />
+                <span>Recovery Time: 12ms • Cost Saved: $1.42</span>
               </div>
             </div>
 

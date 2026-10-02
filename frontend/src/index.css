@@ -23,6 +23,7 @@ body {
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .glass-card:hover {
@@ -45,6 +46,67 @@ body {
   background: linear-gradient(135deg, #FFFFFF 20%, #60EFFF 65%, #00FF87 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+/* Animated Text Shimmer */
+@keyframes textShimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-text-shimmer {
+  background: linear-gradient(90deg, #FFFFFF 0%, #60EFFF 30%, #00FF87 50%, #60EFFF 70%, #FFFFFF 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: textShimmer 4s ease infinite;
+}
+
+.animate-text-glow {
+  animation: textGlow 3s ease-in-out infinite alternate;
+}
+
+@keyframes textGlow {
+  from {
+    filter: drop-shadow(0 0 6px rgba(96, 239, 255, 0.25));
+  }
+  to {
+    filter: drop-shadow(0 0 16px rgba(0, 255, 135, 0.5));
+  }
+}
+
+/* Interactive Ripple Pulses */
+.pulse-emerald {
+  animation: pulseEmerald 2.5s infinite;
+}
+
+@keyframes pulseEmerald {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(0, 255, 135, 0.45);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(0, 255, 135, 0);
+  }
+}
+
+.pulse-cyan {
+  animation: pulseCyan 2.5s infinite;
+}
+
+@keyframes pulseCyan {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(96, 239, 255, 0.45);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(96, 239, 255, 0);
+  }
 }
 
 /* Custom Scrollbar */

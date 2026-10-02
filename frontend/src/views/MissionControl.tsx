@@ -11,7 +11,8 @@ import {
   PauseCircle, 
   Check, 
   Shuffle, 
-  XOctagon 
+  XOctagon,
+  ShieldAlert 
 } from 'lucide-react';
 
 export const MissionControl: React.FC = () => {
@@ -27,23 +28,23 @@ export const MissionControl: React.FC = () => {
 
   const handleApprove = () => {
     setHitlCount(0);
-    showToast('✓ Action Approved: Agent devops_db_migration_prod resumed with execution envelope.');
+    showToast('Action Approved: Agent devops_db_migration_prod resumed with execution envelope.');
   };
 
   const handleSteerSubmit = () => {
     setSteerModalOpen(false);
     setHitlCount(0);
-    showToast(`🔀 Steering Directive Dispatched: "${steerDirective}"`);
+    showToast(`Steering Directive Dispatched: "${steerDirective}"`);
   };
 
   const handleAbort = () => {
     setHitlCount(0);
-    showToast('🛑 Session Aborted: Trajectory killed and disk rolled back to initial commit.');
+    showToast('Session Aborted: Trajectory killed and disk rolled back to initial commit.');
   };
 
   const handleEmergencyStop = () => {
-    if (window.confirm('🛑 CRITICAL EMERGENCY OVERRIDE:\nAre you sure you want to FREEZE ALL 4 running agent instances immediately?')) {
-      showToast('🛑 GLOBAL KILL SWITCH TRIPPED: All 4 agent execution loops suspended.');
+    if (window.confirm('CRITICAL EMERGENCY OVERRIDE:\nAre you sure you want to FREEZE ALL 4 running agent instances immediately?')) {
+      showToast('GLOBAL KILL SWITCH TRIPPED: All 4 agent execution loops suspended.');
     }
   };
 
@@ -171,8 +172,9 @@ export const MissionControl: React.FC = () => {
                 </div>
               </div>
             </div>
-            <div className="p-2.5 rounded bg-red-950/50 font-mono text-[10px] text-red-300 truncate">
-              🛑 Blast radius kill: root cleanup blocked
+            <div className="p-2.5 rounded bg-red-950/50 font-mono text-[10px] text-red-300 truncate flex items-center gap-1.5">
+              <ShieldAlert className="w-3.5 h-3.5 text-red-400 shrink-0" />
+              <span>Blast radius kill: root cleanup blocked</span>
             </div>
           </div>
 
@@ -402,8 +404,9 @@ export const MissionControl: React.FC = () => {
             </div>
           </div>
         ) : (
-          <div className="p-8 text-center rounded-xl bg-void/40 border border-white/5 font-mono text-xs text-slate-500">
-            ✓ No pending escalations in queue. Autonomous agents operating within safety envelope.
+          <div className="p-8 text-center rounded-xl bg-void/40 border border-white/5 font-mono text-xs text-slate-400 flex items-center justify-center gap-2">
+            <Check className="w-4 h-4 text-sentry-emerald" />
+            <span>No pending escalations in queue. Autonomous agents operating within safety envelope.</span>
           </div>
         )}
       </div>

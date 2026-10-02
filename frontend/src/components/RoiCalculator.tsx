@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calculator } from 'lucide-react';
+import { Calculator, Sparkles } from 'lucide-react';
 
 export const RoiCalculator: React.FC = () => {
   const [agents, setAgents] = useState<number>(20);
@@ -19,7 +19,7 @@ export const RoiCalculator: React.FC = () => {
           <span>ECONOMIC VALUE MODEL</span>
         </div>
         <h2 className="text-3xl sm:text-4xl font-display font-bold text-white mb-3">
-          Calculate Your Fleet Savings
+          <span className="animate-text-shimmer">Calculate Your Fleet Savings</span>
         </h2>
         <p className="text-slate-400 max-w-2xl mx-auto text-sm sm:text-base">
           See how much wasted LLM tokens, developer debugging hours, and cloud compute Agentry saves your team each month.
@@ -72,8 +72,9 @@ export const RoiCalculator: React.FC = () => {
               </div>
             </div>
 
-            <div className="p-4 rounded-xl bg-void/50 border border-white/5 text-xs text-slate-400">
-              💡 <em>Based on empirical SWE-bench benchmark metrics: 23.4% of rogue steps in unguarded agent runs are unrecoverable loops and hallucinated retry cycles.</em>
+            <div className="p-4 rounded-xl bg-void/50 border border-white/5 text-xs text-slate-400 flex items-start gap-2">
+              <Sparkles className="w-4 h-4 text-sentry-emerald shrink-0 mt-0.5" />
+              <span><em>Based on empirical SWE-bench benchmark metrics: 23.4% of rogue steps in unguarded agent runs are unrecoverable loops and hallucinated retry cycles.</em></span>
             </div>
           </div>
 
