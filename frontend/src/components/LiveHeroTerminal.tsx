@@ -114,7 +114,7 @@ export const LiveHeroTerminal: React.FC = () => {
       <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-sentry-cyan to-transparent animate-beam-sweep z-30" />
 
       {/* Terminal Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-surface-1/95 border-b border-white/10">
+      <div className="flex items-center justify-between px-4 py-3 bg-[#0B0B0C] border-b border-white/10">
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-red-500/80" />
           <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
@@ -150,7 +150,7 @@ export const LiveHeroTerminal: React.FC = () => {
       </div>
 
       {/* Terminal Telemetry Body */}
-      <div className="p-5 font-mono text-xs space-y-3 bg-void/90 min-h-[260px] relative">
+      <div className="p-5 font-mono text-xs space-y-3 bg-black min-h-[260px] relative">
         {STREAM_STEPS.slice(0, visibleCount).map((item, idx) => {
           const isLatest = idx === visibleCount - 1;
           return (
@@ -225,7 +225,7 @@ export const LiveHeroTerminal: React.FC = () => {
 
       {/* Autonomic Healer Ribbon */}
       {showHealer ? (
-        <div className="px-5 py-3 bg-gradient-to-r from-emerald-950 via-surface-1 to-cyan-950 border-t border-emerald-500/40 flex items-center justify-between flex-wrap gap-2 text-xs animate-fade-in shadow-inner">
+        <div className="px-5 py-3 bg-[#0B0B0C] border-t border-emerald-500/40 flex items-center justify-between flex-wrap gap-2 text-xs animate-fade-in shadow-inner">
           <div className="flex items-center gap-2 text-sentry-emerald font-semibold">
             <Sparkles className="w-4 h-4 animate-spin" />
             <span>Autonomic Healer Engaged:</span>
@@ -233,13 +233,13 @@ export const LiveHeroTerminal: React.FC = () => {
               Physical snapshot restored to <strong className="text-white font-mono">t=2</strong> • Injected counterfactual steering directive
             </span>
           </div>
-          <div className="font-mono text-[11px] text-sentry-cyan font-bold flex items-center gap-1.5 bg-void/60 px-2.5 py-1 rounded-lg border border-cyan-500/20">
+          <div className="font-mono text-[11px] text-sentry-cyan font-bold flex items-center gap-1.5 bg-black px-2.5 py-1 rounded-lg border border-cyan-500/20">
             <Zap className="w-3.5 h-3.5 text-sentry-cyan animate-pulse" />
             <span>Rollback Time: 12ms • Capital Saved: $1.42</span>
           </div>
         </div>
       ) : (
-        <div className="px-5 py-2.5 bg-surface-1/90 border-t border-white/5 flex items-center justify-between text-[11px] font-mono text-slate-500">
+        <div className="px-5 py-2.5 bg-[#0B0B0C] border-t border-white/5 flex items-center justify-between text-[11px] font-mono text-slate-500">
           <span>TabPFN-3.5 Multiclass Foundation Model</span>
           <span>Autonomous Circuit-Breaker: ARMED</span>
         </div>

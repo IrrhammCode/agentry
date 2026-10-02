@@ -10,9 +10,9 @@ export default {
       colors: {
         void: '#000000',
         surface: {
-          1: '#0A0D14',
-          2: '#121620',
-          3: '#1A202E',
+          1: '#0B0B0C',
+          2: '#141416',
+          3: '#1F1F23',
         },
         sentry: {
           emerald: '#00FF87',
