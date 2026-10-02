@@ -30,30 +30,30 @@ const TRAPS: Trap[] = [
     icon: <Repeat className="w-6 h-6 text-amber-400" />,
     iconBg: 'bg-amber-500/10 border-amber-500/20',
     title: 'The $1,000 Infinite Retry Spiral',
-    subtitle: 'Agen AI Mengulang Error 40x Saat Anda Tidur',
-    realWorldStory: 'Agen AI Anda gagal menjalankan unit test karena ada koma yang hilang. Alih-alih berhenti, agen terus mengedit baris yang salah dan menjalankan tes yang sama 40 kali berturut-turut. Histori percakapan membengkak hingga 128k token.',
-    damageCost: 'Tagihan cloud membengkak $800 - $1,500 dalam satu malam tanpa hasil.',
-    agentryFix: 'TabPFN mengenali entropi pengulangan multivariate pada langkah ke-5, memutus loop buntu, dan menghentikan pengeluaran token secara instan.'
+    subtitle: 'AI Agents Repeating Crashes 40 Times While You Sleep',
+    realWorldStory: 'An AI agent fails a unit test due to a missing comma. Instead of stopping, the agent edits the wrong line and reruns the same test 40 times in a row. Context balloons to 128k tokens, silently burning through your budget.',
+    damageCost: 'Cloud bills inflate by $800 - $1,500 overnight with zero working code.',
+    agentryFix: 'TabPFN identifies repetitive multivariate step entropy at step 5, breaks the loop, and halts token consumption immediately.'
   },
   {
     id: 'blast',
     icon: <Bomb className="w-6 h-6 text-sentry-red" />,
     iconBg: 'bg-red-500/10 border-red-500/20',
     title: 'Irreversible Blast Radius',
-    subtitle: 'Perintah Terminal Yang Menghapus Seluruh Server',
-    realWorldStory: 'Diberikan akses ke terminal bash untuk membersihkan cache, agen berhalusinasi dan menjalankan "rm -rf /" atau menghapus database utama ("DROP TABLE users"). Kerusakan fisik terjadi sebelum manusia sempat menekan tombol cancel.',
-    damageCost: 'Data pelanggan hilang permanen, server produksi mati, dan downtime bisnis berhari-hari.',
-    agentryFix: 'Agentry Layer 1 mencegat perintah terminal berbahaya dalam <1ms sebelum shell sistem sempat menjalankannya.'
+    subtitle: 'Terminal Commands That Wipe Out Production Servers',
+    realWorldStory: 'Granted bash terminal access to clear cache, a hallucinating agent runs "rm -rf /" or drops primary database tables. Irreversible data loss strikes before a human operator can hit cancel.',
+    damageCost: 'Permanent customer data loss, production service downtime, and catastrophic business impact.',
+    agentryFix: 'Agentry Layer 1 halts high-hazard terminal commands in <1ms before the OS shell ever spawns.'
   },
   {
     id: 'leak',
     icon: <EyeOff className="w-6 h-6 text-sentry-violet" />,
     iconBg: 'bg-violet-500/10 border-violet-500/20',
     title: 'Silent Credential Leaks',
-    subtitle: 'Kunci Rahasia API & Password Terbocor ke Pihak Luar',
-    realWorldStory: 'Banyak sistem pengawas agen mengirim seluruh log percakapan ke LLM komersial pihak ketiga untuk dipantau. Tanpa disadari, file .env, kunci AWS, dan token database Anda ikut terkirim ke server cloud luar.',
-    damageCost: 'Kredensial rahasia dicuri, potensi pelanggaran kepatuhan hukum data, dan ancaman penyusupan sistem.',
-    agentryFix: '100% Zero-Prompt Transmission: TabPFN hanya membaca 16 metrik angka telemetri. Kode rahasia Anda tidak pernah meninggalkan mesin lokal.'
+    subtitle: 'API Keys & Passwords Leaking to Third-Party Clouds',
+    realWorldStory: 'Many agent supervisory tools forward entire conversation logs to commercial third-party LLMs for monitoring. Unbeknownst to you, .env files, private SSH keys, and database tokens leak to external servers.',
+    damageCost: 'Stolen credentials, regulatory compliance penalties, and systemic breach vulnerabilities.',
+    agentryFix: '100% Zero-Prompt Transmission: TabPFN evaluates purely on 16 numerical telemetry metrics. Your secret code never leaves your local environment.'
   }
 ];
 
@@ -67,13 +67,13 @@ export const FatalTraps: React.FC = () => {
       <div className="text-center mb-14">
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-500/10 border border-red-500/30 text-sentry-red text-xs font-mono font-medium mb-3 animate-pulse-glow">
           <Flame className="w-3.5 h-3.5" />
-          <span>MENGAPA ATURAN MANUAL SELALU GAGAL?</span>
+          <span>WHY STATIC HEURISTICS ALWAYS FAIL</span>
         </div>
         <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-white mb-3">
-          3 Jebakan Maut Armada Agen AI Otonom
+          The 3 Fatal Traps of Autonomous Agent Fleets
         </h2>
         <p className="text-slate-300 max-w-2xl mx-auto text-sm sm:text-base leading-relaxed">
-          Agen AI bekerja dengan kecepatan tinggi. Tanpa pelindung foundation model yang otonom, kesalahan kecil akan memicu spiral bencana yang sangat mahal.
+          Autonomous agents operate at machine speed in high-dimensional codebases and APIs. Without a foundation model tabular sentry, small errors spiral into catastrophic failures.
         </p>
       </div>
 
@@ -114,7 +114,7 @@ export const FatalTraps: React.FC = () => {
                 <div className="p-3 rounded-xl bg-red-950/30 border border-red-500/25 flex items-start gap-2.5">
                   <XCircle className="w-4 h-4 text-sentry-red shrink-0 mt-0.5" />
                   <span className="text-red-200">
-                    <strong className="text-white">Dampak Kerugian:</strong> {trap.damageCost}
+                    <strong className="text-white">Financial & System Impact:</strong> {trap.damageCost}
                   </span>
                 </div>
 
@@ -122,7 +122,7 @@ export const FatalTraps: React.FC = () => {
                 <div className="p-3 rounded-xl bg-emerald-950/30 border border-emerald-500/25 flex items-start gap-2.5">
                   <CheckCircle className="w-4 h-4 text-sentry-emerald shrink-0 mt-0.5" />
                   <span className="text-emerald-200">
-                    <strong className="text-white">Solusi Agentry:</strong> {trap.agentryFix}
+                    <strong className="text-white">Agentry Autonomous Solution:</strong> {trap.agentryFix}
                   </span>
                 </div>
               </div>
@@ -140,14 +140,14 @@ export const FatalTraps: React.FC = () => {
         <div className="flex items-center gap-3">
           <Sparkles className="w-5 h-5 text-sentry-emerald animate-pulse" />
           <span className="text-xs sm:text-sm text-slate-200">
-            <strong>Kesimpulan:</strong> Agentry bukan sekadar aturan IF/ELSE kaku — Agentry adalah pelindung cerdas berbasis matematika prior Bayesian yang menjaga kode, data, dan anggaran Anda secara otonom.
+            <strong>Key Takeaway:</strong> Agentry is not a brittle set of IF/ELSE rules — it is an autonomous sentry powered by Bayesian tabular priors, defending your codebase, data, and budget without manual oversight.
           </span>
         </div>
         <a 
           href="#playground" 
           className="shrink-0 px-4 py-2 rounded-xl bg-surface-2 hover:bg-surface-3 border border-white/10 text-xs font-mono text-sentry-cyan hover:text-white transition-colors"
         >
-          Coba di Simulator ↑
+          Try in Simulator ↑
         </a>
       </div>
 

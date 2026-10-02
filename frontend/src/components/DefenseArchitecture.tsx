@@ -32,53 +32,53 @@ const LAYERS: LayerDetail[] = [
   {
     id: 1,
     label: 'LAYER 1',
-    badge: 'PENCEGAHAN INSTAN (<1ms)',
+    badge: 'INSTANT FILTER (<1ms)',
     badgeColor: 'bg-sentry-cyan/20 text-sentry-cyan border-sentry-cyan/30',
-    analogy: '🛡️ "Satpam Pintu Masuk"',
+    analogy: '🛡️ "Front Door Sentry"',
     title: 'In-Flight Pre-Execution Interception',
-    subtitle: 'Mencegat bahaya fisik seketika sebelum kode dieksekusi',
-    description: 'Sama seperti satpam yang memeriksa barang bawaan sebelum masuk gedung, Layer 1 menyaring perintah terminal secara instan. Jika ada perintah pemusnah seperti rm -rf atau kunci rahasia API yang ingin dikirim keluar, perintah langsung dibatalkan sebelum terminal sempat membukanya.',
+    subtitle: 'Deterministic semantic sandbox & data loss prevention executed before shell spawn',
+    description: 'Just like a physical security gate at an airport, Layer 1 inspects incoming commands and outbound payloads deterministically before they execute. Destructive shell actions (like rm -rf or DROP DATABASE) and credential leaks (OpenAI tokens, AWS keys) are blocked in under 1 millisecond before the OS shell ever spawns.',
     howItWorks: [
-      'Pemeriksaan Sintaks AST & Semantic Blast Radius sebelum proses shell dijalankan',
-      'Penyensoran Kredensial Sensitif Otomatis (DLP: AWS Key, SSH Key, OpenAI Token)',
-      'Deteksi Siklus Deadlock Ping-Pong antar 2 agen multi-agent'
+      'Semantic AST & Blast Radius syntax check prior to OS shell execution',
+      'In-flight high-entropy secret masking (DLP: AWS, SSH, OpenAI, DB credentials)',
+      'Cyclic ping-pong swarm deadlock detection between multi-agent peers'
     ],
-    techStack: ['AST Parser', 'High-Entropy Regex DLP', 'Deterministic Filter'],
-    visualMetric: { label: 'Kecepatan Saring', value: '< 0.8 ms' }
+    techStack: ['Semantic AST Parser', 'High-Entropy Regex DLP', 'Deterministic Filter'],
+    visualMetric: { label: 'Filter Speed', value: '< 0.8 ms' }
   },
   {
     id: 2,
     label: 'LAYER 2',
-    badge: 'OTAK INTI TABPFN-3.5',
+    badge: 'CORE TABPFN-3.5 BRAIN',
     badgeColor: 'bg-emerald-500/20 text-sentry-emerald border-emerald-500/30 glow-emerald',
-    analogy: '🧠 "Detektif Analisis Tabular"',
+    analogy: '🧠 "Tabular AI Detective"',
     title: 'Prior Labs TabPFN-3.5 Tabular Intelligence',
-    subtitle: 'Membaca gelagat anomali agen dalam 14.8ms tanpa kirim prompt',
-    description: 'Ini adalah senjata rahasia Agentry. Tidak menggunakan LLM mahal yang lambat dan bocor privasi, Agentry memanfaatkan model foundation tabular TabPFN-3.5 buatan Prior Labs. TabPFN menganalisis 16 metrik numerik (panjang error, repetisi tindakan, laju token, entropy) dan memprediksi apakah agen akan gagal atau terjebak loop buntu.',
+    subtitle: 'Predicts agent anomalies and runaways in 14.8ms with zero prompt transmission',
+    description: 'This is Agentry\'s secret weapon. Rather than relying on slow, expensive cloud LLMs that compromise data privacy, Agentry utilizes Prior Labs TabPFN-3.5 foundation model. TabPFN evaluates 16 numerical telemetry metrics (error streaks, repetition entropy, token burn rate, step velocity) to predict whether an agent is failing or trapped in an unproductive loop.',
     howItWorks: [
-      'Evaluasi Probabilistik Bayesian Prior dalam 14.8ms (30x lebih cepat dari kedipan mata)',
-      '100% Zero-Leakage Privacy: Kode & data rahasia tidak pernah dikirim ke LLM publik',
-      'Klasifikasi 5 Mode Kegagalan (Loop Buntu, Halusinasi Alat, Biaya Membengkak, dll)'
+      'Bayesian in-context prior probability evaluation in 14.8ms (30x faster than an eye blink)',
+      '100% Zero-Leakage Privacy: Your code and prompts never leave your local environment',
+      '5-Mode Multiclass Failure Classification (Infinite Loop, Tool Hallucination, Cost Runaway, etc.)'
     ],
     techStack: ['TabPFN-3.5 Prior Labs', 'Bayesian In-Context', 'Thinking Mode (10k tokens)'],
-    visualMetric: { label: 'Waktu Inferensi', value: '14.8 ms' }
+    visualMetric: { label: 'Inference Latency', value: '14.8 ms' }
   },
   {
     id: 3,
     label: 'LAYER 3',
-    badge: 'PENYEMBUH OTOMATIS',
+    badge: 'AUTONOMIC HEALER',
     badgeColor: 'bg-violet-500/20 text-sentry-violet border-violet-500/30',
-    analogy: '⏳ "Mesin Pemutar Waktu"',
+    analogy: '⏳ "Autonomous Time Machine"',
     title: 'Closed-Loop Autonomic Self-Healing',
-    subtitle: 'Memutar balik waktu dan menyembuhkan agen yang tersesat',
-    description: 'Jika agen terjebak dalam error spiral berulang, Agentry tidak hanya mematikannya — sistem secara otomatis memutar balik file sistem ke snapshot terakhir yang bersih, memotong riwayat memori agen yang beracun, dan menyuntikkan instruksi baru agar agen mencoba cara lain yang benar.',
+    subtitle: 'Rewinds physical disk state, prunes poisoned memory, and guides rogue agents',
+    description: 'When an agent spirals into repeated errors, Agentry does more than just kill it — the system automatically rolls back the filesystem to the last known healthy snapshot, prunes hallucinated turns from the agent\'s memory context, and injects counterfactual steering directives so the agent resumes on a healthy trajectory.',
     howItWorks: [
-      'Rollback Snapshot Fisik: Mengembalikan kode yang dirusak agen ke kondisi sehat',
-      'Pruning Memori LLM: Menghapus loop error yang membingungkan agen',
-      'Injeksi Kemudi Otonom: Memberi petunjuk korektif agar agen melanjutkan tugas dengan selamat'
+      'Physical Snapshot Rollback: Restores damaged codebase files to a clean checkpoint',
+      'Context Memory Pruning: Strips out repetitive error loops that poison LLM attention',
+      'Autonomic Steering Injection: Dispatches corrective directives so agents self-correct and converge'
     ],
     techStack: ['Filesystem Snapshot Engine', 'LLM Trajectory Pruner', 'Autonomic Steering'],
-    visualMetric: { label: 'Tingkat Pemulihan', value: '100% E2E' }
+    visualMetric: { label: 'E2E Recovery Rate', value: '100% E2E' }
   }
 ];
 
@@ -97,10 +97,10 @@ export const DefenseArchitecture: React.FC = () => {
             <span>DEFENSE-IN-DEPTH ARCHITECTURE</span>
           </div>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-white mb-3">
-            Arsitektur Pertahanan 3 Lapis (Defense-in-Depth)
+            The 3-Layer Defense-in-Depth Architecture
           </h2>
           <p className="text-slate-300 max-w-2xl mx-auto text-sm sm:text-base leading-relaxed">
-            Klik masing-masing lapis di bawah untuk melihat bagaimana kombinasi filter instan, model foundation <span className="text-sentry-emerald font-semibold">TabPFN-3.5</span>, dan sistem pemulih otomatis melindungi armada agen Anda.
+            Click each layer below to see how deterministic zero-latency interceptors, Prior Labs <span className="text-sentry-emerald font-semibold">TabPFN-3.5</span> foundation model, and autonomic self-healing work together to safeguard your agent fleet.
           </p>
         </div>
 
@@ -173,10 +173,10 @@ export const DefenseArchitecture: React.FC = () => {
                 <div className="text-xl font-bold text-sentry-emerald">{currentLayer.visualMetric.value}</div>
               </div>
               <div className="text-center px-3">
-                <div className="text-[10px] text-slate-400">STATUS SIRKUIT</div>
+                <div className="text-[10px] text-slate-400">CIRCUIT STATUS</div>
                 <div className="text-xs font-bold text-emerald-400 flex items-center gap-1 justify-center">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                  AKTIF & TERUJI
+                  ARMED & ACTIVE
                 </div>
               </div>
             </div>
@@ -185,7 +185,7 @@ export const DefenseArchitecture: React.FC = () => {
           {/* Description & Explanation */}
           <div className="py-6">
             <h4 className="text-xs font-mono text-slate-400 uppercase tracking-wider mb-2">
-              Bagaimana Cara Kerjanya? (Penjelasan Bahasa Manusia):
+              How It Works (Plain English):
             </h4>
             <p className="text-sm sm:text-base text-slate-200 leading-relaxed bg-void/50 p-4 sm:p-5 rounded-xl border border-white/5">
               {currentLayer.description}
@@ -196,7 +196,7 @@ export const DefenseArchitecture: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
             <div>
               <h4 className="text-xs font-mono text-slate-400 uppercase tracking-wider mb-3">
-                Kemampuan Utama:
+                Core Capabilities:
               </h4>
               <div className="space-y-2.5">
                 {currentLayer.howItWorks.map((item, idx) => (
@@ -210,7 +210,7 @@ export const DefenseArchitecture: React.FC = () => {
 
             <div>
               <h4 className="text-xs font-mono text-slate-400 uppercase tracking-wider mb-3">
-                Teknologi yang Diterapkan:
+                Underlying Technologies:
               </h4>
               <div className="flex flex-wrap gap-2">
                 {currentLayer.techStack.map((tech, idx) => (
