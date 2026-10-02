@@ -2,7 +2,7 @@ import React from 'react';
 import { Shield } from 'lucide-react';
 
 interface FooterProps {
-  onViewChange: (view: 'showcase' | 'console' | 'defense') => void;
+  onViewChange: (view: 'showcase' | 'console' | 'defense' | 'docs') => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({ onViewChange }) => {
@@ -15,7 +15,7 @@ export const Footer: React.FC<FooterProps> = ({ onViewChange }) => {
           <span>• Prior Labs TabPFN-3.5 Global Hackathon 2026</span>
         </div>
 
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-6 flex-wrap">
           <a 
             href="https://github.com/IrrhammCode/agentry" 
             target="_blank" 
@@ -28,13 +28,25 @@ export const Footer: React.FC<FooterProps> = ({ onViewChange }) => {
             onClick={() => onViewChange('showcase')} 
             className="hover:text-white transition-colors"
           >
-            Attack Simulator
+            Simulator
           </button>
           <button 
             onClick={() => onViewChange('console')} 
             className="hover:text-white transition-colors"
           >
             Mission Control
+          </button>
+          <button 
+            onClick={() => onViewChange('defense')} 
+            className="hover:text-white transition-colors"
+          >
+            Active Defense
+          </button>
+          <button 
+            onClick={() => onViewChange('docs')} 
+            className="text-sentry-cyan hover:underline transition-colors font-bold"
+          >
+            Documentation
           </button>
           <span className="text-emerald-400">MIT Open Source</span>
         </div>

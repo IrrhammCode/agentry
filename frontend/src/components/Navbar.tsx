@@ -5,16 +5,17 @@ import {
   ShieldAlert, 
   Wallet, 
   Terminal, 
-  ArrowLeft 
+  ArrowLeft,
+  BookOpen
 } from 'lucide-react';
 
 interface NavbarProps {
-  currentView: 'showcase' | 'console' | 'defense';
-  onViewChange: (view: 'showcase' | 'console' | 'defense') => void;
+  currentView: 'showcase' | 'console' | 'defense' | 'docs';
+  onViewChange: (view: 'showcase' | 'console' | 'defense' | 'docs') => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ currentView, onViewChange }) => {
-  const isConsoleMode = currentView === 'console' || currentView === 'defense';
+  const isConsoleMode = currentView === 'console' || currentView === 'defense' || currentView === 'docs';
 
   return (
     <header className="sticky top-0 z-50 w-full bg-black/95 backdrop-blur-md border-b border-white/10 px-4 lg:px-8 py-3 transition-all duration-300">
@@ -35,11 +36,11 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onViewChange }) => 
               <div className="flex items-center gap-1.5">
                 <span className="font-display font-bold text-xl tracking-tight text-white">Agentry</span>
                 <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-sentry-emerald font-semibold border border-emerald-500/30">
-                  {isConsoleMode ? 'WAR ROOM' : 'v0.1.0'}
+                  {currentView === 'docs' ? 'DOCS' : isConsoleMode ? 'WAR ROOM' : 'v0.1.0'}
                 </span>
               </div>
               <p className="text-[11px] text-slate-400 font-mono hidden sm:block">
-                {isConsoleMode ? 'Live Fleet Command Center' : 'TabPFN-3.5 Autonomous Sentry'}
+                {currentView === 'docs' ? 'Developer Hub & API Reference' : isConsoleMode ? 'Live Fleet Command Center' : 'TabPFN-3.5 Autonomous Sentry'}
               </p>
             </div>
           </button>
@@ -77,21 +78,22 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onViewChange }) => 
               >
                 ROI Calc
               </a>
-              <a 
-                href="#quickstart" 
-                className="px-3 py-1.5 rounded-lg hover:text-white hover:bg-white/5 transition-colors"
+              <button 
+                onClick={() => onViewChange('docs')}
+                className="px-3 py-1.5 rounded-lg text-sentry-cyan hover:bg-white/5 font-semibold transition-colors flex items-center gap-1"
               >
-                Docs
-              </a>
+                <BookOpen className="w-3.5 h-3.5" />
+                <span>Docs</span>
+              </button>
             </nav>
           )}
 
-          {/* CONSOLE VIEW SWITCHER (Only visible when user has launched console) */}
+          {/* CONSOLE VIEW SWITCHER (Only visible when user has launched console or docs) */}
           {isConsoleMode && (
-            <nav className="flex items-center p-1 bg-surface-1/80 rounded-xl border border-white/10 animate-fade-in">
+            <nav className="flex items-center p-1 bg-surface-1/80 rounded-xl border border-white/10 animate-fade-in overflow-x-auto">
               <button 
                 onClick={() => onViewChange('console')}
-                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
                   currentView === 'console'
                     ? 'text-white bg-surface-2 border border-white/10 shadow-sm'
                     : 'text-slate-400 hover:text-white'
@@ -104,7 +106,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onViewChange }) => 
 
               <button 
                 onClick={() => onViewChange('defense')}
-                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
                   currentView === 'defense'
                     ? 'text-white bg-surface-2 border border-white/10 shadow-sm'
                     : 'text-slate-400 hover:text-white'
@@ -113,6 +115,18 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onViewChange }) => 
                 <ShieldAlert className="w-3.5 h-3.5 text-sentry-red" />
                 <span>Active Defense</span>
               </button>
+
+              <button 
+                onClick={() => onViewChange('docs')}
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
+                  currentView === 'docs'
+                    ? 'text-white bg-surface-2 border border-white/10 shadow-sm'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <BookOpen className="w-3.5 h-3.5 text-sentry-cyan" />
+                <span>Docs & Ideas</span>
+              </button>
             </nav>
           )}
         </div>
@@ -120,35 +134,11 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onViewChange }) => 
         {/* Right Side Actions */}
         <div className="flex items-center gap-3">
           
-          {/* CONSOLE METRICS (Only visible when user has launched console) */}
-          {isConsoleMode && (
-            <>
-              {/* Engine Status Badge */}
-              <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-1/90 border border-white/10 font-mono text-xs animate-fade-in">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sentry-emerald opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-sentry-emerald"></span>
-                </span>
-                <span className="text-slate-300">TabPFN-3.5:</span>
-                <span className="text-sentry-emerald font-bold">14.8 ms</span>
-                <span className="text-slate-500">• 100% Local</span>
-              </div>
-
-              {/* 24h Spend Pill */}
-              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-1/90 border border-white/10 font-mono text-xs animate-fade-in">
-                <Wallet className="w-3.5 h-3.5 text-sentry-cyan" />
-                <span className="text-slate-400">24h Spend:</span>
-                <span className="text-white font-bold">$4.12</span>
-                <span className="text-slate-500">/ $25</span>
-              </div>
-            </>
-          )}
-
           {/* GitHub Repo Link (Always visible on desktop) */}
           <a 
             href="https://github.com/IrrhammCode/agentry" 
             target="_blank" 
-            rel="noopener noreferrer"
+            rel="noopener noreferrer" 
             className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-2 hover:bg-surface-3 border border-white/10 text-xs font-medium text-slate-200 transition-colors"
           >
             <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">

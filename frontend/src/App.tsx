@@ -4,11 +4,12 @@ import { Footer } from './components/Footer.tsx';
 import { LandingPage } from './views/LandingPage.tsx';
 import { MissionControl } from './views/MissionControl.tsx';
 import { ActiveDefense } from './views/ActiveDefense.tsx';
+import { Documentation } from './views/Documentation.tsx';
 
 export function App() {
-  const [currentView, setCurrentView] = useState<'showcase' | 'console' | 'defense'>('showcase');
+  const [currentView, setCurrentView] = useState<'showcase' | 'console' | 'defense' | 'docs'>('showcase');
 
-  const handleViewChange = (view: 'showcase' | 'console' | 'defense') => {
+  const handleViewChange = (view: 'showcase' | 'console' | 'defense' | 'docs') => {
     setCurrentView(view);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -28,6 +29,9 @@ export function App() {
         )}
         {currentView === 'defense' && (
           <ActiveDefense />
+        )}
+        {currentView === 'docs' && (
+          <Documentation />
         )}
       </main>
 
