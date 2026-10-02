@@ -1,5 +1,12 @@
 import React from 'react';
-import { ShieldCheck, Globe, Activity, ShieldAlert, Wallet, Terminal } from 'lucide-react';
+import { 
+  ShieldCheck, 
+  Activity, 
+  ShieldAlert, 
+  Wallet, 
+  Terminal, 
+  ArrowLeft 
+} from 'lucide-react';
 
 interface NavbarProps {
   currentView: 'showcase' | 'console' | 'defense';
@@ -7,11 +14,13 @@ interface NavbarProps {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ currentView, onViewChange }) => {
+  const isConsoleMode = currentView === 'console' || currentView === 'defense';
+
   return (
     <header className="sticky top-0 z-50 w-full glass-card border-b border-white/10 px-4 lg:px-8 py-3 transition-all duration-300">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
         
-        {/* Brand & View Switcher */}
+        {/* Brand */}
         <div className="flex items-center gap-6">
           <button 
             onClick={() => onViewChange('showcase')}
@@ -26,76 +35,116 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onViewChange }) => 
               <div className="flex items-center gap-1.5">
                 <span className="font-display font-bold text-xl tracking-tight text-white">Agentry</span>
                 <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-sentry-emerald font-semibold border border-emerald-500/30">
-                  v0.1.0
+                  {isConsoleMode ? 'WAR ROOM' : 'v0.1.0'}
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 font-mono hidden sm:block">TabPFN-3.5 Autonomous Sentry</p>
+              <p className="text-[11px] text-slate-400 font-mono hidden sm:block">
+                {isConsoleMode ? 'Live Fleet Command Center' : 'TabPFN-3.5 Autonomous Sentry'}
+              </p>
             </div>
           </button>
 
-          {/* Primary View Toggle Navigation */}
-          <nav className="hidden md:flex items-center p-1 bg-surface-1/80 rounded-xl border border-white/10">
-            <button 
-              onClick={() => onViewChange('showcase')}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                currentView === 'showcase'
-                  ? 'text-white bg-surface-2 border border-white/10'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <Globe className="w-3.5 h-3.5 text-sentry-cyan" />
-              <span>Public Showcase</span>
-            </button>
+          {/* LANDING PAGE NAVIGATION (Only visible on showcase mode) */}
+          {!isConsoleMode && (
+            <nav className="hidden md:flex items-center gap-1 text-xs font-medium text-slate-300">
+              <a 
+                href="#playground" 
+                className="px-3 py-1.5 rounded-lg hover:text-white hover:bg-white/5 transition-colors"
+              >
+                Simulator
+              </a>
+              <a 
+                href="#traps" 
+                className="px-3 py-1.5 rounded-lg hover:text-white hover:bg-white/5 transition-colors"
+              >
+                Fatal Traps
+              </a>
+              <a 
+                href="#architecture" 
+                className="px-3 py-1.5 rounded-lg hover:text-white hover:bg-white/5 transition-colors"
+              >
+                Architecture
+              </a>
+              <a 
+                href="#benchmarks" 
+                className="px-3 py-1.5 rounded-lg hover:text-white hover:bg-white/5 transition-colors"
+              >
+                Benchmarks
+              </a>
+              <a 
+                href="#calculator" 
+                className="px-3 py-1.5 rounded-lg hover:text-white hover:bg-white/5 transition-colors"
+              >
+                ROI Calc
+              </a>
+              <a 
+                href="#quickstart" 
+                className="px-3 py-1.5 rounded-lg hover:text-white hover:bg-white/5 transition-colors"
+              >
+                Docs
+              </a>
+            </nav>
+          )}
 
-            <button 
-              onClick={() => onViewChange('console')}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                currentView === 'console'
-                  ? 'text-white bg-surface-2 border border-white/10'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <Activity className="w-3.5 h-3.5 text-sentry-emerald" />
-              <span>Mission Control</span>
-              <span className="w-2 h-2 rounded-full bg-sentry-emerald animate-pulse"></span>
-            </button>
+          {/* CONSOLE VIEW SWITCHER (Only visible when user has launched console) */}
+          {isConsoleMode && (
+            <nav className="flex items-center p-1 bg-surface-1/80 rounded-xl border border-white/10 animate-fade-in">
+              <button 
+                onClick={() => onViewChange('console')}
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  currentView === 'console'
+                    ? 'text-white bg-surface-2 border border-white/10 shadow-sm'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Activity className="w-3.5 h-3.5 text-sentry-emerald" />
+                <span>Mission Control</span>
+                <span className="w-2 h-2 rounded-full bg-sentry-emerald animate-pulse"></span>
+              </button>
 
-            <button 
-              onClick={() => onViewChange('defense')}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                currentView === 'defense'
-                  ? 'text-white bg-surface-2 border border-white/10'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <ShieldAlert className="w-3.5 h-3.5 text-sentry-red" />
-              <span>Active Defense</span>
-            </button>
-          </nav>
+              <button 
+                onClick={() => onViewChange('defense')}
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  currentView === 'defense'
+                    ? 'text-white bg-surface-2 border border-white/10 shadow-sm'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <ShieldAlert className="w-3.5 h-3.5 text-sentry-red" />
+                <span>Active Defense</span>
+              </button>
+            </nav>
+          )}
         </div>
 
-        {/* Live Engine Telemetry & Actions */}
+        {/* Right Side Actions */}
         <div className="flex items-center gap-3">
-          {/* Engine Status Badge */}
-          <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-1/90 border border-white/10 font-mono text-xs">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sentry-emerald opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-sentry-emerald"></span>
-            </span>
-            <span className="text-slate-300">TabPFN-3.5:</span>
-            <span className="text-sentry-emerald font-bold">14.8 ms</span>
-            <span className="text-slate-500">• 100% Local</span>
-          </div>
+          
+          {/* CONSOLE METRICS (Only visible when user has launched console) */}
+          {isConsoleMode && (
+            <>
+              {/* Engine Status Badge */}
+              <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-1/90 border border-white/10 font-mono text-xs animate-fade-in">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sentry-emerald opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-sentry-emerald"></span>
+                </span>
+                <span className="text-slate-300">TabPFN-3.5:</span>
+                <span className="text-sentry-emerald font-bold">14.8 ms</span>
+                <span className="text-slate-500">• 100% Local</span>
+              </div>
 
-          {/* 24h Spend Pill */}
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-1/90 border border-white/10 font-mono text-xs">
-            <Wallet className="w-3.5 h-3.5 text-sentry-cyan" />
-            <span className="text-slate-400">24h Spend:</span>
-            <span className="text-white font-bold">$4.12</span>
-            <span className="text-slate-500">/ $25</span>
-          </div>
+              {/* 24h Spend Pill */}
+              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-1/90 border border-white/10 font-mono text-xs animate-fade-in">
+                <Wallet className="w-3.5 h-3.5 text-sentry-cyan" />
+                <span className="text-slate-400">24h Spend:</span>
+                <span className="text-white font-bold">$4.12</span>
+                <span className="text-slate-500">/ $25</span>
+              </div>
+            </>
+          )}
 
-          {/* GitHub Repo Link */}
+          {/* GitHub Repo Link (Always visible on desktop) */}
           <a 
             href="https://github.com/IrrhammCode/agentry" 
             target="_blank" 
@@ -112,13 +161,23 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onViewChange }) => 
           </a>
 
           {/* Primary View Switcher Button */}
-          <button 
-            onClick={() => onViewChange(currentView === 'showcase' ? 'console' : 'showcase')}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-sentry-cyan to-sentry-emerald text-void font-bold text-xs glow-cyan hover:scale-[1.02] active:scale-[0.98] transition-all"
-          >
-            <Terminal className="w-4 h-4" />
-            <span>{currentView === 'showcase' ? 'Launch Console' : 'Back to Showcase'}</span>
-          </button>
+          {!isConsoleMode ? (
+            <button 
+              onClick={() => onViewChange('console')}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-sentry-cyan to-sentry-emerald text-void font-bold text-xs glow-cyan hover:scale-[1.02] active:scale-[0.98] transition-all"
+            >
+              <Terminal className="w-4 h-4" />
+              <span>Launch Console</span>
+            </button>
+          ) : (
+            <button 
+              onClick={() => onViewChange('showcase')}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-surface-2 hover:bg-surface-3 border border-white/10 text-xs font-semibold text-slate-200 hover:text-white transition-all"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 text-sentry-cyan" />
+              <span>Exit Console</span>
+            </button>
+          )}
         </div>
 
       </div>

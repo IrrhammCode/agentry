@@ -186,28 +186,44 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchConsole }) => 
       </section>
 
       {/* Interactive Simulator Component */}
-      <AttackSimulator />
+      <div id="playground">
+        <AttackSimulator />
+      </div>
 
       {/* The 3 Fatal Traps */}
-      <FatalTraps />
+      <div id="traps">
+        <FatalTraps />
+      </div>
 
       {/* 3-Layer Defense-in-Depth Architecture */}
-      <DefenseArchitecture />
+      <div id="architecture">
+        <DefenseArchitecture />
+      </div>
 
       {/* Empirical Benchmarks Arena */}
-      <BenchmarkArena />
+      <div id="benchmarks">
+        <BenchmarkArena />
+      </div>
 
       {/* Enterprise Bento Grid */}
-      <BentoGrid />
+      <div id="features">
+        <BentoGrid />
+      </div>
 
       {/* ROI & Cost Calculator */}
-      <RoiCalculator />
+      <div id="calculator">
+        <RoiCalculator />
+      </div>
 
       {/* Developer Quickstart */}
-      <DeveloperQuickstart />
+      <div id="quickstart">
+        <DeveloperQuickstart />
+      </div>
 
       {/* FAQ Section */}
-      <FaqSection />
+      <div id="faq">
+        <FaqSection />
+      </div>
 
     </div>
   );
