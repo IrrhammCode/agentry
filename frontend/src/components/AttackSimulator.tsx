@@ -218,11 +218,7 @@ export const AttackSimulator: React.FC = () => {
   };
 
   return (
-    <section id="playground" className="py-20 px-4 lg:px-8 border-y border-white/10 bg-surface-1/40 relative overflow-hidden">
-      
-      {/* Background ambient light */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[350px] bg-gradient-to-r from-sentry-cyan/10 via-emerald-500/5 to-transparent blur-[140px] pointer-events-none -z-10" />
-
+    <section id="playground" className="py-20 px-4 lg:px-8 border-y border-white/10 bg-black relative">
       <div className="max-w-6xl mx-auto">
         
         {/* Header with ScrollReveal */}

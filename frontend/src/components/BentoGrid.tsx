@@ -55,7 +55,7 @@ const BENTO_ITEMS = [
 
 export const BentoGrid: React.FC = () => {
   return (
-    <section id="features" className="py-20 px-4 lg:px-8 border-t border-white/10 bg-surface-1/40">
+    <section id="features" className="py-20 px-4 lg:px-8 border-t border-white/10 bg-black">
       <div className="max-w-6xl mx-auto">
         
         {/* Section Header with ScrollReveal */}

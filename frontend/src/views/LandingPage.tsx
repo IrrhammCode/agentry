@@ -28,13 +28,10 @@ interface LandingPageProps {
 
 export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchConsole }) => {
   return (
-    <div className="flex-grow">
+    <div className="flex-grow bg-black">
       
       {/* Hero Section */}
-      <section className="relative pt-16 pb-20 px-4 lg:px-8 overflow-hidden">
-        {/* Ambient Backlight Glow */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-gradient-to-tr from-sentry-cyan/15 via-emerald-500/10 to-transparent blur-[120px] pointer-events-none -z-10" />
-
+      <section className="relative pt-16 pb-20 px-4 lg:px-8 overflow-hidden bg-black">
         <div className="max-w-6xl mx-auto text-center">
           
           {/* Eyebrow Badge */}

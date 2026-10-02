@@ -6,9 +6,10 @@
   color-scheme: dark;
 }
 
-body {
-  background-color: #000000;
+html, body, #root {
+  background-color: #000000 !important;
   color: #F8FAFC;
+  min-height: 100vh;
 }
 
 .glass-card {

@@ -7,7 +7,7 @@ interface FooterProps {
 
 export const Footer: React.FC<FooterProps> = ({ onViewChange }) => {
   return (
-    <footer className="mt-auto border-t border-white/10 glass-card px-4 lg:px-8 py-8">
+    <footer className="mt-auto border-t border-white/10 bg-black px-4 lg:px-8 py-8">
       <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-slate-400">
         <div className="flex items-center gap-2">
           <Shield className="w-4 h-4 text-sentry-cyan" />

@@ -54,7 +54,7 @@ export const DeveloperQuickstart: React.FC = () => {
   };
 
   return (
-    <section className="py-20 px-4 lg:px-8 border-t border-white/10 bg-surface-1/40">
+    <section className="py-20 px-4 lg:px-8 border-t border-white/10 bg-black">
       <div className="max-w-5xl mx-auto">
         
         {/* Header with ScrollReveal */}

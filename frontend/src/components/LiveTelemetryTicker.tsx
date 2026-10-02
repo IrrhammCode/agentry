@@ -24,11 +24,11 @@ const TICKER_ITEMS = [
 
 export const LiveTelemetryTicker: React.FC = () => {
   return (
-    <div className="w-full overflow-hidden border-y border-white/10 bg-surface-1/50 py-3 backdrop-blur-md relative select-none">
+    <div className="w-full overflow-hidden border-y border-white/10 bg-black py-3 relative select-none">
       
       {/* Ambient edge gradients for smooth fade */}
-      <div className="absolute top-0 bottom-0 left-0 w-24 bg-gradient-to-r from-void to-transparent z-10 pointer-events-none" />
-      <div className="absolute top-0 bottom-0 right-0 w-24 bg-gradient-to-l from-void to-transparent z-10 pointer-events-none" />
+      <div className="absolute top-0 bottom-0 left-0 w-24 bg-gradient-to-r from-black to-transparent z-10 pointer-events-none" />
+      <div className="absolute top-0 bottom-0 right-0 w-24 bg-gradient-to-l from-black to-transparent z-10 pointer-events-none" />
 
       <div className="animate-ticker flex items-center gap-8">
         

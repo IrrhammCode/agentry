@@ -17,7 +17,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onViewChange }) => 
   const isConsoleMode = currentView === 'console' || currentView === 'defense';
 
   return (
-    <header className="sticky top-0 z-50 w-full glass-card border-b border-white/10 px-4 lg:px-8 py-3 transition-all duration-300">
+    <header className="sticky top-0 z-50 w-full bg-black/95 backdrop-blur-md border-b border-white/10 px-4 lg:px-8 py-3 transition-all duration-300">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
         
         {/* Brand */}

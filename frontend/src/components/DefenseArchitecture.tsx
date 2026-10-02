@@ -94,7 +94,7 @@ export const DefenseArchitecture: React.FC = () => {
   };
 
   return (
-    <section id="architecture" className="py-20 px-4 lg:px-8 border-y border-white/10 bg-surface-1/30 relative">
+    <section id="architecture" className="py-20 px-4 lg:px-8 border-y border-white/10 bg-black relative">
       <div className="max-w-6xl mx-auto">
         
         {/* Section Header with ScrollReveal */}

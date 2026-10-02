@@ -14,12 +14,12 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col font-sans antialiased text-slate-100">
+    <div className="min-h-screen flex flex-col font-sans antialiased text-slate-100 bg-black">
       {/* Global Navbar */}
       <Navbar currentView={currentView} onViewChange={handleViewChange} />
 
       {/* Main View Port */}
-      <main className="flex-grow flex flex-col">
+      <main className="flex-grow flex flex-col bg-black">
         {currentView === 'showcase' && (
           <LandingPage onLaunchConsole={() => handleViewChange('console')} />
         )}
