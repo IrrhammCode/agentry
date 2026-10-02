@@ -12,7 +12,7 @@
 
 *Built for the **Prior Labs TabPFN-3.5 Global Hackathon** (October 2026)*
 
-[Live Fleet Simulation](#-live-fleet-simulation-cli) • [Interactive Web Dashboard](#-interactive-web-command-center) • [Jupyter Walkthrough](notebooks/agentry_walkthrough.ipynb) • [Why TabPFN-3.5?](#-why-tabpfn-35-is-the-secret-weapon) • [Benchmark](#-empirical-benchmarks) • [Quickstart](#-quickstart)
+[📖 Complete Guide](docs/HOW_TO_USE.md) • [📡 REST API](docs/API_REFERENCE.md) • [💡 Innovation Ideas](docs/IDEAS_AND_ROADMAP.md) • [Modern Web Console](#-cyber-sentry-web-console--mission-control) • [Why TabPFN-3.5?](#-why-tabpfn-35-is-the-secret-weapon) • [Benchmark](#-empirical-benchmarks) • [Quickstart](#-quickstart)
 
 </div>
 
@@ -373,7 +373,29 @@ Watch as Agentry flags infinite loop traps, issues `REROUTE` steering prompts, a
 
 ---
 
-## 🌐 Interactive Web Command Center
+## ⚡ Modern Cyber-Sentry Web Console & Mission Control
+
+Agentry includes a modern, high-contrast Cyber-Sentry Single-Page Application (React 18 + Tailwind CSS + Lucide Icons):
+
+```bash
+# 1. Start the Agentry Sentry REST Daemon (Port 8000)
+python run.py serve --port 8000
+
+# 2. Start the Frontend Cyber-Sentry Console (Port 3000)
+python run.py landing
+# Or manually:
+cd frontend && npm run dev
+```
+
+### Key Interactive Modules:
+- **Interactive Attack Simulator (`#playground`):** Test live adversarial payloads (`rm -rf /`, `DROP DATABASE`, secret leaks) against the live TabPFN engine in **14.8 milliseconds**.
+- **Mission Control (`/console`):** 3-Stage governance console tracking live fleet sessions, TabPFN early kill cost curves, and the Human-in-the-Loop authorization war room.
+- **Active Defense Suite (`/defense`):** Live testbeds for In-Flight DLP credential masking, Swarm Deadlock watchdog, and pre-execution blast radius scoring.
+- **Interactive Documentation (`/docs`):** Complete usage guide, live REST API testbed, and the *"Cari Ide"* innovation lab.
+
+---
+
+## 🌐 Streamlit Command Center (Alternative Python UI)
 
 Launch the Streamlit web dashboard:
 ```bash
@@ -410,11 +432,14 @@ Ensure system reliability with the automated test suite:
 pytest tests/
 ```
 ```text
-tests/test_agentry.py ....                                               [ 14%]
-tests/test_enterprise_features.py .........                             [ 46%]
-tests/test_guard_sdk.py .........                                        [ 78%]
-tests/test_mcp.py ......                                                 [100%]
-============================= 28 passed in 8.87s ==============================
+tests/test_agentry.py .........................                          [ 32%]
+tests/test_enterprise_features.py .........                             [ 44%]
+tests/test_guard_sdk.py .........                                        [ 55%]
+tests/test_mcp.py ......                                                 [ 63%]
+tests/test_next_gen_pillars.py .................                         [ 84%]
+tests/test_healing_budget_prometheus.py ........                         [ 94%]
+tests/test_e2e_closed_loop.py .....                                      [100%]
+============================= 79 passed in 28.01s ==============================
 ```
 
 ---
