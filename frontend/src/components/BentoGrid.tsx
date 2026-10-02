@@ -12,7 +12,7 @@ export const BentoGrid: React.FC = () => {
             <span>ENTERPRISE-GRADE CAPABILITIES</span>
           </div>
           <h2 className="text-3xl sm:text-4xl font-display font-bold text-white mb-3">
-            Built for Production Swarms and Coding Fleets
+            <span className="animate-text-shimmer">Built for Production Swarms and Coding Fleets</span>
           </h2>
           <p className="text-slate-400 max-w-2xl mx-auto text-sm sm:text-base">
             Everything your platform engineering team needs to govern autonomous agents at scale.

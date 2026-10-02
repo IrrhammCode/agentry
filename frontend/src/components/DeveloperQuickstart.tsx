@@ -62,7 +62,7 @@ export const DeveloperQuickstart: React.FC = () => {
             <span>5-MINUTE INTEGRATION</span>
           </div>
           <h2 className="text-3xl sm:text-4xl font-display font-bold text-white mb-3">
-            Start Guarding Your Agents in Minutes
+            <span className="animate-text-shimmer">Start Guarding Your Agents in Minutes</span>
           </h2>
           <p className="text-slate-400 max-w-xl mx-auto text-sm">
             Whether you use raw OpenAI calls, LangChain, CrewAI, AutoGen, or Cursor IDE.

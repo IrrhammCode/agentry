@@ -10,7 +10,7 @@ export const BenchmarkArena: React.FC = () => {
           <span>RIGOROUS EMPIRICAL VALIDATION</span>
         </div>
         <h2 className="text-3xl sm:text-4xl font-display font-bold text-white mb-3">
-          Why TabPFN-3.5 Destroys Classical ML
+          <span className="animate-text-shimmer">Why TabPFN-3.5 Destroys Classical ML</span>
         </h2>
         <p className="text-slate-400 max-w-2xl mx-auto text-sm sm:text-base">
           Evaluated across <strong>1,156 real SWE-bench agent steps</strong> in 55 full trajectory sessions. 

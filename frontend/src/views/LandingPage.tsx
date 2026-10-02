@@ -18,6 +18,8 @@ import { BentoGrid } from '../components/BentoGrid.tsx';
 import { RoiCalculator } from '../components/RoiCalculator.tsx';
 import { DeveloperQuickstart } from '../components/DeveloperQuickstart.tsx';
 import { FaqSection } from '../components/FaqSection.tsx';
+import { LiveHeroTerminal } from '../components/LiveHeroTerminal.tsx';
+import { LiveTelemetryTicker } from '../components/LiveTelemetryTicker.tsx';
 
 interface LandingPageProps {
   onLaunchConsole: () => void;
@@ -100,92 +102,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchConsole }) => 
           </div>
 
           {/* ================================================================= */}
-          {/* FLOATING 3D SENTRY HUD TERMINAL                                   */}
+          {/* ANIMATED LIVE SENTRY HUD RADAR TERMINAL                          */}
           {/* ================================================================= */}
-          <div className="mt-14 max-w-4xl mx-auto glass-card rounded-2xl overflow-hidden border border-white/15 shadow-2xl relative text-left">
-            
-            {/* Terminal Header */}
-            <div className="flex items-center justify-between px-4 py-3 bg-surface-1/90 border-b border-white/10">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-red-500/80" />
-                <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
-                <div className="w-3 h-3 rounded-full bg-emerald-500/80" />
-                <span className="ml-2 font-mono text-xs text-slate-400">SESSION: swe_bench_fix_auth_regress.jsonl</span>
-              </div>
-              <div className="flex items-center gap-3 font-mono text-xs">
-                <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-sentry-emerald border border-emerald-500/30">
-                  AGENT: CoderAgent-01
-                </span>
-                <span className="text-slate-400 hidden sm:inline">CIRCUIT-BREAKER: ARMED</span>
-              </div>
-            </div>
-
-            {/* Terminal Telemetry Body */}
-            <div className="p-5 font-mono text-xs space-y-3 bg-void/90 min-h-[220px]">
-              <div className="flex items-start justify-between text-slate-400">
-                <div className="flex items-center gap-2">
-                  <span className="text-sentry-cyan">t=1</span>
-                  <span>tool: read_file("auth/tokens.py")</span>
-                </div>
-                <span className="text-emerald-400 font-bold">NOMINAL (P_fail=0.03) • PASS</span>
-              </div>
-              
-              <div className="flex items-start justify-between text-slate-400">
-                <div className="flex items-center gap-2">
-                  <span className="text-sentry-cyan">t=2</span>
-                  <span>tool: replace_code("tokens.py:42", "new_logic")</span>
-                </div>
-                <span className="text-emerald-400 font-bold">NOMINAL (P_fail=0.07) • PASS</span>
-              </div>
-
-              <div className="flex items-start justify-between text-amber-300">
-                <div className="flex items-center gap-2">
-                  <span className="text-sentry-cyan">t=3</span>
-                  <span>tool: run_command("pytest tests/test_auth.py")</span>
-                  <span className="text-slate-500">[Exit: 1 Crash]</span>
-                </div>
-                <span className="text-amber-400 font-bold">ANOMALY_RUNAWAY (P_fail=0.68) • WARN</span>
-              </div>
-
-              <div className="flex items-start justify-between text-red-300">
-                <div className="flex items-center gap-2">
-                  <span className="text-sentry-cyan">t=4</span>
-                  <span>tool: run_command("pytest tests/test_auth.py")</span>
-                  <span className="text-slate-500">[Repeated Error Loop streak=2]</span>
-                </div>
-                <span className="text-sentry-red font-bold">CRITICAL_LOOP (P_fail=0.94) • REROUTE</span>
-              </div>
-
-              <div className="flex items-start justify-between text-red-400 bg-red-950/40 p-2.5 rounded-lg border border-red-500/30">
-                <div className="flex items-center gap-2 font-bold">
-                  <OctagonAlert className="w-4 h-4 text-sentry-red animate-pulse" />
-                  <span className="text-sentry-red">t=5</span>
-                  <span>BLAST RADIUS TRIP: run_command("rm -rf /var/cache/*")</span>
-                </div>
-                <span className="text-white bg-red-600 px-2 py-0.5 rounded text-[11px] font-bold flex items-center gap-1.5">
-                  <ShieldAlert className="w-3.5 h-3.5" />
-                  <span>CIRCUIT-BREAKER KILL</span>
-                </span>
-              </div>
-            </div>
-
-            {/* Autonomic Ribbon */}
-            <div className="px-5 py-3 bg-gradient-to-r from-emerald-950/80 via-surface-1 to-cyan-950/80 border-t border-emerald-500/30 flex items-center justify-between flex-wrap gap-2 text-xs">
-              <div className="flex items-center gap-2 text-sentry-emerald font-semibold">
-                <Sparkles className="w-4 h-4 animate-spin" />
-                <span>Autonomic Healer Engaged:</span>
-                <span className="text-slate-300 font-normal">Physical snapshot rollback to t=2 • Injected counterfactual prompt directive</span>
-              </div>
-              <div className="font-mono text-[11px] text-sentry-cyan font-bold flex items-center gap-1.5">
-                <Zap className="w-3.5 h-3.5 text-sentry-cyan" />
-                <span>Recovery Time: 12ms • Cost Saved: $1.42</span>
-              </div>
-            </div>
-
-          </div>
+          <LiveHeroTerminal />
 
         </div>
       </section>
+
+      {/* Real-Time Telemetry Scrolling Marquee Ticker */}
+      <LiveTelemetryTicker />
 
       {/* Interactive Simulator Component */}
       <div id="playground">
