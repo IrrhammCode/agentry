@@ -24,6 +24,7 @@ import {
   ShieldCheck,
   Radio
 } from 'lucide-react';
+import { ScrollReveal } from './ScrollReveal.tsx';
 
 interface Preset {
   id: string;
@@ -224,27 +225,30 @@ export const AttackSimulator: React.FC = () => {
 
       <div className="max-w-6xl mx-auto">
         
-        {/* Header */}
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-sentry-cyan/10 border border-sentry-cyan/30 text-sentry-cyan text-xs font-mono font-medium mb-3 animate-pulse-glow">
-            <Radio className="w-3.5 h-3.5 text-sentry-cyan animate-pulse" />
-            <span>INTERACTIVE ATTACK SIMULATOR</span>
+        {/* Header with ScrollReveal */}
+        <ScrollReveal animation="fade-up" durationMs={800}>
+          <div className="text-center mb-10">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-sentry-cyan/10 border border-sentry-cyan/30 text-sentry-cyan text-xs font-mono font-medium mb-3 animate-pulse-glow">
+              <Radio className="w-3.5 h-3.5 text-sentry-cyan animate-pulse" />
+              <span>INTERACTIVE ATTACK SIMULATOR</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-white mb-3">
+              <span className="animate-text-shimmer">Simulate an Attack & Watch Agentry Intercept It</span>
+            </h2>
+            <p className="text-slate-300 max-w-2xl mx-auto text-sm sm:text-base leading-relaxed">
+              Select an adversarial scenario below. Watch the <span className="text-sentry-emerald font-semibold">TabPFN-3.5</span> tabular foundation model evaluate risk in <span className="text-sentry-cyan font-semibold">14.8 milliseconds</span> and prevent catastrophic failures before execution.
+            </p>
           </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-white mb-3">
-            <span className="animate-text-shimmer">Simulate an Attack & Watch Agentry Intercept It</span>
-          </h2>
-          <p className="text-slate-300 max-w-2xl mx-auto text-sm sm:text-base leading-relaxed">
-            Select an adversarial scenario below. Watch the <span className="text-sentry-emerald font-semibold">TabPFN-3.5</span> tabular foundation model evaluate risk in <span className="text-sentry-cyan font-semibold">14.8 milliseconds</span> and prevent catastrophic failures before execution.
-          </p>
-        </div>
+        </ScrollReveal>
 
         {/* ================================================================= */}
         {/* ANIMATED 3-STEP PIPELINE VISUALIZATION                           */}
         {/* ================================================================= */}
-        <div className="mb-10 p-4 sm:p-5 rounded-2xl glass-card border border-white/10">
-          <div className="text-[11px] font-mono text-slate-400 uppercase tracking-wider text-center mb-3">
-            Real-Time TabPFN Detection Pipeline (Sub-20ms)
-          </div>
+        <ScrollReveal animation="fade-up" delayMs={120} durationMs={800}>
+          <div className="mb-10 p-4 sm:p-5 rounded-2xl glass-card border border-white/10">
+            <div className="text-[11px] font-mono text-slate-400 uppercase tracking-wider text-center mb-3">
+              Real-Time TabPFN Detection Pipeline (Sub-20ms)
+            </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 relative">
             
@@ -315,51 +319,55 @@ export const AttackSimulator: React.FC = () => {
 
           </div>
         </div>
+        </ScrollReveal>
 
         {/* ================================================================= */}
-        {/* PRESET CHIPS SELECTOR                                             */}
+        {/* PRESET CHIPS SELECTOR with ScrollReveal                           */}
         {/* ================================================================= */}
-        <div className="mb-6">
-          <div className="text-xs font-mono text-slate-400 text-center mb-3">
-            SELECT AN ATTACK SCENARIO TO TEST:
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
-            {PRESETS.map((p) => {
-              const isActive = activePreset.id === p.id;
-              return (
-                <button
-                  key={p.id}
-                  onClick={() => handleSelectPreset(p)}
-                  className={`p-3 rounded-xl text-left border transition-all duration-200 relative overflow-hidden group ${
-                    isActive
-                      ? 'bg-surface-2 border-sentry-cyan shadow-lg glow-cyan scale-[1.02]'
-                      : 'glass-card hover:bg-surface-2 border-white/10 text-slate-300 hover:border-white/25'
-                  }`}
-                >
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <div className="w-6 h-6 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
-                      {renderPresetIcon(p.icon)}
+        <ScrollReveal animation="fade-up" delayMs={150} durationMs={700}>
+          <div className="mb-6">
+            <div className="text-xs font-mono text-slate-400 text-center mb-3">
+              SELECT AN ATTACK SCENARIO TO TEST:
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
+              {PRESETS.map((p) => {
+                const isActive = activePreset.id === p.id;
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => handleSelectPreset(p)}
+                    className={`p-3 rounded-xl text-left border transition-all duration-200 relative overflow-hidden group ${
+                      isActive
+                        ? 'bg-surface-2 border-sentry-cyan shadow-lg glow-cyan scale-[1.02]'
+                        : 'glass-card hover:bg-surface-2 border-white/10 text-slate-300 hover:border-white/25'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <div className="w-6 h-6 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
+                        {renderPresetIcon(p.icon)}
+                      </div>
+                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/10 text-slate-300 font-semibold">
+                        {p.tag}
+                      </span>
                     </div>
-                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/10 text-slate-300 font-semibold">
-                      {p.tag}
-                    </span>
-                  </div>
-                  <div className="text-xs font-bold text-white group-hover:text-sentry-cyan transition-colors line-clamp-1">
-                    {p.name}
-                  </div>
-                  {isActive && (
-                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-sentry-cyan to-sentry-emerald" />
-                  )}
-                </button>
-              );
-            })}
+                    <div className="text-xs font-bold text-white group-hover:text-sentry-cyan transition-colors line-clamp-1">
+                      {p.name}
+                    </div>
+                    {isActive && (
+                      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-sentry-cyan to-sentry-emerald" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        </ScrollReveal>
 
         {/* ================================================================= */}
         {/* INTERACTIVE WORKBENCH: CODE INPUT & TABPFN RESULT                  */}
         {/* ================================================================= */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch mb-8">
+        <ScrollReveal animation="zoom-in" delayMs={200} durationMs={800}>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch mb-8">
           
           {/* Input Terminal */}
           <div className="lg:col-span-5 glass-card rounded-2xl p-6 flex flex-col justify-between relative">
@@ -516,54 +524,57 @@ export const AttackSimulator: React.FC = () => {
           </div>
 
         </div>
+        </ScrollReveal>
 
         {/* ================================================================= */}
         {/* EASY TO UNDERSTAND: "WHY THIS MATTERS" (EXPLAINER)                 */}
         {/* ================================================================= */}
-        <div className="glass-card rounded-2xl p-6 sm:p-7 border border-white/15 bg-surface-1/60">
-          <div className="flex items-center gap-2 mb-4">
-            <Sparkles className="w-5 h-5 text-sentry-cyan" />
-            <h3 className="text-base sm:text-lg font-bold text-white">
-              Plain English: Why This Matters to Any Team
-            </h3>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            
-            {/* Without Agentry */}
-            <div className="p-5 rounded-xl bg-red-950/25 border border-red-500/30 flex flex-col justify-between">
-              <div>
-                <div className="flex items-center gap-2 text-xs font-mono text-red-300 font-bold mb-2">
-                  <XCircle className="w-4 h-4 text-red-400" />
-                  <span>WITHOUT AGENTRY (UNCHECKED EXECUTION)</span>
-                </div>
-                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                  {scanResult.withoutAgentry}
-                </p>
-              </div>
-              <div className="mt-4 pt-3 border-t border-red-500/20 text-[11px] font-mono text-red-400">
-                Direct financial loss, permanent data wipeout, ruined brand reputation
-              </div>
+        <ScrollReveal animation="fade-up" delayMs={150} durationMs={800}>
+          <div className="glass-card rounded-2xl p-6 sm:p-7 border border-white/15 bg-surface-1/60">
+            <div className="flex items-center gap-2 mb-4">
+              <Sparkles className="w-5 h-5 text-sentry-cyan" />
+              <h3 className="text-base sm:text-lg font-bold text-white">
+                Plain English: Why This Matters to Any Team
+              </h3>
             </div>
 
-            {/* With Agentry */}
-            <div className="p-5 rounded-xl bg-emerald-950/25 border border-emerald-500/30 flex flex-col justify-between">
-              <div>
-                <div className="flex items-center gap-2 text-xs font-mono text-sentry-emerald font-bold mb-2">
-                  <ShieldCheck className="w-4 h-4 text-sentry-emerald" />
-                  <span>WITH AGENTRY (AUTONOMIC INTERCEPTION)</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              
+              {/* Without Agentry */}
+              <div className="p-5 rounded-xl bg-red-950/25 border border-red-500/30 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center gap-2 text-xs font-mono text-red-300 font-bold mb-2">
+                    <XCircle className="w-4 h-4 text-red-400" />
+                    <span>WITHOUT AGENTRY (UNCHECKED EXECUTION)</span>
+                  </div>
+                  <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                    {scanResult.withoutAgentry}
+                  </p>
                 </div>
-                <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
-                  {scanResult.withAgentry}
-                </p>
+                <div className="mt-4 pt-3 border-t border-red-500/20 text-[11px] font-mono text-red-400">
+                  Direct financial loss, permanent data wipeout, ruined brand reputation
+                </div>
               </div>
-              <div className="mt-4 pt-3 border-t border-emerald-500/20 text-[11px] font-mono text-sentry-emerald">
-                Intercepted in 14.8ms • $0 cost • Filesystem and budget intact
-              </div>
-            </div>
 
+              {/* With Agentry */}
+              <div className="p-5 rounded-xl bg-emerald-950/25 border border-emerald-500/30 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center gap-2 text-xs font-mono text-sentry-emerald font-bold mb-2">
+                    <ShieldCheck className="w-4 h-4 text-sentry-emerald" />
+                    <span>WITH AGENTRY (AUTONOMIC INTERCEPTION)</span>
+                  </div>
+                  <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
+                    {scanResult.withAgentry}
+                  </p>
+                </div>
+                <div className="mt-4 pt-3 border-t border-emerald-500/20 text-[11px] font-mono text-sentry-emerald">
+                  Intercepted in 14.8ms • $0 cost • Filesystem and budget intact
+                </div>
+              </div>
+
+            </div>
           </div>
-        </div>
+        </ScrollReveal>
 
       </div>
     </section>
