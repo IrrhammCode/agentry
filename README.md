@@ -432,14 +432,15 @@ Ensure system reliability with the automated test suite:
 pytest tests/
 ```
 ```text
-tests/test_agentry.py .........................                          [ 32%]
-tests/test_enterprise_features.py .........                             [ 44%]
-tests/test_guard_sdk.py .........                                        [ 55%]
-tests/test_mcp.py ......                                                 [ 63%]
-tests/test_next_gen_pillars.py .................                         [ 84%]
-tests/test_healing_budget_prometheus.py ........                         [ 94%]
+tests/test_agentry.py .........................                          [ 28%]
+tests/test_enterprise_features.py .........                             [ 39%]
+tests/test_guard_sdk.py .........                                        [ 49%]
+tests/test_mcp.py ......                                                 [ 56%]
+tests/test_next_gen_pillars.py .................                         [ 75%]
+tests/test_healing_budget_prometheus.py ........                         [ 84%]
+tests/test_server_api.py .........                                       [ 94%]
 tests/test_e2e_closed_loop.py .....                                      [100%]
-============================= 79 passed in 28.01s ==============================
+============================= 88 passed in 29.69s ==============================
 ```
 
 ---
