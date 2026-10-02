@@ -25,6 +25,7 @@ import {
   Radio
 } from 'lucide-react';
 import { ScrollReveal } from './ScrollReveal.tsx';
+import { AgentryApi, AuditResult, BlastRadiusResult } from '../services/api.ts';
 
 interface Preset {
   id: string;
@@ -151,6 +152,9 @@ export const AttackSimulator: React.FC = () => {
   const [scanStage, setScanStage] = useState<number>(0);
   const [scanResult, setScanResult] = useState<Preset>(PRESETS[0]);
   const [animatedProb, setAnimatedProb] = useState<number>(PRESETS[0].probNumber);
+  const [liveAudit, setLiveAudit] = useState<AuditResult | null>(null);
+  const [liveBlast, setLiveBlast] = useState<BlastRadiusResult | null>(null);
+  const [scanLatency, setScanLatency] = useState<number>(14.8);
 
   useEffect(() => {
     let current = 0;
@@ -168,42 +172,133 @@ export const AttackSimulator: React.FC = () => {
     return () => clearInterval(interval);
   }, [scanResult]);
 
+  // Run live scan on initial load for real telemetry
+  useEffect(() => {
+    triggerScan(PRESETS[0], PRESETS[0].command);
+  }, []);
+
   const handleSelectPreset = (preset: Preset) => {
     setActivePreset(preset);
     setInputCommand(preset.command);
-    triggerScan(preset);
+    triggerScan(preset, preset.command);
   };
 
-  const triggerScan = (targetPreset?: Preset) => {
+  const triggerScan = async (targetPreset?: Preset, commandToScan?: string) => {
+    const cmd = commandToScan !== undefined ? commandToScan : (targetPreset ? targetPreset.command : inputCommand);
     setIsScanning(true);
     setScanStage(1);
 
-    setTimeout(() => {
-      setScanStage(2);
-    }, 150);
+    const stageTimer1 = setTimeout(() => setScanStage(2), 100);
+    const stageTimer2 = setTimeout(() => setScanStage(3), 220);
 
-    setTimeout(() => {
+    try {
+      const [auditRes, blastRes] = await Promise.all([
+        AgentryApi.auditStep({
+          session_id: `sim_${Date.now()}`,
+          tool_name: 'bash',
+          input_text: cmd,
+          thought_trace: `Adversarial scenario evaluation: ${cmd.slice(0, 80)}`,
+          latency_ms: 14.8,
+        }),
+        AgentryApi.evaluateBlastRadius('bash', cmd),
+      ]);
+
+      clearTimeout(stageTimer1);
+      clearTimeout(stageTimer2);
       setScanStage(3);
-    }, 300);
 
-    setTimeout(() => {
+      setLiveAudit(auditRes);
+      setLiveBlast(blastRes);
+      if (auditRes.latency_ms) {
+        setScanLatency(auditRes.latency_ms);
+      }
+
+      const pVal = Number((auditRes.failure_probability * 100).toFixed(1));
+      const isCritical = auditRes.action === 'KILL';
+      const isPause = auditRes.action === 'PAUSE';
+      const isReroute = auditRes.action === 'REROUTE';
+
+      if (targetPreset) {
+        setScanResult({
+          ...targetPreset,
+          probNumber: pVal,
+          prob: `${pVal}%`,
+          blastNumber: blastRes.score,
+          blast: `${blastRes.score} / 100`,
+          saved: auditRes.estimated_cost_saved_usd > 0 ? `$${auditRes.estimated_cost_saved_usd.toFixed(2)}` : '$0.00',
+          desc: auditRes.reason || targetPreset.desc,
+          action: isCritical
+            ? 'Process quarantined immediately & filesystem rolled back to snapshot'
+            : isPause
+            ? 'Dispatched to Human-In-The-Loop (HITL) War Room for operator authorization'
+            : isReroute
+            ? `Autonomously rerouted: ${auditRes.reroute_instruction || 'Injected steering directive'}`
+            : 'Execution verified & passed within calibrated safety bounds',
+          verdict: isCritical
+            ? 'INTERCEPTED & KILLED'
+            : isPause
+            ? 'HOLD FOR OPERATOR'
+            : isReroute
+            ? 'AUTONOMICALLY REROUTED'
+            : 'AUTHORIZED & PASSED',
+          verdictStyle: isCritical
+            ? 'bg-red-500/20 text-sentry-red border-red-500/40 glow-red'
+            : isPause
+            ? 'bg-amber-500/20 text-amber-400 border-amber-500/40'
+            : isReroute
+            ? 'bg-violet-500/20 text-sentry-violet border-violet-500/40'
+            : 'bg-emerald-500/20 text-sentry-emerald border-emerald-500/40',
+        });
+      } else {
+        setScanResult({
+          id: 'custom_scan',
+          name: 'Custom Interactive Command',
+          tag: isCritical ? 'CRITICAL HAZARD' : isPause ? 'OPERATOR ESCALATION' : isReroute ? 'REROUTED' : 'SAFE / NOMINAL',
+          icon: isCritical ? 'bomb' : 'retry',
+          command: cmd,
+          verdict: isCritical ? 'INTERCEPTED & KILLED' : isPause ? 'HOLD FOR HITL' : isReroute ? 'AUTONOMICALLY REROUTED' : 'AUTHORIZED & PASSED',
+          verdictStyle: isCritical
+            ? 'bg-red-500/20 text-sentry-red border-red-500/40 glow-red'
+            : isPause
+            ? 'bg-amber-500/20 text-amber-400 border-amber-500/40'
+            : isReroute
+            ? 'bg-violet-500/20 text-sentry-violet border-violet-500/40'
+            : 'bg-emerald-500/20 text-sentry-emerald border-emerald-500/40',
+          title: isCritical
+            ? (blastRes.violation_reason || 'CATASTROPHIC BLAST RADIUS VIOLATION')
+            : isPause
+            ? 'HIGH-RISK ACTION REQUIRES OPERATOR SIGN-OFF'
+            : isReroute
+            ? 'AUTONOMIC TRAJECTORY STEERING ENGAGED'
+            : 'NOMINAL EXECUTION TELEMETRY VERIFIED',
+          desc: auditRes.reason || (blastRes.violation_reason ? `Blast radius alert: ${blastRes.violation_reason}` : 'TabPFN evaluated Bayesian prior across 16 telemetry dimensions.'),
+          prob: `${pVal}%`,
+          probNumber: pVal,
+          blast: `${blastRes.score} / 100`,
+          blastNumber: blastRes.score,
+          saved: auditRes.estimated_cost_saved_usd > 0 ? `$${auditRes.estimated_cost_saved_usd.toFixed(2)}` : '$0.00',
+          action: isCritical
+            ? 'Halted execution loop before spawning shell process'
+            : isPause
+            ? 'Pushed to Human-In-The-Loop approval queue'
+            : isReroute
+            ? `Injected counterfactual: ${auditRes.reroute_instruction || 'Pruned repetition'}`
+            : 'Allowed safe execution',
+          withoutAgentry: isCritical
+            ? 'Destructive commands execute unchecked on the host, wiping critical services or draining compute budgets.'
+            : 'Agent runs without guardrails, leading to unobserved drift and failure escalation.',
+          withAgentry: isCritical
+            ? `Agentry intercepted the action via ${auditRes.sentry_provider} in ${auditRes.latency_ms || 14.8}ms with zero state mutation.`
+            : `Continuous TabPFN Bayesian audit verified nominal parameters with ${((1 - auditRes.failure_probability) * 100).toFixed(1)}% confidence.`,
+        });
+      }
+    } catch (err) {
+      console.error('Audit failed, using offline fallback', err);
+      if (targetPreset) setScanResult(targetPreset);
+    } finally {
       setIsScanning(false);
       setScanStage(0);
-      if (targetPreset) {
-        setScanResult(targetPreset);
-      } else {
-        // Evaluate custom command
-        if (inputCommand.includes('rm -rf') || inputCommand.includes('DROP')) {
-          setScanResult(PRESETS[0]);
-        } else if (inputCommand.includes('sk-') || inputCommand.includes('KEY') || inputCommand.includes('curl')) {
-          setScanResult(PRESETS[2]);
-        } else if (inputCommand.includes('delegate') || inputCommand.includes('loop')) {
-          setScanResult(PRESETS[3]);
-        } else {
-          setScanResult(PRESETS[4]);
-        }
-      }
-    }, 450);
+    }
   };
 
   const renderPresetIcon = (iconType: string) => {
@@ -396,7 +491,7 @@ export const AttackSimulator: React.FC = () => {
 
             <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between">
               <div className="text-[11px] text-slate-400 font-mono">
-                Engine: <span className="text-sentry-emerald font-semibold">TabPFN-3.5 Prior</span>
+                Engine: <span className="text-sentry-emerald font-semibold">{liveAudit?.sentry_provider || 'TabPFN-3.5 Cloud'}</span>
               </div>
               <button
                 onClick={() => triggerScan()}
@@ -404,7 +499,7 @@ export const AttackSimulator: React.FC = () => {
                 className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-sentry-cyan via-emerald-400 to-sentry-emerald text-void font-bold text-xs glow-cyan hover:scale-[1.03] active:scale-[0.98] transition-all disabled:opacity-50"
               >
                 <Zap className="w-4 h-4 fill-current" />
-                <span>{isScanning ? 'SCANNING (14.8ms)...' : 'SCAN WITH TABPFN'}</span>
+                <span>{isScanning ? `SCANNING (${scanLatency.toFixed(1)}ms)...` : 'SCAN WITH TABPFN'}</span>
               </button>
             </div>
           </div>
@@ -476,7 +571,7 @@ export const AttackSimulator: React.FC = () => {
                     <Clock className="w-3 h-3 text-sentry-emerald" />
                     LATENCY
                   </div>
-                  <div className="text-base font-bold text-sentry-emerald">14.8 ms</div>
+                  <div className="text-base font-bold text-sentry-emerald">{scanLatency.toFixed(1)} ms</div>
                   <div className="text-[9px] text-slate-500">30x faster than blink</div>
                 </div>
 

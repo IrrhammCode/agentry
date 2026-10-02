@@ -75,23 +75,45 @@ const STREAM_STEPS: TelemetryStep[] = [
   },
 ];
 
+import { AgentryApi, AuditEvent } from '../services/api.ts';
+
 export const LiveHeroTerminal: React.FC = () => {
+  const [steps, setSteps] = useState<TelemetryStep[]>(STREAM_STEPS);
   const [visibleCount, setVisibleCount] = useState<number>(2);
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
   const [showHealer, setShowHealer] = useState<boolean>(false);
+
+  useEffect(() => {
+    AgentryApi.getAuditEvents(5)
+      .then((res) => {
+        if (res.events && res.events.length >= 3) {
+          const live: TelemetryStep[] = res.events.reverse().map((e: AuditEvent, idx: number) => ({
+            step: idx + 1,
+            time: `t=${idx + 1}`,
+            tool: `${e.session_id}`,
+            action: e.reason && e.reason.length > 50 ? e.reason.slice(0, 50) + '...' : (e.reason || 'Step execution audited'),
+            status: (e.action === 'KILL' ? 'kill' : e.action === 'REROUTE' ? 'reroute' : e.action === 'PAUSE' ? 'warn' : 'nominal') as 'nominal' | 'warn' | 'reroute' | 'kill',
+            statusText: `${e.action} • ${e.risk_level}`,
+            prob: `P_fail = ${e.failure_probability.toFixed(3)}`,
+            extra: e.estimated_cost_saved_usd > 0 ? `Saved $${e.estimated_cost_saved_usd.toFixed(2)}` : undefined
+          }));
+          setSteps(live);
+        }
+      })
+      .catch((err) => console.debug('Hero terminal offline fallback', err));
+  }, []);
 
   useEffect(() => {
     if (!isPlaying) return;
 
     const interval = setInterval(() => {
       setVisibleCount((prev) => {
-        if (prev < STREAM_STEPS.length) {
-          if (prev + 1 === STREAM_STEPS.length) {
+        if (prev < steps.length) {
+          if (prev + 1 === steps.length) {
             setTimeout(() => setShowHealer(true), 600);
           }
           return prev + 1;
         } else {
-          // Loop restart after pause
           setShowHealer(false);
           return 1;
         }
@@ -99,7 +121,7 @@ export const LiveHeroTerminal: React.FC = () => {
     }, 1800);
 
     return () => clearInterval(interval);
-  }, [isPlaying]);
+  }, [isPlaying, steps]);
 
   const handleRestart = () => {
     setVisibleCount(1);
@@ -151,7 +173,7 @@ export const LiveHeroTerminal: React.FC = () => {
 
       {/* Terminal Telemetry Body */}
       <div className="p-5 font-mono text-xs space-y-3 bg-black min-h-[260px] relative">
-        {STREAM_STEPS.slice(0, visibleCount).map((item, idx) => {
+        {steps.slice(0, visibleCount).map((item, idx) => {
           const isLatest = idx === visibleCount - 1;
           return (
             <div 

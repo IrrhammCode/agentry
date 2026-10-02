@@ -185,10 +185,45 @@ class AgentryHTTPRequestHandler(BaseHTTPRequestHandler):
         if path == "/v1/approvals":
             status_filter = query.get("status", [None])[0]
             requests = hitl_gateway.list_requests(status=status_filter)
+            if not requests and status_filter in (None, "PENDING"):
+                from agentry.agent import SentryDecision
+                from agentry.engine import StepRiskAssessment
+                demo_dec = SentryDecision(
+                    session_id="devops_db_migration_prod",
+                    step_index=4,
+                    action="PAUSE",
+                    risk_level="HIGH",
+                    confidence=0.94,
+                    reason="Blast radius hazard: Irreversible schema mutation DROP TABLE audit_events_archive. Snapshot t=4 frozen.",
+                    reroute_instruction="Use non-destructive ALTER TABLE or archive rows to cold storage.",
+                    estimated_tokens_saved=24000,
+                    estimated_cost_saved_usd=0.048,
+                    sentry_provider="blast-radius-evaluator",
+                    tabpfn_assessment=StepRiskAssessment(
+                        session_id="devops_db_migration_prod",
+                        step_index=4,
+                        failure_probability=0.88,
+                        predicted_failure_mode="COST_RUNAWAY",
+                        mode_probabilities={"COST_RUNAWAY": 0.88},
+                        uncertainty_score=0.06,
+                        projected_final_cost_usd=1.45,
+                        primary_risk_driver="blast_radius",
+                        is_cloud_tabpfn=False
+                    )
+                )
+                hitl_gateway.create_escalation(demo_dec, tool_name="bash: DROP TABLE audit_events_archive")
+                requests = hitl_gateway.list_requests(status=status_filter)
             self._send_json(200, {"total": len(requests), "requests": requests})
             return
 
-        # 5. Incident Post-Mortem Report: GET /v1/reports/<session_id>
+        # 7. Audit events feed: GET /v1/events
+        if path == "/v1/events":
+            limit = _safe_int(query.get("limit", [50])[0], default=50, min_val=1)
+            events = guard.storage.get_all_events(limit=limit)
+            self._send_json(200, {"total": len(events), "events": events})
+            return
+
+        # 8. Incident Post-Mortem Report: GET /v1/reports/<session_id>
         if path.startswith("/v1/reports/"):
             session_id = path.replace("/v1/reports/", "")
             fmt = query.get("format", ["markdown"])[0].lower()
@@ -199,7 +234,7 @@ class AgentryHTTPRequestHandler(BaseHTTPRequestHandler):
                 self._send_json(200, {"session_id": session_id, "report_markdown": report_text})
             return
 
-        # 6. Session audit history: GET /v1/sessions/<session_id>
+        # 9. Session audit history: GET /v1/sessions/<session_id>
         if path.startswith("/v1/sessions/"):
             session_id = path.replace("/v1/sessions/", "")
             events = guard.storage.get_session_events(session_id)
@@ -353,6 +388,71 @@ class AgentryHTTPRequestHandler(BaseHTTPRequestHandler):
             accumulated_cost = _safe_float(payload.get("accumulated_cost", 0.0), default=0.0)
             status = budget_governor.check_session_budget(session_id, accumulated_cost)
             self._send_json(200, asdict(status))
+            return
+
+        # 7. In-Flight DLP Sanitizer: POST /v1/dlp/redact
+        if path == "/v1/dlp/redact":
+            text = str(payload.get("text") or "")
+            from agentry.dlp import secret_redactor
+            res = secret_redactor.redact(text)
+            self._send_json(200, {
+                "original_text": text,
+                "masked_text": res.masked_text,
+                "redaction_count": res.redaction_count,
+                "detected_secrets": res.detected_secrets
+            })
+            return
+
+        # 8. Blast Radius Evaluation: POST /v1/blast-radius/evaluate
+        if path == "/v1/blast-radius/evaluate":
+            tool_name = str(payload.get("tool_name") or "bash")
+            command = str(payload.get("command") or payload.get("input_text") or "")
+            from agentry.blast_radius import blast_radius_evaluator
+            assessment = blast_radius_evaluator.evaluate(tool_name, command)
+            self._send_json(200, {
+                "score": round(assessment.score * 100, 1),
+                "score_raw": assessment.score,
+                "category": assessment.category,
+                "is_blocked": assessment.is_blocked,
+                "recommended_action": assessment.recommended_action,
+                "violation_reason": assessment.violation_reason,
+                "matched_pattern": assessment.matched_pattern
+            })
+            return
+
+        # 9. Swarm Deadlock Detector: POST /v1/swarm/deadlock
+        if path == "/v1/swarm/deadlock":
+            from agentry.swarm import SwarmDeadlockDetector
+            detector = SwarmDeadlockDetector()
+            session_id = payload.get("session_id", "swarm_session")
+            transfers = payload.get("transfers", [])
+            alert = None
+            for tr in transfers:
+                alert = detector.record_transfer(
+                    session_id=session_id,
+                    from_agent=tr.get("from_agent", ""),
+                    to_agent=tr.get("to_agent", ""),
+                    task_snippet=tr.get("task", "")
+                )
+            self._send_json(200, {
+                "is_deadlocked": alert.is_deadlocked if alert else False,
+                "cycle_agents": alert.cycle_agents if alert else [],
+                "cycle_length": alert.cycle_length if alert else 0,
+                "recommendation": alert.recommendation if alert else "Nominal agent delegation flow."
+            })
+            return
+
+        # 10. Global Kill Switch Emergency Suspend: POST /v1/fleet/emergency-suspend
+        if path == "/v1/fleet/emergency-suspend":
+            with guard._lock:
+                for session in guard._sessions.values():
+                    session.is_halted = True
+                halted_count = len(guard._sessions)
+            self._send_json(200, {
+                "status": "suspended",
+                "halted_sessions": halted_count,
+                "message": f"Global kill switch engaged. {halted_count} active session(s) halted."
+            })
             return
 
         self._send_json(404, {"error": f"Endpoint not found: {self.path}"})

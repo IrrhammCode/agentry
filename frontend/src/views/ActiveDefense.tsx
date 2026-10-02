@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   ShieldAlert, 
   Lock, 
@@ -7,47 +7,100 @@ import {
   CornerDownLeft, 
   Flame, 
   Check, 
-  AlertOctagon,
-  ShieldCheck,
-  Cpu,
-  Layers,
-  Sparkles,
-  Terminal,
-  KeyRound
+  AlertOctagon, 
+  ShieldCheck, 
+  Cpu, 
+  Layers, 
+  Sparkles, 
+  Terminal, 
+  KeyRound,
+  ShieldX
 } from 'lucide-react';
+import { 
+  AgentryApi, 
+  DlpResult, 
+  BlastRadiusResult, 
+  SwarmDeadlockResult 
+} from '../services/api.ts';
 
 export const ActiveDefense: React.FC = () => {
   const [rawText, setRawText] = useState<string>(
     'Connect to AWS RDS using key: AKIAIOSFODNN7EXAMPLE and OpenAI token sk-proj-98214abcdef993214 to sync database postgres://admin:superSecret123@db.prod.internal:5432/main'
   );
-  const [maskedText, setMaskedText] = useState<string>(
-    'Connect to AWS RDS using key: [REDACTED_AWS_KEY:AKIA...MPLE] and OpenAI token [REDACTED_OPENAI_KEY:sk-p...3214] to sync database [REDACTED_DB_URI:postgres://[REDACTED]@.../main]'
-  );
+  const [maskedText, setMaskedText] = useState<string>('');
+  const [dlpResult, setDlpResult] = useState<DlpResult | null>(null);
+  const [isDlpLoading, setIsDlpLoading] = useState<boolean>(false);
 
   const [deadlockBroken, setDeadlockBroken] = useState<boolean>(false);
+  const [deadlockResult, setDeadlockResult] = useState<SwarmDeadlockResult | null>(null);
+  const [isDeadlockLoading, setIsDeadlockLoading] = useState<boolean>(false);
+
   const [customCmd, setCustomCmd] = useState<string>('rm -rf / --no-preserve-root');
-  const [blastScore, setBlastScore] = useState<number>(98);
+  const [blastScore, setBlastScore] = useState<number>(100);
+  const [blastResult, setBlastResult] = useState<BlastRadiusResult | null>(null);
+  const [isBlastLoading, setIsBlastLoading] = useState<boolean>(false);
 
-  const handleMask = () => {
-    const masked = rawText
-      .replace(/AKIA[0-9A-Z]{16}/g, '[REDACTED_AWS_KEY:AKIA...MPLE]')
-      .replace(/sk-proj-[a-zA-Z0-9_-]+/g, '[REDACTED_OPENAI_KEY:sk-p...3214]')
-      .replace(/postgres:\/\/[^@]+@/g, 'postgres://[REDACTED_AUTH]@');
-    setMaskedText(masked);
-  };
-
-  const handleEvalBlast = (cmd: string) => {
-    setCustomCmd(cmd);
-    if (cmd.includes('rm -rf') || cmd.includes('DROP') || cmd.includes('mkfs')) {
-      setBlastScore(98);
-    } else if (cmd.includes('chmod') || cmd.includes('chown') || cmd.includes('export')) {
-      setBlastScore(65);
-    } else if (cmd.includes('pytest') || cmd.includes('python')) {
-      setBlastScore(20);
-    } else {
-      setBlastScore(5);
+  // Pillar 1: DLP Secret Redaction
+  const handleMask = async (textToMask?: string) => {
+    const text = textToMask !== undefined ? textToMask : rawText;
+    setIsDlpLoading(true);
+    try {
+      const res = await AgentryApi.redactDlp(text);
+      setMaskedText(res.masked_text);
+      setDlpResult(res);
+    } catch (err) {
+      console.error('DLP redaction failed', err);
+    } finally {
+      setIsDlpLoading(false);
     }
   };
+
+  // Pillar 2: Swarm Deadlock Detection
+  const handleToggleDeadlock = async () => {
+    const targetState = !deadlockBroken;
+    setDeadlockBroken(targetState);
+    setIsDeadlockLoading(true);
+    try {
+      const transfers = targetState 
+        ? [
+            { from_agent: 'CoderAgent-01', to_agent: 'ReviewerAgent-02', task: 'Review pull request #402' },
+            { from_agent: 'ReviewerAgent-02', to_agent: 'TerminalAgent-Finalizer', task: 'Merged and finalized' }
+          ]
+        : [
+            { from_agent: 'CoderAgent-01', to_agent: 'ReviewerAgent-02', task: 'Review pull request' },
+            { from_agent: 'ReviewerAgent-02', to_agent: 'CoderAgent-01', task: 'Please revise code' },
+            { from_agent: 'CoderAgent-01', to_agent: 'ReviewerAgent-02', task: 'Review pull request again' },
+            { from_agent: 'ReviewerAgent-02', to_agent: 'CoderAgent-01', task: 'Please revise code again' }
+          ];
+      const res = await AgentryApi.detectDeadlock('swarm_live_session', transfers);
+      setDeadlockResult(res);
+    } catch (err) {
+      console.error('Swarm deadlock check failed', err);
+    } finally {
+      setIsDeadlockLoading(false);
+    }
+  };
+
+  // Pillar 3: Semantic Blast Radius
+  const handleEvalBlast = async (cmd: string) => {
+    setCustomCmd(cmd);
+    setIsBlastLoading(true);
+    try {
+      const res = await AgentryApi.evaluateBlastRadius('bash', cmd);
+      setBlastScore(res.score);
+      setBlastResult(res);
+    } catch (err) {
+      console.error('Blast radius evaluation failed', err);
+    } finally {
+      setIsBlastLoading(false);
+    }
+  };
+
+  // Initial load: trigger live evaluations
+  useEffect(() => {
+    handleMask(rawText);
+    handleEvalBlast('rm -rf / --no-preserve-root');
+  }, []);
 
   return (
     <div className="flex-grow max-w-7xl mx-auto w-full px-4 lg:px-8 py-10 space-y-10 bg-black">
@@ -62,7 +115,7 @@ export const ActiveDefense: React.FC = () => {
           Active Defense & Security Interception Suite
         </h1>
         <p className="text-xs sm:text-sm text-slate-400 mt-1">
-          Explore the 3 proactive defense pillars protecting your agents before, during, and after execution.
+          Explore the 3 proactive defense pillars powered by live Agentry runtime engines.
         </p>
       </div>
 
@@ -91,15 +144,24 @@ export const ActiveDefense: React.FC = () => {
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-2 text-xs font-mono text-slate-300">
               <KeyRound className="w-4 h-4 text-sentry-violet" />
-              <span>Real-Time Masking Testbench</span>
+              <span>Real-Time Masking Testbench (Live Regex DLP Engine)</span>
             </div>
-            <button 
-              onClick={handleMask}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-sentry-violet/20 hover:bg-violet-500/30 text-sentry-violet border border-violet-500/30 text-xs font-mono font-bold transition-all hover:scale-[1.02]"
-            >
-              <RefreshCw className="w-3.5 h-3.5" />
-              <span>Re-run Sanitizer</span>
-            </button>
+            
+            <div className="flex items-center gap-3">
+              {dlpResult && dlpResult.redaction_count > 0 && (
+                <span className="px-2.5 py-1 rounded-lg bg-violet-500/15 border border-violet-500/30 text-sentry-violet text-xs font-mono font-bold">
+                  {dlpResult.redaction_count} Secret(s) Redacted In-Flight
+                </span>
+              )}
+              <button 
+                onClick={() => handleMask()}
+                disabled={isDlpLoading}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-sentry-violet/20 hover:bg-violet-500/30 text-sentry-violet border border-violet-500/30 text-xs font-mono font-bold transition-all hover:scale-[1.02] disabled:opacity-50"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isDlpLoading ? 'animate-spin' : ''}`} />
+                <span>{isDlpLoading ? 'Sanitizing...' : 'Re-run Live DLP Sanitizer'}</span>
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -129,6 +191,19 @@ export const ActiveDefense: React.FC = () => {
               />
             </div>
           </div>
+
+          {dlpResult && dlpResult.detected_secrets.length > 0 && (
+            <div className="p-3 rounded-xl bg-violet-950/20 border border-violet-500/20 text-xs font-mono text-violet-300 flex items-center justify-between flex-wrap gap-2">
+              <span>Detected Token Classes:</span>
+              <div className="flex items-center gap-2">
+                {dlpResult.detected_secrets.map((s, idx) => (
+                  <span key={idx} className="px-2 py-0.5 rounded bg-violet-500/20 border border-violet-500/30 text-[11px] font-bold">
+                    {s.type}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -157,10 +232,11 @@ export const ActiveDefense: React.FC = () => {
           <div className="flex items-center justify-between flex-wrap gap-2">
             <span className="text-xs font-mono text-slate-300 flex items-center gap-2">
               <RefreshCw className="w-4 h-4 text-sentry-cyan" />
-              <span>Directed Graph Cycle State</span>
+              <span>Directed Graph Cycle State (Live Topology Evaluation)</span>
             </span>
             <button 
-              onClick={() => setDeadlockBroken(!deadlockBroken)}
+              onClick={handleToggleDeadlock}
+              disabled={isDeadlockLoading}
               className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-mono text-slate-200 border border-white/10 transition-colors"
             >
               {deadlockBroken ? 'Simulate Deadlock Cycle' : 'Test Autonomic Loop Break'}
@@ -186,7 +262,9 @@ export const ActiveDefense: React.FC = () => {
                   <CornerDownLeft className="w-6 h-6 text-red-500 animate-pulse" />
                   <div className="p-3.5 rounded-xl bg-red-950/40 border border-red-500 text-red-300 text-center font-bold text-xs flex flex-col items-center gap-1">
                     <span className="flex items-center gap-1.5"><AlertOctagon className="w-4 h-4 text-red-400" /> CYCLE DETECTED (Length: 2)</span>
-                    <span className="text-[11px] font-normal text-slate-300">Intervention: TabPFN forces terminal finalizer at Step 4</span>
+                    <span className="text-[11px] font-normal text-slate-300">
+                      {deadlockResult?.recommendation || 'Intervention: TabPFN forces terminal finalizer at Step 4'}
+                    </span>
                   </div>
                 </>
               ) : (
@@ -225,17 +303,24 @@ export const ActiveDefense: React.FC = () => {
           <div className="flex items-center justify-between flex-wrap gap-2">
             <span className="text-xs font-mono text-slate-300 flex items-center gap-2">
               <Terminal className="w-4 h-4 text-sentry-red" />
-              <span>Interactive Command Hazard Scoring</span>
+              <span>Interactive Command Hazard Scoring (Live Agentry Evaluator)</span>
             </span>
-            <span className={`px-3 py-1 rounded-xl text-xs font-mono font-bold border ${
-              blastScore > 70 
-                ? 'bg-red-500/20 text-sentry-red border-red-500/40' 
-                : blastScore > 30 
-                ? 'bg-amber-500/20 text-amber-400 border-amber-500/40'
-                : 'bg-emerald-500/20 text-sentry-emerald border-emerald-500/40'
-            }`}>
-              Blast Hazard Rating: {blastScore} / 100
-            </span>
+            <div className="flex items-center gap-2">
+              {blastResult && (
+                <span className="px-2.5 py-1 rounded-xl text-xs font-mono font-bold bg-white/5 border border-white/10 text-slate-300">
+                  {blastResult.category} • Action: {blastResult.recommended_action}
+                </span>
+              )}
+              <span className={`px-3 py-1 rounded-xl text-xs font-mono font-bold border ${
+                blastScore > 70 
+                  ? 'bg-red-500/20 text-sentry-red border-red-500/40' 
+                  : blastScore > 30 
+                  ? 'bg-amber-500/20 text-amber-400 border-amber-500/40'
+                  : 'bg-emerald-500/20 text-sentry-emerald border-emerald-500/40'
+              }`}>
+                Blast Hazard Rating: {blastScore} / 100
+              </span>
+            </div>
           </div>
 
           <div className="space-y-3">
@@ -246,6 +331,13 @@ export const ActiveDefense: React.FC = () => {
               className="w-full bg-black rounded-xl p-4 font-mono text-xs text-sentry-cyan border border-white/15 focus:border-sentry-cyan focus:outline-none"
               placeholder="Type command e.g. rm -rf /, DROP DATABASE, pytest tests/..."
             />
+
+            {blastResult?.violation_reason && (
+              <div className="p-3 rounded-xl bg-red-950/20 border border-red-500/30 text-xs font-mono text-red-300 flex items-center gap-2">
+                <ShieldX className="w-4 h-4 text-red-400 shrink-0" />
+                <span>{blastResult.violation_reason}</span>
+              </div>
+            )}
 
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-[11px] font-mono text-slate-500">Quick Scenarios:</span>
