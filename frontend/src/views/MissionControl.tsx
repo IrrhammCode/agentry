@@ -6,13 +6,22 @@ import {
   UserCheck, 
   Radio, 
   Power, 
-  PieChart, 
   TrendingUp, 
   PauseCircle, 
   Check, 
   Shuffle, 
   XOctagon,
-  ShieldAlert 
+  ShieldAlert,
+  Clock,
+  ArrowRight,
+  Lock,
+  RefreshCw,
+  AlertTriangle,
+  FileCode,
+  Terminal,
+  Database,
+  Search,
+  Sparkles
 } from 'lucide-react';
 
 export const MissionControl: React.FC = () => {
@@ -23,12 +32,12 @@ export const MissionControl: React.FC = () => {
 
   const showToast = (msg: string) => {
     setNotification(msg);
-    setTimeout(() => setNotification(null), 3500);
+    setTimeout(() => setNotification(null), 4000);
   };
 
   const handleApprove = () => {
     setHitlCount(0);
-    showToast('Action Approved: Agent devops_db_migration_prod resumed with execution envelope.');
+    showToast('Action Approved: devops_db_migration_prod authorized with safety sandbox envelope.');
   };
 
   const handleSteerSubmit = () => {
@@ -39,402 +48,584 @@ export const MissionControl: React.FC = () => {
 
   const handleAbort = () => {
     setHitlCount(0);
-    showToast('Session Aborted: Trajectory killed and disk rolled back to initial commit.');
+    showToast('Session Aborted: Destructive process terminated & disk rolled back to snapshot.');
   };
 
   const handleEmergencyStop = () => {
-    if (window.confirm('CRITICAL EMERGENCY OVERRIDE:\nAre you sure you want to FREEZE ALL 4 running agent instances immediately?')) {
+    if (window.confirm('EMERGENCY FLEET SUSPEND:\nFreeze all 4 running AI agent instances immediately?')) {
       showToast('GLOBAL KILL SWITCH TRIPPED: All 4 agent execution loops suspended.');
     }
   };
 
   return (
-    <div className="flex-grow max-w-7xl mx-auto w-full px-4 lg:px-8 py-8 space-y-8">
+    <div className="flex-grow max-w-7xl mx-auto w-full px-4 lg:px-8 py-10 space-y-10">
       
-      {/* Toast Notification */}
+      {/* Interactive Toast Notification */}
       {notification && (
-        <div className="fixed bottom-6 right-6 z-50 glass-card border border-emerald-500/40 bg-surface-1/95 p-4 rounded-xl text-xs font-mono text-sentry-emerald shadow-2xl flex items-center gap-2 glow-emerald">
-          <Check className="w-4 h-4 text-sentry-emerald" />
+        <div className="fixed bottom-6 right-6 z-50 bg-[#0E1520] border border-emerald-500/40 p-4 rounded-xl text-xs font-mono text-sentry-emerald shadow-2xl flex items-center gap-3 glow-emerald animate-fade-in">
+          <Check className="w-4 h-4 text-sentry-emerald shrink-0" />
           <span>{notification}</span>
         </div>
       )}
 
-      {/* Top KPI Command Bar */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="glass-card rounded-xl p-4 border border-white/10">
-          <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
-            <span>ACTIVE SWARM FLEET</span>
-            <Bot className="w-4 h-4 text-sentry-cyan" />
+      {/* ===================================================================== */}
+      {/* TOP COMMAND HEADER & GLOBAL KILL SWITCH                               */}
+      {/* ===================================================================== */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/10">
+        <div>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sentry-cyan/10 border border-sentry-cyan/20 text-sentry-cyan text-xs font-mono font-medium mb-2">
+            <Radio className="w-3.5 h-3.5 animate-pulse" />
+            <span>MISSION CONTROL • LIVE FLEET SENTRY</span>
           </div>
-          <div className="text-2xl font-bold font-mono text-white">
-            4 Agents <span className="text-xs text-emerald-400 font-normal">● Live</span>
+          <h1 className="text-2xl sm:text-3xl font-display font-bold text-white tracking-tight">
+            Autonomous Fleet Governance Console
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-400 mt-1">
+            Follow the 3-step sentry lifecycle: <strong>1. Fleet Execution</strong> → <strong>2. TabPFN Detection</strong> → <strong>3. Human Authorization</strong>.
+          </p>
+        </div>
+
+        <button 
+          onClick={handleEmergencyStop}
+          className="self-start sm:self-center flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-500/15 hover:bg-red-500/25 text-sentry-red border border-red-500/30 text-xs font-mono font-bold transition-all hover:scale-[1.02] active:scale-[0.98]"
+        >
+          <Power className="w-4 h-4" />
+          <span>GLOBAL KILL SWITCH</span>
+        </button>
+      </div>
+
+      {/* ===================================================================== */}
+      {/* TOP KPI OVERVIEW CARDS (SPACIOUS & HIGH CONTRAST)                     */}
+      {/* ===================================================================== */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        
+        <div className="glass-card rounded-2xl p-5 border border-white/10 hover:border-white/20 transition-colors">
+          <div className="flex items-center justify-between text-xs text-slate-400 mb-2">
+            <span className="font-mono uppercase tracking-wider">Active Swarm Fleet</span>
+            <div className="w-8 h-8 rounded-lg bg-sentry-cyan/10 flex items-center justify-center">
+              <Bot className="w-4 h-4 text-sentry-cyan" />
+            </div>
+          </div>
+          <div className="text-3xl font-bold font-mono text-white mb-1">
+            4 Agents
+          </div>
+          <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-mono">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+            <span>Synchronized & Monitored</span>
           </div>
         </div>
 
-        <div className="glass-card rounded-xl p-4 border border-white/10">
-          <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
-            <span>RISK INTERCEPTION RATE</span>
-            <ShieldCheck className="w-4 h-4 text-sentry-emerald" />
+        <div className="glass-card rounded-2xl p-5 border border-white/10 hover:border-white/20 transition-colors">
+          <div className="flex items-center justify-between text-xs text-slate-400 mb-2">
+            <span className="font-mono uppercase tracking-wider">TabPFN Scan Latency</span>
+            <div className="w-8 h-8 rounded-lg bg-sentry-emerald/10 flex items-center justify-center">
+              <Clock className="w-4 h-4 text-sentry-emerald" />
+            </div>
           </div>
-          <div className="text-2xl font-bold font-mono text-sentry-emerald">
-            94.2% <span className="text-xs text-slate-400 font-normal">P(Recall)</span>
+          <div className="text-3xl font-bold font-mono text-sentry-emerald mb-1">
+            14.8 ms
           </div>
-        </div>
-
-        <div className="glass-card rounded-xl p-4 border border-white/10">
-          <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
-            <span>DOLLARS SALVAGED</span>
-            <BadgeDollarSign className="w-4 h-4 text-sentry-cyan" />
-          </div>
-          <div className="text-2xl font-bold font-mono text-sentry-cyan">
-            $124.50 <span className="text-xs text-slate-400 font-normal">Today</span>
+          <div className="text-xs text-slate-400 font-mono">
+            Sub-20ms Bayesian Prior Evaluation
           </div>
         </div>
 
-        <div className="glass-card rounded-xl p-4 border border-white/10">
-          <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
-            <span>HITL ESCALATIONS</span>
-            <UserCheck className="w-4 h-4 text-amber-400" />
+        <div className="glass-card rounded-2xl p-5 border border-white/10 hover:border-white/20 transition-colors">
+          <div className="flex items-center justify-between text-xs text-slate-400 mb-2">
+            <span className="font-mono uppercase tracking-wider">Dollars Salvaged</span>
+            <div className="w-8 h-8 rounded-lg bg-sentry-cyan/10 flex items-center justify-center">
+              <BadgeDollarSign className="w-4 h-4 text-sentry-cyan" />
+            </div>
           </div>
-          <div className="text-2xl font-bold font-mono text-amber-400">
+          <div className="text-3xl font-bold font-mono text-sentry-cyan mb-1">
+            $124.50
+          </div>
+          <div className="text-xs text-slate-400 font-mono">
+            From prevented loops & runaway burns
+          </div>
+        </div>
+
+        <div className="glass-card rounded-2xl p-5 border border-white/10 hover:border-white/20 transition-colors">
+          <div className="flex items-center justify-between text-xs text-slate-400 mb-2">
+            <span className="font-mono uppercase tracking-wider">Human Sign-Offs</span>
+            <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
+              <UserCheck className="w-4 h-4 text-amber-400" />
+            </div>
+          </div>
+          <div className={`text-3xl font-bold font-mono mb-1 ${hitlCount > 0 ? 'text-amber-400' : 'text-sentry-emerald'}`}>
             {hitlCount} Pending
           </div>
+          <div className="text-xs text-slate-400 font-mono">
+            {hitlCount > 0 ? 'Requires operator confirmation' : 'All clear (Queue empty)'}
+          </div>
         </div>
+
       </div>
 
-      {/* Active 4-Agent Fleet Grid */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-xl font-display font-bold text-white flex items-center gap-2">
-              <Radio className="w-5 h-5 text-sentry-cyan animate-pulse" />
-              Live Fleet Radar & Telemetry Stream
-            </h2>
-            <p className="text-xs text-slate-400 font-mono">Synchronized 4-Agent Cluster • 15ms TabPFN Sentry Polling</p>
-          </div>
-          <button 
-            onClick={handleEmergencyStop}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-sentry-red border border-red-500/30 text-xs font-mono font-bold transition-all"
-          >
-            <Power className="w-3.5 h-3.5" />
-            <span>GLOBAL KILL SWITCH</span>
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          
-          {/* Agent 1: CoderAgent */}
-          <div className="glass-card rounded-2xl p-5 border border-white/10 hover:border-emerald-500/30 transition-all flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <span className="font-mono text-xs font-bold text-white">CoderAgent-01</span>
-                <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-sentry-emerald text-[10px] font-mono font-semibold">RUNNING</span>
-              </div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="relative w-14 h-14 flex items-center justify-center shrink-0">
-                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                    <path className="text-surface-2 stroke-current" strokeWidth="3.5" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
-                    <path className="text-sentry-emerald stroke-current" strokeDasharray="14, 100" strokeWidth="3.5" strokeLinecap="round" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
-                  </svg>
-                  <span className="absolute font-mono text-xs font-bold text-sentry-emerald">14%</span>
-                </div>
-                <div className="font-mono text-[11px] space-y-1">
-                  <div className="text-slate-400">Step: <span className="text-white font-bold">12 / 50</span></div>
-                  <div className="text-slate-400">Burn: <span className="text-sentry-cyan font-bold">$0.34</span></div>
-                  <div className="text-slate-400">Tool: <span className="text-emerald-300">edit_file()</span></div>
-                </div>
-              </div>
-            </div>
-            <div className="p-2.5 rounded bg-void/80 font-mono text-[10px] text-slate-400 truncate">
-              &gt; refactoring auth_middleware.py tests...
-            </div>
-          </div>
-
-          {/* Agent 2: DevOps-Sentry */}
-          <div className="glass-card rounded-2xl p-5 border border-red-500/30 bg-red-950/10 flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <span className="font-mono text-xs font-bold text-white">DevOps-Sentry</span>
-                <span className="px-2 py-0.5 rounded bg-red-500/20 text-sentry-red text-[10px] font-mono font-semibold animate-pulse">INTERCEPTED</span>
-              </div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="relative w-14 h-14 flex items-center justify-center shrink-0">
-                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                    <path className="text-surface-2 stroke-current" strokeWidth="3.5" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
-                    <path className="text-sentry-red stroke-current" strokeDasharray="96, 100" strokeWidth="3.5" strokeLinecap="round" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
-                  </svg>
-                  <span className="absolute font-mono text-xs font-bold text-sentry-red">96%</span>
-                </div>
-                <div className="font-mono text-[11px] space-y-1">
-                  <div className="text-slate-400">Step: <span className="text-white font-bold">5 / 20</span></div>
-                  <div className="text-slate-400">Burn: <span className="text-sentry-red font-bold">$1.89</span></div>
-                  <div className="text-slate-400">Tool: <span className="text-red-400">rm -rf</span></div>
-                </div>
-              </div>
-            </div>
-            <div className="p-2.5 rounded bg-red-950/50 font-mono text-[10px] text-red-300 truncate flex items-center gap-1.5">
-              <ShieldAlert className="w-3.5 h-3.5 text-red-400 shrink-0" />
-              <span>Blast radius kill: root cleanup blocked</span>
-            </div>
-          </div>
-
-          {/* Agent 3: ResearchBot */}
-          <div className="glass-card rounded-2xl p-5 border border-white/10 hover:border-amber-500/30 transition-all flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <span className="font-mono text-xs font-bold text-white">ResearchBot-03</span>
-                <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 text-[10px] font-mono font-semibold">REROUTED</span>
-              </div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="relative w-14 h-14 flex items-center justify-center shrink-0">
-                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                    <path className="text-surface-2 stroke-current" strokeWidth="3.5" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
-                    <path className="text-amber-400 stroke-current" strokeDasharray="64, 100" strokeWidth="3.5" strokeLinecap="round" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
-                  </svg>
-                  <span className="absolute font-mono text-xs font-bold text-amber-400">64%</span>
-                </div>
-                <div className="font-mono text-[11px] space-y-1">
-                  <div className="text-slate-400">Step: <span className="text-white font-bold">18 / 40</span></div>
-                  <div className="text-slate-400">Burn: <span className="text-amber-400 font-bold">$0.78</span></div>
-                  <div className="text-slate-400">Tool: <span className="text-amber-300">fetch_url()</span></div>
-                </div>
-              </div>
-            </div>
-            <div className="p-2.5 rounded bg-void/80 font-mono text-[10px] text-slate-400 truncate">
-              &gt; pruned 3 duplicate search steps
-            </div>
-          </div>
-
-          {/* Agent 4: DataAnalyst */}
-          <div className="glass-card rounded-2xl p-5 border border-white/10 hover:border-emerald-500/30 transition-all flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <span className="font-mono text-xs font-bold text-white">DataAnalyst-04</span>
-                <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-sentry-emerald text-[10px] font-mono font-semibold">RUNNING</span>
-              </div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="relative w-14 h-14 flex items-center justify-center shrink-0">
-                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                    <path className="text-surface-2 stroke-current" strokeWidth="3.5" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
-                    <path className="text-sentry-emerald stroke-current" strokeDasharray="8, 100" strokeWidth="3.5" strokeLinecap="round" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
-                  </svg>
-                  <span className="absolute font-mono text-xs font-bold text-sentry-emerald">8%</span>
-                </div>
-                <div className="font-mono text-[11px] space-y-1">
-                  <div className="text-slate-400">Step: <span className="text-white font-bold">29 / 30</span></div>
-                  <div className="text-slate-400">Burn: <span className="text-sentry-cyan font-bold">$1.11</span></div>
-                  <div className="text-slate-400">Tool: <span className="text-emerald-300">sql_aggregate()</span></div>
-                </div>
-              </div>
-            </div>
-            <div className="p-2.5 rounded bg-void/80 font-mono text-[10px] text-slate-400 truncate">
-              &gt; final aggregations validated
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-      {/* Central Charts Row: Multiclass Donut + Cost Trajectory */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      {/* ===================================================================== */}
+      {/* STEP 1: ACTIVE AGENT FLEET (WHAT ARE AGENTS DOING RIGHT NOW?)          */}
+      {/* ===================================================================== */}
+      <div className="space-y-4">
         
-        {/* Multiclass Donut */}
-        <div className="lg:col-span-5 glass-card rounded-2xl p-6 border border-white/10 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-white text-sm flex items-center gap-2">
-                <PieChart className="w-4 h-4 text-sentry-cyan" />
-                TabPFN Multiclass Anomaly Distribution
-              </h3>
-              <span className="font-mono text-[11px] text-sentry-emerald">Bayesian In-Context</span>
-            </div>
-            
-            <div className="h-56 flex items-center justify-center relative">
-              <svg className="w-48 h-48 transform -rotate-90" viewBox="0 0 42 42">
-                <circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#1E293B" strokeWidth="5"></circle>
-                {/* Nominal: 78.4% */}
-                <circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#00FF87" strokeWidth="5" strokeDasharray="78.4 21.6" strokeDashoffset="0"></circle>
-                {/* Infinite Loop: 14.2% */}
-                <circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#EF4444" strokeWidth="5" strokeDasharray="14.2 85.8" strokeDashoffset="-78.4"></circle>
-                {/* Poisoned Context: 5.1% */}
-                <circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#F59E0B" strokeWidth="5" strokeDasharray="5.1 94.9" strokeDashoffset="-92.6"></circle>
-                {/* Runaway Cost: 2.3% */}
-                <circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#8B5CF6" strokeWidth="5" strokeDasharray="2.3 97.7" strokeDashoffset="-97.7"></circle>
-              </svg>
-              <div className="absolute text-center">
-                <span className="text-xl font-bold font-mono text-white">78.4%</span>
-                <span className="block text-[10px] text-slate-400 font-mono">NOMINAL</span>
-              </div>
-            </div>
+        {/* Step Header */}
+        <div className="flex items-center gap-3 pb-3 border-b border-white/10">
+          <div className="w-8 h-8 rounded-xl bg-sentry-cyan/15 text-sentry-cyan border border-sentry-cyan/30 flex items-center justify-center font-mono font-bold text-sm shrink-0">
+            1
           </div>
-
-          <div className="pt-3 border-t border-white/10 grid grid-cols-2 gap-2 text-[11px] font-mono text-slate-400">
-            <div>● Nominal: <span className="text-sentry-emerald font-bold">78.4%</span></div>
-            <div>● Infinite Loop: <span className="text-sentry-red font-bold">14.2%</span></div>
-            <div>● Context Poison: <span className="text-amber-400 font-bold">5.1%</span></div>
-            <div>● Cost Runaway: <span className="text-violet-400 font-bold">2.3%</span></div>
+          <div>
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <span>Step 1: Active Agent Fleet</span>
+              <span className="text-xs font-mono text-slate-400 font-normal">
+                (Real-time telemetry stream of running instances)
+              </span>
+            </h2>
+            <p className="text-xs text-slate-400">
+              Each agent tool call passes through TabPFN tabular sentry before operating on your environment.
+            </p>
           </div>
         </div>
 
-        {/* Cost Regression Trajectory */}
-        <div className="lg:col-span-7 glass-card rounded-2xl p-6 border border-white/10 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-white text-sm flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-sentry-emerald" />
-                Runaway Cost Projection (TabPFN vs Actual)
-              </h3>
-              <span className="font-mono text-[11px] text-sentry-cyan">R² = 0.782 • MAE = $0.0057</span>
-            </div>
+        {/* 4 Agent Cards Grid (Spacious, Clear Story) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+          
+          {/* Agent 1: CoderAgent-01 (Normal) */}
+          <div className="glass-card rounded-2xl p-5 border border-white/10 hover:border-emerald-500/40 transition-all flex flex-col justify-between space-y-4">
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-sentry-cyan">
+                    <FileCode className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-white text-sm">CoderAgent-01</h3>
+                    <span className="text-[10px] font-mono text-slate-400">Python / Test Suite</span>
+                  </div>
+                </div>
+                <span className="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold bg-emerald-500/15 text-sentry-emerald border border-emerald-500/30">
+                  SAFE • STEP 12/50
+                </span>
+              </div>
 
-            <div className="h-56 flex flex-col justify-center">
-              <svg className="w-full h-40" viewBox="0 0 500 150">
-                {/* Grid Lines */}
-                <line x1="40" y1="20" x2="480" y2="20" stroke="rgba(255,255,255,0.05)" />
-                <line x1="40" y1="60" x2="480" y2="60" stroke="rgba(255,255,255,0.05)" />
-                <line x1="40" y1="100" x2="480" y2="100" stroke="rgba(255,255,255,0.05)" />
-                <line x1="40" y1="130" x2="480" y2="130" stroke="rgba(255,255,255,0.1)" />
-
-                {/* Projected Runaway Line (Dashed Red) */}
-                <polyline 
-                  fill="none" 
-                  stroke="#EF4444" 
-                  strokeWidth="2.5" 
-                  strokeDasharray="6,4" 
-                  points="50,130 110,128 170,124 230,115 290,100 350,65 410,35 470,15"
-                />
-
-                {/* Actual Controlled Line (Solid Cyan) */}
-                <polyline 
-                  fill="none" 
-                  stroke="#60EFFF" 
-                  strokeWidth="3" 
-                  points="50,130 110,128 170,124 230,115 290,105"
-                />
-
-                {/* Points */}
-                <circle cx="50" cy="130" r="3.5" fill="#60EFFF" />
-                <circle cx="110" cy="128" r="3.5" fill="#60EFFF" />
-                <circle cx="170" cy="124" r="3.5" fill="#60EFFF" />
-                <circle cx="230" cy="115" r="3.5" fill="#60EFFF" />
-                <circle cx="290" cy="105" r="5" fill="#EF4444" className="animate-ping" />
-                <circle cx="290" cy="105" r="4" fill="#EF4444" />
-
-                {/* Text marker */}
-                <text x="300" y="100" fill="#EF4444" fontSize="10" fontFamily="monospace" fontWeight="bold">Kill @ t=4</text>
-              </svg>
-              <div className="flex justify-between text-[10px] text-slate-500 font-mono px-6">
-                <span>t=0</span>
-                <span>t=1</span>
-                <span>t=2</span>
-                <span>t=3</span>
-                <span>t=4 (Kill)</span>
-                <span>t=5 (Proj)</span>
-                <span>t=6 (Proj)</span>
-                <span>t=7 (Proj)</span>
+              {/* Action Description */}
+              <div className="p-3 rounded-xl bg-black/60 border border-white/5 font-mono text-xs text-slate-300 mb-3 space-y-1">
+                <div className="text-[10px] text-slate-400 uppercase">Current Tool Execution:</div>
+                <div className="text-sentry-cyan font-semibold truncate">edit_file("auth_test.py")</div>
+                <div className="text-[11px] text-slate-400 truncate">Refactoring jwt validation tests...</div>
               </div>
             </div>
+
+            {/* Sentry Verdict */}
+            <div className="pt-3 border-t border-white/10 text-xs font-mono flex items-center justify-between text-slate-400">
+              <span>TabPFN Risk: <strong className="text-sentry-emerald">0.04 (Nominal)</strong></span>
+              <span className="text-white font-semibold">Burn: $0.34</span>
+            </div>
           </div>
 
-          <div className="pt-3 border-t border-white/10 flex items-center justify-between text-xs text-slate-400 font-mono">
-            <span>Inflection Point Detected at Step 4</span>
-            <span className="text-sentry-emerald font-bold">Early Kill Saved $4.85</span>
+          {/* Agent 2: DevOps-Sentry (Hazard Intercepted) */}
+          <div className="glass-card rounded-2xl p-5 border border-red-500/40 bg-red-950/10 flex flex-col justify-between space-y-4 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/10 blur-2xl pointer-events-none" />
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-red-500/20 border border-red-500/30 flex items-center justify-center text-sentry-red">
+                    <Terminal className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-white text-sm">DevOps-Sentry</h3>
+                    <span className="text-[10px] font-mono text-slate-400">Server Maintenance</span>
+                  </div>
+                </div>
+                <span className="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold bg-red-500/20 text-sentry-red border border-red-500/40 animate-pulse">
+                  BLOCKED (14.8ms)
+                </span>
+              </div>
+
+              {/* Action Description */}
+              <div className="p-3 rounded-xl bg-red-950/40 border border-red-500/30 font-mono text-xs text-red-200 mb-3 space-y-1">
+                <div className="text-[10px] text-red-400 uppercase font-bold flex items-center gap-1">
+                  <ShieldAlert className="w-3.5 h-3.5" />
+                  <span>Hazard Intercepted:</span>
+                </div>
+                <div className="text-red-300 font-bold truncate">rm -rf / --no-preserve-root</div>
+                <div className="text-[11px] text-slate-300">Attempted root erasure; halted before shell spawned.</div>
+              </div>
+            </div>
+
+            {/* Sentry Verdict */}
+            <div className="pt-3 border-t border-red-500/20 text-xs font-mono flex items-center justify-between text-red-300">
+              <span>TabPFN Risk: <strong className="text-sentry-red">0.96 (CRITICAL)</strong></span>
+              <span className="text-emerald-400 font-bold">Saved: $1,200+</span>
+            </div>
           </div>
+
+          {/* Agent 3: ResearchBot-03 (Loop Healed) */}
+          <div className="glass-card rounded-2xl p-5 border border-amber-500/30 bg-amber-950/10 flex flex-col justify-between space-y-4">
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                    <RefreshCw className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-white text-sm">ResearchBot-03</h3>
+                    <span className="text-[10px] font-mono text-slate-400">Web Research Fleet</span>
+                  </div>
+                </div>
+                <span className="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                  LOOP HEALED
+                </span>
+              </div>
+
+              {/* Action Description */}
+              <div className="p-3 rounded-xl bg-amber-950/30 border border-amber-500/20 font-mono text-xs text-amber-200 mb-3 space-y-1">
+                <div className="text-[10px] text-amber-400 uppercase font-bold flex items-center gap-1">
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  <span>Autonomic Intervention:</span>
+                </div>
+                <div className="text-amber-300 font-bold truncate">fetch_url() retry loop streak=3</div>
+                <div className="text-[11px] text-slate-300">Pruned duplicate turns & steered to new query.</div>
+              </div>
+            </div>
+
+            {/* Sentry Verdict */}
+            <div className="pt-3 border-t border-amber-500/20 text-xs font-mono flex items-center justify-between text-amber-300">
+              <span>TabPFN Risk: <strong className="text-amber-400">0.64 (Elevated)</strong></span>
+              <span className="text-white font-semibold">Burn Capped: $0.78</span>
+            </div>
+          </div>
+
+          {/* Agent 4: DataAnalyst-04 (Normal) */}
+          <div className="glass-card rounded-2xl p-5 border border-white/10 hover:border-emerald-500/40 transition-all flex flex-col justify-between space-y-4">
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-sentry-emerald">
+                    <Database className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-white text-sm">DataAnalyst-04</h3>
+                    <span className="text-[10px] font-mono text-slate-400">SQL Analytics Bot</span>
+                  </div>
+                </div>
+                <span className="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold bg-emerald-500/15 text-sentry-emerald border border-emerald-500/30">
+                  SAFE • STEP 29/30
+                </span>
+              </div>
+
+              {/* Action Description */}
+              <div className="p-3 rounded-xl bg-black/60 border border-white/5 font-mono text-xs text-slate-300 mb-3 space-y-1">
+                <div className="text-[10px] text-slate-400 uppercase">Current Tool Execution:</div>
+                <div className="text-sentry-emerald font-semibold truncate">sql_aggregate("quarterly_cohorts")</div>
+                <div className="text-[11px] text-slate-400 truncate">Computing customer retention cohorts...</div>
+              </div>
+            </div>
+
+            {/* Sentry Verdict */}
+            <div className="pt-3 border-t border-white/10 text-xs font-mono flex items-center justify-between text-slate-400">
+              <span>TabPFN Risk: <strong className="text-sentry-emerald">0.08 (Nominal)</strong></span>
+              <span className="text-white font-semibold">Burn: $1.11</span>
+            </div>
+          </div>
+
         </div>
 
       </div>
 
-      {/* Human-in-the-Loop (HITL) War Room & Approval Queue */}
-      <div className="glass-card rounded-2xl p-6 border border-white/10">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h3 className="font-bold text-white text-lg flex items-center gap-2">
-              <PauseCircle className="w-5 h-5 text-amber-400" />
-              HITL Operator War Room & Steering Queue
-            </h3>
-            <p className="text-xs text-slate-400 font-mono">Quarantined Agent Sessions Requiring Supervisor Escalation</p>
+      {/* ===================================================================== */}
+      {/* STEP 2: TABPFN PROTECTION ANALYTICS (WHY TABPFN INTERVENED)           */}
+      {/* ===================================================================== */}
+      <div className="space-y-4">
+        
+        {/* Step Header */}
+        <div className="flex items-center gap-3 pb-3 border-b border-white/10">
+          <div className="w-8 h-8 rounded-xl bg-sentry-emerald/15 text-sentry-emerald border border-sentry-emerald/30 flex items-center justify-center font-mono font-bold text-sm shrink-0">
+            2
           </div>
-          <span className={`px-2.5 py-1 rounded text-xs font-mono font-bold border ${
-            hitlCount > 0 
-              ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' 
-              : 'bg-emerald-500/20 text-sentry-emerald border-emerald-500/30'
-          }`}>
-            {hitlCount > 0 ? `${hitlCount} Active Escalation` : 'All Clear (0 Pending)'}
-          </span>
+          <div>
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <span>Step 2: TabPFN-3.5 Early Detection & Cost Avoidance</span>
+              <span className="text-xs font-mono text-sentry-emerald font-normal">
+                (Sub-20ms Bayesian Prior Evaluation)
+              </span>
+            </h2>
+            <p className="text-xs text-slate-400">
+              How TabPFN identified the exact failure inflection point and prevented runaway token waste.
+            </p>
+          </div>
         </div>
 
-        {hitlCount > 0 ? (
-          <div className="p-5 rounded-xl bg-surface-2/60 border border-amber-500/30 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        {/* Analytics Grid: Left = Curve Comparison, Right = Action Breakdown */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          {/* Left Chart: Cost Trajectory Early Kill */}
+          <div className="lg:col-span-7 glass-card rounded-2xl p-6 border border-white/10 flex flex-col justify-between space-y-4">
             <div>
-              <div className="flex items-center gap-2 font-mono text-xs text-slate-300 mb-1">
-                <span className="text-amber-400 font-bold">[ESCALATION #HITL-8941]</span>
-                <span>Session: <code className="text-sentry-cyan">devops_db_migration_prod</code></span>
-                <span className="text-slate-500">• 2 mins ago</span>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-sentry-emerald" />
+                  <h3 className="font-bold text-white text-sm">
+                    Runaway Cost Prevention Trajectory (TabPFN vs Unchecked LLM)
+                  </h3>
+                </div>
+                <span className="font-mono text-xs text-sentry-emerald font-semibold">
+                  R² = 0.782
+                </span>
               </div>
-              <p className="text-sm font-medium text-white mb-1">
-                Agent attempted destructive SQL statement: <code className="text-red-400 font-mono">DROP TABLE audit_events_archive;</code>
+              <p className="text-xs text-slate-400 mb-4">
+                At Step 4, TabPFN detected repetitive error compounding. Terminating early prevented the agent from burning through 100k+ tokens.
               </p>
-              <p className="text-xs text-slate-400">
-                Blast Radius Score: <strong className="text-sentry-red">88/100</strong> • TabPFN Risk: <strong className="text-amber-400">0.89</strong> • System disk snapshot safely frozen.
-              </p>
+
+              {/* The Visual Line Chart */}
+              <div className="p-4 rounded-xl bg-black/60 border border-white/5">
+                <svg className="w-full h-36" viewBox="0 0 500 130">
+                  {/* Grid Lines */}
+                  <line x1="30" y1="20" x2="470" y2="20" stroke="rgba(255,255,255,0.06)" />
+                  <line x1="30" y1="55" x2="470" y2="55" stroke="rgba(255,255,255,0.06)" />
+                  <line x1="30" y1="90" x2="470" y2="90" stroke="rgba(255,255,255,0.06)" />
+                  <line x1="30" y1="115" x2="470" y2="115" stroke="rgba(255,255,255,0.12)" />
+
+                  {/* Projected Runaway Line (Dashed Red) */}
+                  <polyline 
+                    fill="none" 
+                    stroke="#EF4444" 
+                    strokeWidth="2.5" 
+                    strokeDasharray="6,4" 
+                    points="40,115 100,113 160,109 220,98 280,75 340,48 400,28 460,15"
+                  />
+
+                  {/* Controlled Agentry Line (Solid Cyan) */}
+                  <polyline 
+                    fill="none" 
+                    stroke="#60EFFF" 
+                    strokeWidth="3" 
+                    points="40,115 100,113 160,109 220,98 280,88"
+                  />
+
+                  {/* Nodes */}
+                  <circle cx="40" cy="115" r="3.5" fill="#60EFFF" />
+                  <circle cx="100" cy="113" r="3.5" fill="#60EFFF" />
+                  <circle cx="160" cy="109" r="3.5" fill="#60EFFF" />
+                  <circle cx="220" cy="98" r="3.5" fill="#60EFFF" />
+                  <circle cx="280" cy="88" r="5" fill="#EF4444" className="animate-ping" />
+                  <circle cx="280" cy="88" r="4" fill="#EF4444" />
+
+                  {/* Text marker */}
+                  <text x="290" y="82" fill="#EF4444" fontSize="11" fontFamily="monospace" fontWeight="bold">
+                    TabPFN Early Kill @ t=4
+                  </text>
+                </svg>
+
+                <div className="flex justify-between text-[10px] text-slate-500 font-mono px-3 pt-2">
+                  <span>Step 1 ($0.10)</span>
+                  <span>Step 2 ($0.30)</span>
+                  <span>Step 3 ($0.70)</span>
+                  <span className="text-sentry-emerald font-bold">Step 4: Intercepted ($1.89)</span>
+                  <span className="text-red-400">Unchecked Runaway ($15.00+)</span>
+                </div>
+              </div>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
-              <button 
-                onClick={handleApprove}
-                className="px-3.5 py-2 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-sentry-emerald border border-emerald-500/30 text-xs font-mono font-bold transition-all flex items-center gap-1.5"
-              >
-                <Check className="w-3.5 h-3.5" />
-                <span>Approve</span>
-              </button>
-              <button 
-                onClick={() => setSteerModalOpen(true)}
-                className="px-3.5 py-2 rounded-lg bg-sentry-cyan/20 hover:bg-sentry-cyan/30 text-sentry-cyan border border-sentry-cyan/30 text-xs font-mono font-bold transition-all flex items-center gap-1.5"
-              >
-                <Shuffle className="w-3.5 h-3.5" />
-                <span>Steer Prompt</span>
-              </button>
-              <button 
-                onClick={handleAbort}
-                className="px-3.5 py-2 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-sentry-red border border-red-500/30 text-xs font-mono font-bold transition-all flex items-center gap-1.5"
-              >
-                <XOctagon className="w-3.5 h-3.5" />
-                <span>Abort & Rollback</span>
-              </button>
+            {/* Bottom Insight */}
+            <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between text-xs font-mono">
+              <span className="text-slate-300">Prevented runaway loop burn:</span>
+              <span className="text-sentry-emerald font-bold text-sm">+$13.11 Saved on this session</span>
+            </div>
+          </div>
+
+          {/* Right Cards: Fleet Telemetry Breakdown */}
+          <div className="lg:col-span-5 glass-card rounded-2xl p-6 border border-white/10 flex flex-col justify-between space-y-4">
+            <div>
+              <h3 className="font-bold text-white text-sm mb-1">
+                Today's 164 Fleet Tool Invocations
+              </h3>
+              <p className="text-xs text-slate-400 mb-4">
+                Summary of decisions TabPFN made autonomously today across all agents.
+              </p>
+
+              <div className="space-y-3 font-mono text-xs">
+                
+                {/* 1. Normal allowed */}
+                <div className="p-3 rounded-xl bg-black/60 border border-white/5 flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-sentry-emerald" />
+                    <div>
+                      <div className="text-white font-bold">157 Normal Steps Passed</div>
+                      <div className="text-[10px] text-slate-400">Safe code refactors & test runs</div>
+                    </div>
+                  </div>
+                  <span className="text-sentry-emerald font-bold">95.7%</span>
+                </div>
+
+                {/* 2. Destructive blocked */}
+                <div className="p-3 rounded-xl bg-red-950/20 border border-red-500/20 flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-sentry-red" />
+                    <div>
+                      <div className="text-red-300 font-bold">4 Destructive Commands Intercepted</div>
+                      <div className="text-[10px] text-slate-400">Root wipeouts & DROP statements</div>
+                    </div>
+                  </div>
+                  <span className="text-sentry-red font-bold">2.4%</span>
+                </div>
+
+                {/* 3. Infinite loops broken */}
+                <div className="p-3 rounded-xl bg-amber-950/20 border border-amber-500/20 flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+                    <div>
+                      <div className="text-amber-300 font-bold">2 Infinite Retry Loops Broken</div>
+                      <div className="text-[10px] text-slate-400">Context pruned, agent steered</div>
+                    </div>
+                  </div>
+                  <span className="text-amber-400 font-bold">1.2%</span>
+                </div>
+
+                {/* 4. Credentials redacted */}
+                <div className="p-3 rounded-xl bg-violet-950/20 border border-violet-500/20 flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-sentry-violet" />
+                    <div>
+                      <div className="text-violet-300 font-bold">1 Outbound API Key Redacted</div>
+                      <div className="text-[10px] text-slate-400">Masked before external HTTP call</div>
+                    </div>
+                  </div>
+                  <span className="text-sentry-violet font-bold">0.7%</span>
+                </div>
+
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-white/10 text-[11px] font-mono text-slate-400 flex items-center justify-between">
+              <span>Average Scan Latency:</span>
+              <span className="text-sentry-cyan font-bold">14.8 ms (Local Prior)</span>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* ===================================================================== */}
+      {/* STEP 3: HUMAN-IN-THE-LOOP (OPERATOR WAR ROOM)                         */}
+      {/* ===================================================================== */}
+      <div className="space-y-4">
+        
+        {/* Step Header */}
+        <div className="flex items-center gap-3 pb-3 border-b border-white/10">
+          <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center justify-center font-mono font-bold text-sm shrink-0">
+            3
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <span>Step 3: Human-In-The-Loop Authorization Center</span>
+              <span className={`px-2 py-0.5 rounded text-xs font-mono font-bold border ${
+                hitlCount > 0 
+                  ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' 
+                  : 'bg-emerald-500/20 text-sentry-emerald border-emerald-500/30'
+              }`}>
+                {hitlCount > 0 ? `${hitlCount} Action Waiting For Sign-Off` : 'All Clear (0 Pending)'}
+              </span>
+            </h2>
+            <p className="text-xs text-slate-400">
+              When an agent requests a sensitive production change, TabPFN holds it until you decide.
+            </p>
+          </div>
+        </div>
+
+        {/* Pending Escalation Card */}
+        {hitlCount > 0 ? (
+          <div className="glass-card rounded-2xl p-6 border border-amber-500/30 bg-[#0E0E14] relative overflow-hidden">
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+              
+              <div className="space-y-2 max-w-3xl">
+                <div className="flex items-center gap-2 font-mono text-xs text-slate-300">
+                  <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 font-bold border border-amber-500/30">
+                    PENDING SIGN-OFF #HITL-8941
+                  </span>
+                  <span>Agent: <strong className="text-sentry-cyan">devops_db_migration_prod</strong></span>
+                  <span className="text-slate-500">• 2 mins ago</span>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-black/80 border border-white/10 font-mono text-sm">
+                  <div className="text-[10px] text-slate-400 uppercase mb-1">Agent Request:</div>
+                  <code className="text-red-400 font-bold">DROP TABLE audit_events_archive;</code>
+                </div>
+
+                <p className="text-xs text-slate-300">
+                  <strong>Why TabPFN Paused It:</strong> Blast radius hazard rating is{' '}
+                  <strong className="text-sentry-red">88/100</strong> (Irreversible production schema mutation).{' '}
+                  Filesystem disk snapshot is currently frozen at <code className="text-sentry-cyan">t=4</code>.
+                </p>
+              </div>
+
+              {/* 3 Action Buttons */}
+              <div className="flex flex-col sm:flex-row lg:flex-col gap-2.5 shrink-0 w-full sm:w-auto">
+                <button 
+                  onClick={handleApprove}
+                  className="px-5 py-2.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-sentry-emerald border border-emerald-500/30 text-xs font-mono font-bold transition-all flex items-center justify-center gap-2 hover:scale-[1.02]"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>Approve & Execute</span>
+                </button>
+
+                <button 
+                  onClick={() => setSteerModalOpen(true)}
+                  className="px-5 py-2.5 rounded-xl bg-sentry-cyan/20 hover:bg-sentry-cyan/30 text-sentry-cyan border border-sentry-cyan/30 text-xs font-mono font-bold transition-all flex items-center justify-center gap-2 hover:scale-[1.02]"
+                >
+                  <Shuffle className="w-4 h-4" />
+                  <span>Steer Agent Prompt</span>
+                </button>
+
+                <button 
+                  onClick={handleAbort}
+                  className="px-5 py-2.5 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-sentry-red border border-red-500/30 text-xs font-mono font-bold transition-all flex items-center justify-center gap-2 hover:scale-[1.02]"
+                >
+                  <XOctagon className="w-4 h-4" />
+                  <span>Abort & Roll Back</span>
+                </button>
+              </div>
+
             </div>
           </div>
         ) : (
-          <div className="p-8 text-center rounded-xl bg-void/40 border border-white/5 font-mono text-xs text-slate-400 flex items-center justify-center gap-2">
-            <Check className="w-4 h-4 text-sentry-emerald" />
-            <span>No pending escalations in queue. Autonomous agents operating within safety envelope.</span>
+          <div className="glass-card rounded-2xl p-8 text-center border border-white/10 font-mono text-xs text-slate-400 flex flex-col items-center justify-center gap-2">
+            <div className="w-10 h-10 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-sentry-emerald mb-1">
+              <Check className="w-5 h-5" />
+            </div>
+            <span className="text-white font-bold text-sm">No Pending Approvals</span>
+            <span>All 4 agents are operating within calibrated TabPFN safety bounds.</span>
           </div>
         )}
+
       </div>
 
-      {/* Steer Modal */}
+      {/* ===================================================================== */}
+      {/* STEER PROMPT MODAL                                                    */}
+      {/* ===================================================================== */}
       {steerModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="glass-card max-w-lg w-full rounded-2xl p-6 border border-sentry-cyan/40">
-            <h3 className="text-base font-bold text-white mb-2">Inject Counterfactual Directive</h3>
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#0D111A] max-w-lg w-full rounded-2xl p-6 border border-sentry-cyan/40 shadow-2xl">
+            <h3 className="text-base font-bold text-white mb-1">Inject Counterfactual Directive</h3>
             <p className="text-xs text-slate-400 mb-4">
-              The agent will resume execution with this directive injected into its immediate reasoning context:
+              Instruct the agent on what alternative tool or logic it should use instead of the blocked command:
             </p>
             <textarea
               value={steerDirective}
               onChange={(e) => setSteerDirective(e.target.value)}
               rows={4}
-              className="w-full bg-void rounded-xl p-3 font-mono text-xs text-sentry-cyan border border-white/10 focus:border-sentry-cyan focus:outline-none resize-none mb-4"
+              className="w-full bg-black/90 rounded-xl p-3 font-mono text-xs text-sentry-cyan border border-white/15 focus:border-sentry-cyan focus:outline-none resize-none mb-4"
+              placeholder="e.g. Do not drop table. Archive old rows to S3 cold storage instead..."
             />
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-end gap-3">
               <button 
                 onClick={() => setSteerModalOpen(false)}
-                className="px-4 py-2 rounded-lg bg-surface-2 text-slate-300 text-xs font-mono"
+                className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-mono transition-colors"
               >
                 Cancel
               </button>
               <button 
                 onClick={handleSteerSubmit}
-                className="px-4 py-2 rounded-lg bg-gradient-to-r from-sentry-cyan to-sentry-emerald text-void font-bold text-xs font-mono"
+                className="px-5 py-2 rounded-xl bg-gradient-to-r from-sentry-cyan to-sentry-emerald text-black font-bold text-xs font-mono glow-cyan hover:scale-[1.02] transition-all"
               >
                 Dispatch Directive
               </button>

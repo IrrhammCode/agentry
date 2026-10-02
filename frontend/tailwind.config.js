@@ -8,11 +8,11 @@ export default {
   theme: {
     extend: {
       colors: {
-        void: '#07090E',
+        void: '#000000',
         surface: {
-          1: '#0F172A',
-          2: '#1E293B',
-          3: '#334155',
+          1: '#0A0D14',
+          2: '#121620',
+          3: '#1A202E',
         },
         sentry: {
           emerald: '#00FF87',
