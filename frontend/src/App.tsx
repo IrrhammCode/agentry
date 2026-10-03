@@ -5,11 +5,12 @@ import { LandingPage } from './views/LandingPage.tsx';
 import { MissionControl } from './views/MissionControl.tsx';
 import { ActiveDefense } from './views/ActiveDefense.tsx';
 import { Documentation } from './views/Documentation.tsx';
+import { McpUsageMonitor } from './views/McpUsageMonitor.tsx';
 
 export function App() {
-  const [currentView, setCurrentView] = useState<'showcase' | 'console' | 'defense' | 'docs'>('showcase');
+  const [currentView, setCurrentView] = useState<'showcase' | 'console' | 'defense' | 'docs' | 'mcp'>('showcase');
 
-  const handleViewChange = (view: 'showcase' | 'console' | 'defense' | 'docs') => {
+  const handleViewChange = (view: 'showcase' | 'console' | 'defense' | 'docs' | 'mcp') => {
     setCurrentView(view);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -33,6 +34,9 @@ export function App() {
         {currentView === 'docs' && (
           <Documentation />
         )}
+        {currentView === 'mcp' && (
+          <McpUsageMonitor />
+        )}
       </main>
 
       {/* Global Footer */}
@@ -42,3 +46,4 @@ export function App() {
 }
 
 export default App;
+

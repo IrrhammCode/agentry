@@ -94,6 +94,24 @@ export interface SwarmDeadlockResult {
   recommendation: string;
 }
 
+export interface SourceMetrics {
+  total_steps: number;
+  unique_sessions: number;
+  tokens_saved: number;
+  cost_saved_usd: number;
+  interventions: {
+    KILL: number;
+    REROUTE: number;
+    PAUSE: number;
+    PASS: number;
+  };
+}
+
+export interface McpUsageResponse {
+  sources: Record<string, SourceMetrics>;
+  recent_mcp_events: AuditEvent[];
+}
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const url = `${API_BASE}${path}`;
   const headers = {
@@ -208,5 +226,15 @@ export const AgentryApi = {
       '/v1/fleet/emergency-suspend',
       { method: 'POST', body: JSON.stringify({}) }
     );
+  },
+
+  // 11. MCP Usage Breakdown
+  async getMcpUsage(): Promise<McpUsageResponse> {
+    return request<McpUsageResponse>('/v1/mcp/usage');
+  },
+
+  // 12. Events by Source (mcp, rest, proxy, frontend)
+  async getEventsBySource(source: string, limit = 20): Promise<{ source: string; total: number; events: AuditEvent[] }> {
+    return request<{ source: string; total: number; events: AuditEvent[] }>(`/v1/events/${source}?limit=${limit}`);
   },
 };

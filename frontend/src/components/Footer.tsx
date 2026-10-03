@@ -2,7 +2,7 @@ import React from 'react';
 import { Shield } from 'lucide-react';
 
 interface FooterProps {
-  onViewChange: (view: 'showcase' | 'console' | 'defense' | 'docs') => void;
+  onViewChange: (view: 'showcase' | 'console' | 'defense' | 'docs' | 'mcp') => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({ onViewChange }) => {

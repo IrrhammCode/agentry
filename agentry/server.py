@@ -245,6 +245,20 @@ class AgentryHTTPRequestHandler(BaseHTTPRequestHandler):
             })
             return
 
+        # 10. MCP Usage Breakdown: GET /v1/mcp/usage
+        if path == "/v1/mcp/usage":
+            usage = guard.storage.get_usage_by_source()
+            self._send_json(200, usage)
+            return
+
+        # 11. Events by Source: GET /v1/events/<source>
+        if path.startswith("/v1/events/"):
+            source = path.replace("/v1/events/", "")
+            limit = _safe_int(query.get("limit", [20])[0], default=20, min_val=1)
+            events = guard.storage.get_events_by_source(source, limit=limit)
+            self._send_json(200, {"source": source, "total": len(events), "events": events})
+            return
+
         self._send_json(404, {"error": f"Endpoint not found: {self.path}"})
 
     def do_POST(self):

@@ -6,16 +6,17 @@ import {
   Wallet, 
   Terminal, 
   ArrowLeft,
-  BookOpen
+  BookOpen,
+  Cable
 } from 'lucide-react';
 
 interface NavbarProps {
-  currentView: 'showcase' | 'console' | 'defense' | 'docs';
-  onViewChange: (view: 'showcase' | 'console' | 'defense' | 'docs') => void;
+  currentView: 'showcase' | 'console' | 'defense' | 'docs' | 'mcp';
+  onViewChange: (view: 'showcase' | 'console' | 'defense' | 'docs' | 'mcp') => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ currentView, onViewChange }) => {
-  const isConsoleMode = currentView === 'console' || currentView === 'defense' || currentView === 'docs';
+  const isConsoleMode = currentView === 'console' || currentView === 'defense' || currentView === 'docs' || currentView === 'mcp';
 
   return (
     <header className="sticky top-0 z-50 w-full bg-black/95 backdrop-blur-md border-b border-white/10 px-4 lg:px-8 py-3 transition-all duration-300">
@@ -36,11 +37,11 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onViewChange }) => 
               <div className="flex items-center gap-1.5">
                 <span className="font-display font-bold text-xl tracking-tight text-white">Agentry</span>
                 <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-sentry-emerald font-semibold border border-emerald-500/30">
-                  {currentView === 'docs' ? 'DOCS' : isConsoleMode ? 'WAR ROOM' : 'v0.1.0'}
+                  {currentView === 'docs' ? 'DOCS' : currentView === 'mcp' ? 'MCP' : isConsoleMode ? 'WAR ROOM' : 'v0.1.0'}
                 </span>
               </div>
               <p className="text-[11px] text-slate-400 font-mono hidden sm:block">
-                {currentView === 'docs' ? 'Developer Hub & API Reference' : isConsoleMode ? 'Live Fleet Command Center' : 'TabPFN-3.5 Autonomous Sentry'}
+                {currentView === 'docs' ? 'Developer Hub & API Reference' : currentView === 'mcp' ? 'MCP Integration Monitor' : isConsoleMode ? 'Live Fleet Command Center' : 'TabPFN-3.5 Autonomous Sentry'}
               </p>
             </div>
           </button>
@@ -127,6 +128,18 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onViewChange }) => 
                 <BookOpen className="w-3.5 h-3.5 text-sentry-cyan" />
                 <span>Docs & Ideas</span>
               </button>
+
+              <button 
+                onClick={() => onViewChange('mcp')}
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
+                  currentView === 'mcp'
+                    ? 'text-white bg-surface-2 border border-white/10 shadow-sm'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Cable className="w-3.5 h-3.5 text-sentry-violet" />
+                <span>MCP Monitor</span>
+              </button>
             </nav>
           )}
         </div>
@@ -146,7 +159,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onViewChange }) => 
             </svg>
             <span>Star</span>
             <span className="px-1.5 py-0.2 rounded bg-black/40 text-[10px] text-sentry-cyan font-mono border border-cyan-500/20">
-              79 Pass
+              88 Pass
             </span>
           </a>
 

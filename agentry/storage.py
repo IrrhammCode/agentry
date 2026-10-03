@@ -40,6 +40,7 @@ class AuditStorage:
         finally:
             conn.close()
 
+
     def _init_db(self):
         with self._get_connection() as conn:
             conn.execute("""
@@ -58,15 +59,22 @@ class AuditStorage:
                     reroute_instruction TEXT,
                     estimated_tokens_saved INTEGER NOT NULL,
                     estimated_cost_saved_usd REAL NOT NULL,
-                    sentry_provider TEXT NOT NULL
+                    sentry_provider TEXT NOT NULL,
+                    source TEXT NOT NULL DEFAULT 'rest'
                 );
             """)
             conn.execute("""
                 CREATE INDEX IF NOT EXISTS idx_audit_session
                 ON audit_events(session_id, step_index);
             """)
+            # Auto-migrate: add 'source' column if not present (existing databases)
+            try:
+                conn.execute("ALTER TABLE audit_events ADD COLUMN source TEXT NOT NULL DEFAULT 'rest';")
+            except Exception:
+                pass  # Column already exists
 
-    def record_decision(self, decision: SentryDecision) -> int:
+
+    def record_decision(self, decision: SentryDecision, source: str = "rest") -> int:
         """Persists a single SentryDecision to the audit database with retry on lock."""
         from agentry.dlp import secret_redactor
         clean_reason, _ = secret_redactor.redact(decision.reason or "")
@@ -90,8 +98,9 @@ class AuditStorage:
                             reroute_instruction,
                             estimated_tokens_saved,
                             estimated_cost_saved_usd,
-                            sentry_provider
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            sentry_provider,
+                            source
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """, (
                         decision.session_id,
                         decision.step_index,
@@ -106,7 +115,8 @@ class AuditStorage:
                         clean_reroute,
                         decision.estimated_tokens_saved,
                         decision.estimated_cost_saved_usd,
-                        decision.sentry_provider
+                        decision.sentry_provider,
+                        source
                     ))
                     return cursor.lastrowid
             except sqlite3.OperationalError as e:
@@ -163,6 +173,61 @@ class AuditStorage:
                 "total_tokens_saved": int(savings[0]),
                 "total_cost_saved_usd": round(float(savings[1]), 4)
             }
+
+    def get_usage_by_source(self) -> Dict[str, Any]:
+        """Returns usage breakdown by source (mcp, rest, proxy, frontend)."""
+        with self._get_connection() as conn:
+            rows = conn.execute("""
+                SELECT
+                    source,
+                    COUNT(*) as total_steps,
+                    COUNT(DISTINCT session_id) as unique_sessions,
+                    COALESCE(SUM(estimated_tokens_saved), 0) as tokens_saved,
+                    COALESCE(SUM(estimated_cost_saved_usd), 0.0) as cost_saved,
+                    SUM(CASE WHEN action = 'KILL' THEN 1 ELSE 0 END) as kills,
+                    SUM(CASE WHEN action = 'REROUTE' THEN 1 ELSE 0 END) as reroutes,
+                    SUM(CASE WHEN action = 'PAUSE' THEN 1 ELSE 0 END) as pauses,
+                    SUM(CASE WHEN action = 'PASS' THEN 1 ELSE 0 END) as passes
+                FROM audit_events
+                GROUP BY source
+                ORDER BY total_steps DESC
+            """).fetchall()
+
+            sources = {}
+            for row in rows:
+                r = dict(row)
+                src = r.pop("source", "rest")
+                sources[src] = {
+                    "total_steps": r["total_steps"],
+                    "unique_sessions": r["unique_sessions"],
+                    "tokens_saved": int(r["tokens_saved"]),
+                    "cost_saved_usd": round(float(r["cost_saved"]), 4),
+                    "interventions": {
+                        "KILL": r["kills"],
+                        "REROUTE": r["reroutes"],
+                        "PAUSE": r["pauses"],
+                        "PASS": r["passes"],
+                    }
+                }
+
+            # Also get most recent events per source
+            recent_mcp = conn.execute(
+                "SELECT * FROM audit_events WHERE source = 'mcp' ORDER BY id DESC LIMIT 10"
+            ).fetchall()
+
+            return {
+                "sources": sources,
+                "recent_mcp_events": [dict(r) for r in recent_mcp]
+            }
+
+    def get_events_by_source(self, source: str, limit: int = 20) -> List[Dict[str, Any]]:
+        """Retrieves recent audit events filtered by source."""
+        with self._get_connection() as conn:
+            rows = conn.execute(
+                "SELECT * FROM audit_events WHERE source = ? ORDER BY id DESC LIMIT ?",
+                (source, limit)
+            ).fetchall()
+            return [dict(r) for r in rows]
 
     def clear(self):
         """Clears the audit database (used in testing)."""

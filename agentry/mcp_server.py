@@ -142,7 +142,7 @@ def audit_agent_step(
 
     # Persist event to SQLite WAL audit database safely
     try:
-        guard.storage.record_decision(decision)
+        guard.storage.record_decision(decision, source="mcp")
     except Exception as exc:
         logger.warning("MCP failed to record audit event to SQLite: %s", exc)
 
