@@ -14,13 +14,18 @@ import {
   Sparkles, 
   Terminal, 
   KeyRound,
-  ShieldX
+  ShieldX,
+  RotateCcw,
+  Scissors,
+  Wand2,
+  FileCheck
 } from 'lucide-react';
 import { 
   AgentryApi, 
   DlpResult, 
   BlastRadiusResult, 
-  SwarmDeadlockResult 
+  SwarmDeadlockResult,
+  RewindPrescription
 } from '../services/api.ts';
 
 export const ActiveDefense: React.FC = () => {
@@ -96,10 +101,52 @@ export const ActiveDefense: React.FC = () => {
     }
   };
 
+  // Pillar 4: Autonomous Trajectory Rewind & Time-Travel Healing
+  const [rewindSessionId, setRewindSessionId] = useState<string>('swe_django_migration_trap');
+  const [rewindStep, setRewindStep] = useState<number>(6);
+  const [rewindTool, setRewindTool] = useState<string>('bash: python manage.py migrate');
+  const [rewindStreak, setRewindStreak] = useState<number>(4);
+  const [rewindReason, setRewindReason] = useState<string>('Recursive DB lock deadlock: OperationalError database is locked');
+  const [rewindResult, setRewindResult] = useState<RewindPrescription | null>(null);
+  const [isRewindLoading, setIsRewindLoading] = useState<boolean>(false);
+
+  const handlePrescribeRewind = async (sessionOverride?: { id: string; step: number; tool: string; streak: number; reason: string }) => {
+    setIsRewindLoading(true);
+    const sid = sessionOverride ? sessionOverride.id : rewindSessionId;
+    const step = sessionOverride ? sessionOverride.step : rewindStep;
+    const tool = sessionOverride ? sessionOverride.tool : rewindTool;
+    const streak = sessionOverride ? sessionOverride.streak : rewindStreak;
+    const reason = sessionOverride ? sessionOverride.reason : rewindReason;
+
+    if (sessionOverride) {
+      setRewindSessionId(sid);
+      setRewindStep(step);
+      setRewindTool(tool);
+      setRewindStreak(streak);
+      setRewindReason(reason);
+    }
+
+    try {
+      const res = await AgentryApi.prescribeRewind({
+        session_id: sid,
+        current_step: step,
+        failed_tool: tool,
+        error_streak: streak,
+        reason: reason,
+      });
+      setRewindResult(res);
+    } catch (err) {
+      console.error('Rewind calculation failed', err);
+    } finally {
+      setIsRewindLoading(false);
+    }
+  };
+
   // Initial load: trigger live evaluations
   useEffect(() => {
     handleMask(rawText);
     handleEvalBlast('rm -rf / --no-preserve-root');
+    handlePrescribeRewind();
   }, []);
 
   return (
@@ -364,6 +411,170 @@ export const ActiveDefense: React.FC = () => {
         </div>
       </div>
 
+      {/* ===================================================================== */}
+      {/* PILLAR 4: AUTONOMIC TRAJECTORY REWIND & TIME-TRAVEL HEALING           */}
+      {/* ===================================================================== */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-3 pb-3 border-b border-white/10">
+          <div className="w-8 h-8 rounded-xl bg-violet-500/15 text-sentry-violet border border-violet-500/30 flex items-center justify-center font-mono font-bold text-sm shrink-0">
+            4
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <span>Pillar 4: Autonomous Trajectory Rewind & Time-Travel Healing</span>
+              <span className="text-xs font-mono text-sentry-violet font-normal">
+                (Divergence Inflection Pruning & Counterfactual Steering)
+              </span>
+            </h2>
+            <p className="text-xs text-slate-400">
+              We do not just kill agents; we heal them. When TabPFN detects a failure loop, Agentry locates the divergence inflection point (t*), rolls back poisoned turns, reverts filesystem mutations, and injects counterfactual steering directives.
+            </p>
+          </div>
+        </div>
+
+        <div className="glass-card rounded-2xl p-6 border border-white/10 space-y-6">
+          {/* Header Controls */}
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div className="flex items-center gap-2">
+              <RotateCcw className="w-4 h-4 text-sentry-violet" />
+              <span className="text-xs font-mono text-white font-bold">Interactive Trajectory Rewind Engine</span>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[11px] font-mono text-slate-400">Looping Agent Scenarios:</span>
+              <button
+                onClick={() => handlePrescribeRewind({
+                  id: 'swe_django_migration_trap',
+                  step: 6,
+                  tool: 'bash: python manage.py migrate',
+                  streak: 4,
+                  reason: 'Recursive DB lock deadlock: OperationalError database is locked'
+                })}
+                className="px-3 py-1.5 rounded-lg bg-[#141416] hover:bg-white/10 text-xs font-mono text-sentry-violet border border-white/10 transition-colors"
+              >
+                Django DB Deadlock (Step 6)
+              </button>
+              <button
+                onClick={() => handlePrescribeRewind({
+                  id: 'react_build_infinite_retry',
+                  step: 8,
+                  tool: 'npm run build',
+                  streak: 5,
+                  reason: 'Syntax recursion error: TS2304 Cannot find name Cost in JSX'
+                })}
+                className="px-3 py-1.5 rounded-lg bg-[#141416] hover:bg-white/10 text-xs font-mono text-amber-400 border border-white/10 transition-colors"
+              >
+                Vite TS Build Loop (Step 8)
+              </button>
+              <button
+                onClick={() => handlePrescribeRewind({
+                  id: 'crawler_rate_limit_backoff',
+                  step: 5,
+                  tool: 'http_request: GET /api/v2/items',
+                  streak: 3,
+                  reason: '429 Rate Limit exponential backoff saturation'
+                })}
+                className="px-3 py-1.5 rounded-lg bg-[#141416] hover:bg-white/10 text-xs font-mono text-sentry-cyan border border-white/10 transition-colors"
+              >
+                HTTP 429 Saturation (Step 5)
+              </button>
+            </div>
+          </div>
+
+          {/* Interactive Timeline Diagram */}
+          <div className="p-4 rounded-xl bg-black/60 border border-white/5 space-y-3">
+            <div className="text-[11px] font-mono text-slate-400 flex items-center justify-between">
+              <span>Trajectory Execution Timeline (Session: <strong className="text-sentry-cyan">{rewindSessionId}</strong>)</span>
+              {rewindResult && (
+                <span className="text-sentry-emerald font-bold">
+                  Divergence Inflection Point: t* = Step #{rewindResult.target_step}
+                </span>
+              )}
+            </div>
+
+            {/* Visual Timeline Nodes */}
+            <div className="flex items-center gap-2 overflow-x-auto py-3">
+              {[...Array(rewindStep + 1)].map((_, idx) => {
+                const targetStep = rewindResult ? rewindResult.target_step : 2;
+                const isHealthy = idx <= targetStep;
+                const isInflection = idx === targetStep;
+                const isPoisoned = idx > targetStep;
+
+                return (
+                  <div key={idx} className="flex items-center gap-2 shrink-0">
+                    <div className={`p-3 rounded-xl border flex flex-col items-center min-w-[90px] text-center transition-all ${
+                      isInflection
+                        ? 'bg-emerald-950/40 border-emerald-400 shadow-lg glow-emerald'
+                        : isHealthy
+                        ? 'bg-black/60 border-emerald-500/40 text-emerald-400'
+                        : 'bg-red-950/30 border-red-500/30 text-red-400 line-through opacity-60'
+                    }`}>
+                      <span className="text-[10px] font-mono font-bold">Step #{idx}</span>
+                      <span className="text-[9px] font-mono mt-0.5">
+                        {isInflection ? '★ Inflection' : isHealthy ? 'Healthy' : 'Poisoned'}
+                      </span>
+                    </div>
+                    {idx < rewindStep && (
+                      <ArrowRight className={`w-3.5 h-3.5 ${idx >= targetStep ? 'text-red-500/50' : 'text-emerald-500/50'}`} />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Action Bar */}
+            <div className="pt-2 border-t border-white/10 flex items-center justify-between flex-wrap gap-3">
+              <div className="flex items-center gap-2 text-xs font-mono text-slate-300">
+                <Scissors className="w-4 h-4 text-red-400" />
+                <span>Pruned Poisoned Turns: <strong className="text-red-400">{rewindResult?.pruned_steps_count || (rewindStep - 2)} steps cut</strong></span>
+              </div>
+              <div className="flex items-center gap-2 text-xs font-mono text-slate-300">
+                <FileCheck className="w-4 h-4 text-sentry-emerald" />
+                <span>Filesystem Rollback: <strong className="text-sentry-emerald">State Restored to Snapshot t={rewindResult?.target_step || 2}</strong></span>
+              </div>
+            </div>
+          </div>
+
+          {/* Results Grid: 3 Metric Cards + Synthesized Directive */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-4 rounded-xl bg-black/60 border border-white/5 font-mono text-xs space-y-1">
+              <span className="text-slate-400 text-[10px] uppercase">Tokens Salvaged:</span>
+              <div className="text-2xl font-bold text-sentry-cyan">
+                {rewindResult ? rewindResult.estimated_tokens_saved.toLocaleString() : '18,500'}
+              </div>
+              <div className="text-[10px] text-slate-500">Prevented runaway LLM context spill</div>
+            </div>
+
+            <div className="p-4 rounded-xl bg-black/60 border border-white/5 font-mono text-xs space-y-1">
+              <span className="text-slate-400 text-[10px] uppercase">Capital Preserved:</span>
+              <div className="text-2xl font-bold text-sentry-emerald">
+                ${rewindResult ? rewindResult.estimated_cost_saved_usd.toFixed(2) : '14.80'} USD
+              </div>
+              <div className="text-[10px] text-slate-500">Saved by early rollback vs infinite retry</div>
+            </div>
+
+            <div className="p-4 rounded-xl bg-black/60 border border-white/5 font-mono text-xs space-y-1">
+              <span className="text-slate-400 text-[10px] uppercase">Autonomic Intervention:</span>
+              <div className="text-2xl font-bold text-amber-400">
+                REROUTE
+              </div>
+              <div className="text-[10px] text-slate-500">Context pruned + steered</div>
+            </div>
+          </div>
+
+          {/* Synthesized Counterfactual Steering Directive */}
+          <div className="p-4 rounded-xl bg-violet-950/20 border border-violet-500/30 space-y-2">
+            <div className="flex items-center gap-2 font-mono text-xs text-sentry-violet font-bold">
+              <Wand2 className="w-4 h-4" />
+              <span>Synthesized Counterfactual Steering Directive (Dispatched into Agent Context):</span>
+            </div>
+            <div className="p-3.5 rounded-lg bg-black/80 border border-white/10 font-mono text-xs text-slate-200 leading-relaxed">
+              <code>{rewindResult?.counterfactual_directive || `AUTONOMIC REROUTE DIRECTIVE: Terminate repetitive calls to '${rewindTool}'. Pruned turns ${rewindResult ? rewindResult.target_step + 1 : 3} through ${rewindStep}. Adopt an alternative approach: inspect schema state or use non-destructive migration flags.`}</code>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
   );
 };
+

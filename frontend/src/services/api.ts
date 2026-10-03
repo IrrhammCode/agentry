@@ -112,6 +112,21 @@ export interface McpUsageResponse {
   recent_mcp_events: AuditEvent[];
 }
 
+export interface RewindPrescription {
+  session_id: string;
+  current_step: number;
+  target_step: number;
+  pruned_steps_count: number;
+  trigger_reason: string;
+  failed_tool: string;
+  counterfactual_directive: string;
+  estimated_tokens_saved: number;
+  estimated_cost_saved_usd: number;
+  created_at: number;
+  filesystem_reverted_count: number;
+  reverted_files: string[];
+}
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const url = `${API_BASE}${path}`;
   const headers = {
@@ -236,5 +251,19 @@ export const AgentryApi = {
   // 12. Events by Source (mcp, rest, proxy, frontend)
   async getEventsBySource(source: string, limit = 20): Promise<{ source: string; total: number; events: AuditEvent[] }> {
     return request<{ source: string; total: number; events: AuditEvent[] }>(`/v1/events/${source}?limit=${limit}`);
+  },
+
+  // 13. Trajectory Rewind & Self-Healing Prescription
+  async prescribeRewind(params: {
+    session_id: string;
+    current_step?: number;
+    failed_tool?: string;
+    error_streak?: number;
+    reason?: string;
+  }): Promise<RewindPrescription> {
+    return request<RewindPrescription>('/v1/healing/rewind', {
+      method: 'POST',
+      body: JSON.stringify(params),
+    });
   },
 };
