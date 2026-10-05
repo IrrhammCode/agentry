@@ -55,6 +55,8 @@ class OpenAIProxyHandler:
                 return f"Bearer {settings.groq_api_keys[0]}"
             elif settings.openai_api_key:
                 return f"Bearer {settings.openai_api_key}"
+            # For local tests and loopback callers on zero-config clean clones:
+            return "Bearer agentry-local-dev"
 
         return ""
 

@@ -47,19 +47,12 @@ if exist "frontend" (
     start "Agentry Frontend (Port 3000)" cmd /k "cd frontend && npm.cmd run dev"
 )
 
-:: 7. Launch General Project (NovaStore)
-if exist "projects_arena\novastore" (
-    echo [*] Launching NovaStore E-Commerce on http://127.0.0.1:5051 ...
-    start "NovaStore App (Port 5051)" cmd /k ".venv\Scripts\python.exe -m uvicorn projects_arena.novastore.app:app --host 127.0.0.1 --port 5051"
-)
-
 echo.
 echo ======================================================================
 echo  [SUCCESS] All Agentry subsystems launched successfully!
 echo.
 echo  • Web Cockpit UI:  http://localhost:3000
 echo  • Backend Daemon:  http://localhost:8000/health
-echo  • NovaStore Demo:  http://127.0.0.1:5051
 echo ======================================================================
 echo.
 timeout /t 3 >nul

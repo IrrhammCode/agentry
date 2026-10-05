@@ -253,7 +253,7 @@ curl -X POST http://127.0.0.1:8000/v1/audit \
     "tool_name": "bash",
     "input_text": "DROP DATABASE production;",
     "thought_trace": "Purging old records",
-    "latency_ms": 14.8
+    "latency_ms": 25.0
   }'
 ```
 Response:

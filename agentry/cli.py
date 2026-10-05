@@ -110,7 +110,7 @@ def run_live_fleet_demo(num_steps: int = 24, speed_s: float = 0.4, use_real: boo
         engine.fit(df)
         sentry = AgentrySentry(engine)
 
-    mode_status = "[bold green]TabPFN-3.5 Cloud (Thinking Mode)[/]" if engine.is_cloud_tabpfn else "[bold yellow]sklearn fallback, bukan TabPFN (Set TABPFN_TOKEN for Cloud Prior Labs API)[/]"
+    mode_status = "[bold green]TabPFN-3.5 Cloud (Thinking Mode)[/]" if engine.is_cloud_tabpfn else "[bold yellow]scikit-learn fallback (HistGradientBoosting), not TabPFN (Set TABPFN_TOKEN for Cloud Prior Labs API)[/]"
     console.print(f"  • Telemetry Source: [bold cyan]{dataset_desc}[/]")
     console.print(f"  • Engine: {mode_status}")
     console.print(f"  • Sentry Brain: [cyan]{sentry.model}[/] (Ollama local inference)")
@@ -266,11 +266,17 @@ def run_benchmark_cli(use_real: bool = True):
             f"{r.inference_latency_ms:.2f}ms"
         )
 
-    console.print(table)
-    console.print(
-        "\n[bold green]Key Takeaway:[/] TabPFN demonstrates superior few-shot generalization on heterogeneous "
-        "tabular telemetry (metrics + grouped session structures) without manual hyperparameter tuning.\n"
-    )
+    has_real_tabpfn = any("TabPFN-3.5 (Prior Labs)" in r.model_name for r in results)
+    if has_real_tabpfn:
+        console.print(
+            "\n[bold green]Key Takeaway:[/] TabPFN demonstrates superior few-shot generalization on heterogeneous "
+            "tabular telemetry (metrics + grouped session structures) without manual hyperparameter tuning.\n"
+        )
+    else:
+        console.print(
+            "\n[bold yellow]Note:[/] Benchmark ran using local scikit-learn fallback. "
+            "To evaluate official TabPFN-3.5 foundation models, configure TABPFN_TOKEN.\n"
+        )
 
 
 def audit_session_cli(session_id: str):

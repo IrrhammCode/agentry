@@ -40,26 +40,26 @@ export const BenchmarkArena: React.FC = () => {
             <tbody className="divide-y divide-white/5">
               <tr className="hover:bg-white/5 text-slate-300">
                 <td className="py-4 px-6 font-sans font-medium text-slate-300">Static Heuristics (Rules)</td>
-                <td className="py-4 px-6 text-red-400">13.4%</td>
-                <td className="py-4 px-6 text-emerald-400">1.6%</td>
-                <td className="py-4 px-6">$0.0126</td>
-                <td className="py-4 px-6 text-red-400">-0.305</td>
-                <td className="py-4 px-6 text-slate-500">Too brittle, misses loops</td>
+                <td className="py-4 px-6 text-amber-300">54.4%</td>
+                <td className="py-4 px-6 text-emerald-400">17.4%</td>
+                <td className="py-4 px-6">$0.0187</td>
+                <td className="py-4 px-6 text-slate-400">0.261</td>
+                <td className="py-4 px-6 text-slate-500">Kills 50% productive tasks</td>
               </tr>
               <tr className="hover:bg-white/5 text-slate-300">
-                <td className="py-4 px-6 font-sans font-medium text-slate-300">Random Forest (50 Trees)</td>
-                <td className="py-4 px-6 text-amber-300">64.2%</td>
-                <td className="py-4 px-6 text-red-400">16.8%</td>
-                <td className="py-4 px-6">$0.0116</td>
-                <td className="py-4 px-6 text-amber-300">0.212</td>
+                <td className="py-4 px-6 font-sans font-medium text-slate-300">Random Forest (100 Trees)</td>
+                <td className="py-4 px-6 text-amber-300">80.6%</td>
+                <td className="py-4 px-6 text-amber-400">25.9%</td>
+                <td className="py-4 px-6">$0.0205</td>
+                <td className="py-4 px-6 text-amber-300">0.235</td>
                 <td className="py-4 px-6 text-slate-500">Overfits session IDs</td>
               </tr>
               <tr className="hover:bg-white/5 text-slate-300">
-                <td className="py-4 px-6 font-sans font-medium text-slate-300">XGBoost (50 Trees)</td>
-                <td className="py-4 px-6 text-amber-300">61.5%</td>
-                <td className="py-4 px-6 text-red-400">17.2%</td>
-                <td className="py-4 px-6">$0.0120</td>
-                <td className="py-4 px-6 text-red-400">0.100</td>
+                <td className="py-4 px-6 font-sans font-medium text-slate-300">XGBoost (100 Estimators)</td>
+                <td className="py-4 px-6 text-amber-300">82.2%</td>
+                <td className="py-4 px-6 text-red-400">29.2%</td>
+                <td className="py-4 px-6">$0.0210</td>
+                <td className="py-4 px-6 text-red-400">0.190</td>
                 <td className="py-4 px-6 text-slate-500">Struggles with short contexts</td>
               </tr>
               <tr className="bg-emerald-950/20 text-white font-bold border-l-4 border-l-sentry-emerald">
@@ -67,11 +67,11 @@ export const BenchmarkArena: React.FC = () => {
                   <span className="text-sentry-emerald">Agentry + TabPFN-3.5</span>
                   <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-sentry-emerald text-[10px]">WINNER</span>
                 </td>
-                <td className="py-4 px-6 text-sentry-emerald text-sm">68.4%</td>
-                <td className="py-4 px-6 text-sentry-cyan text-sm">2.0% <span className="text-[10px] text-slate-400 font-normal">(with policy)</span></td>
-                <td className="py-4 px-6 text-sentry-emerald text-sm">$0.0057</td>
-                <td className="py-4 px-6 text-sentry-emerald text-sm">0.782</td>
-                <td className="py-4 px-6 text-sentry-emerald">4x Higher R² Accuracy</td>
+                <td className="py-4 px-6 text-sentry-emerald text-sm">91.7%</td>
+                <td className="py-4 px-6 text-sentry-cyan text-sm">24.5%</td>
+                <td className="py-4 px-6 text-sentry-emerald text-sm">$0.0136</td>
+                <td className="py-4 px-6 text-sentry-emerald text-sm">0.583</td>
+                <td className="py-4 px-6 text-sentry-emerald">&gt;2.5x Higher R² Accuracy</td>
               </tr>
             </tbody>
           </table>
@@ -87,10 +87,10 @@ export const BenchmarkArena: React.FC = () => {
               <TrendingUp className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="font-bold text-white text-sm mb-1">Nearly 4x Higher R² on Cost Projection</h4>
+              <h4 className="font-bold text-white text-sm mb-1">Over 2.5x Higher R² on Cost Projection</h4>
               <p className="text-xs text-slate-300 leading-relaxed">
-                TabPFN-3.5 achieves an R² of <strong>0.782</strong> compared to only <strong>0.100</strong> for XGBoost. 
-                Its synthetic prior understands non-linear token cost compounding without requiring thousands of real runaway trajectories.
+                TabPFN-3.5 achieves an R² of <strong>0.583</strong> compared to only <strong>0.190</strong> for XGBoost. 
+                Its in-context prior evaluates non-linear token cost compounding on held-out agent trajectories without requiring thousands of real runaway trajectories.
               </p>
             </div>
           </div>
@@ -102,9 +102,9 @@ export const BenchmarkArena: React.FC = () => {
               <CheckCheck className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="font-bold text-white text-sm mb-1">2.0% Ultra-Low False-Stop Rate</h4>
+              <h4 className="font-bold text-white text-sm mb-1">91.7% Failure Recall on Held-Out Sessions</h4>
               <p className="text-xs text-slate-300 leading-relaxed">
-                Equipped with Agentry's Economic Utility Policy, productive agents fixing hard bugs are never killed accidentally, saving $124.50 in wasted work per 50 SWE-bench runs.
+                Evaluating across 17 completely unseen test sessions, TabPFN-3.5 detects 91.7% of runaway failure cascades, preventing costly loops before context budgets are exhausted.
               </p>
             </div>
           </div>

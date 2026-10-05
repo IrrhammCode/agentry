@@ -29,14 +29,6 @@ if %ERRORLEVEL% NEQ 0 (
 )
 
 echo.
-echo [4/4] Running NovaStore E-Commerce Integration Tests (10 tests)...
-.venv\Scripts\python.exe -m pytest projects_arena\novastore\tests\test_store.py -q
-if %ERRORLEVEL% NEQ 0 (
-    echo [FAIL] NovaStore tests failed!
-    exit /b 1
-)
-
-echo.
 echo ======================================================================
 echo  [ALL TESTS PASSED 100%%] System is completely verified and operational!
 echo ======================================================================

@@ -5,12 +5,15 @@ for intercepting agent tool executions, detecting infinite loops,
 and preventing runaway token costs via TabPFN-3.5 and Local SLM.
 """
 
+from __future__ import annotations
+
 import time
 import re
 import functools
 import inspect
 import threading
 import logging
+from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Dict, Any, List, Optional, Callable, Union
 

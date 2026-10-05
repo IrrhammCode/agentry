@@ -547,7 +547,7 @@ export const ActiveDefense: React.FC = () => {
             <div className="p-4 rounded-xl bg-black/60 border border-white/5 font-mono text-xs space-y-1">
               <span className="text-slate-400 text-[10px] uppercase">Capital Preserved:</span>
               <div className="text-2xl font-bold text-sentry-emerald">
-                ${rewindResult ? rewindResult.estimated_cost_saved_usd.toFixed(2) : '14.80'} USD
+                ${rewindResult ? rewindResult.estimated_cost_saved_usd.toFixed(2) : '0.45'} USD
               </div>
               <div className="text-[10px] text-slate-500">Saved by early rollback vs infinite retry</div>
             </div>

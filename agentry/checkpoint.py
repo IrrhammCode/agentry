@@ -6,6 +6,8 @@ checkpoint, the physical filesystem and modified files are reverted to match
 the safe execution state, ensuring both prompt context and code state are consistent.
 """
 
+from __future__ import annotations
+
 import os
 import sys
 import shutil
@@ -13,7 +15,7 @@ import logging
 import subprocess
 from pathlib import Path
 from dataclasses import dataclass, field
-from typing import Dict, Any, List, Optional, Set
+from typing import Dict, Any, List, Optional, Set, Sequence, Union
 
 from agentry.config import ROOT_DIR
 

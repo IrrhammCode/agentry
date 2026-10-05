@@ -389,7 +389,7 @@ cd frontend && npm run dev
 ```
 
 ### Key Interactive Modules:
-- **Interactive Attack Simulator (`#playground`):** Test live adversarial payloads (`rm -rf /`, `DROP DATABASE`, secret leaks) against the live TabPFN engine in **14.8 milliseconds**.
+- **Interactive Attack Simulator (`#playground`):** Test live adversarial payloads (`rm -rf /`, `DROP DATABASE`, secret leaks) against the live TabPFN engine in real time with live feedback.
 - **Mission Control (`/console`):** 3-Stage governance console tracking live fleet sessions, TabPFN early kill cost curves, and the Human-in-the-Loop authorization war room.
 - **Active Defense Suite (`/defense`):** Live testbeds for In-Flight DLP credential masking, Swarm Deadlock watchdog, and pre-execution blast radius scoring.
 - **Interactive Documentation (`/docs`):** Complete usage guide, live REST API testbed, and the *"Cari Ide"* innovation lab.
@@ -451,12 +451,12 @@ tests/test_e2e_closed_loop.py .....                                      [100%]
 Agentry supports two distinct operational modes depending on enterprise security requirements:
 
 - **1. Cloud Prior Labs & Groq Mode (Default High-Fidelity):**
-  - Tabular telemetry metrics (`session_id`, `step_index`, `step_latency_ms`, `tokens`, `repetition_score`, `error_streak`) are evaluated via HTTPS by the official Prior Labs TabPFN-3.5 API.
+  - Tabular telemetry metrics (`session_id`, `step_index`, `step_latency_ms`, `tokens`, `repetition_score`, `error_streak`, `thought_length`) and short thought snippets are evaluated via HTTPS by the official Prior Labs TabPFN-3.5 API.
   - When `GROQ_API_KEYS` are provided, diagnostic forensic root causes are synthesized via Groq cloud LLMs.
 - **2. Air-Gapped Offline Mode (`TABPFN_OFFLINE_MODE=1`):**
-  - Tabular evaluation runs locally via scikit-learn's `HistGradientBoosting` fallback engine (`sklearn fallback, bukan TabPFN`).
+  - Tabular evaluation runs locally via scikit-learn's `HistGradientBoosting` fallback engine (`scikit-learn fallback (HistGradientBoosting), not TabPFN`).
   - Semantic reasoning runs locally via Ollama (`qwen2.5:3b`).
-  - In this configuration, **100% of data remains on localhost** with zero outbound network packets.
+  - In this air-gapped configuration, **100% of data remains on localhost** with zero outbound network packets.
 
 ---
 

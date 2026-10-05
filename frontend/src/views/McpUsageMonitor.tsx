@@ -296,7 +296,7 @@ export const McpUsageMonitor: React.FC = () => {
                 <Shield className="w-6 h-6 text-sentry-cyan mx-auto mb-2" />
                 <div className="text-xs font-mono text-white font-bold">TabPFN-3.5</div>
                 <div className="text-xs font-mono text-white font-bold">Sentry Engine</div>
-                <div className="text-[9px] text-slate-400 mt-1">14.8ms Bayesian Prior</div>
+                <div className="text-[9px] text-slate-400 mt-1">Bayesian In-Context Prior</div>
               </div>
 
               {/* Arrow */}

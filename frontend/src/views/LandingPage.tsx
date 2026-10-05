@@ -55,8 +55,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchConsole }) => 
           {/* Subheadline */}
           <ScrollReveal animation="fade-up" delayMs={250}>
             <p className="max-w-3xl mx-auto text-lg sm:text-xl text-slate-300 font-normal mb-8 leading-relaxed">
-              The first autonomous tabular sentry for AI fleets. Evaluates multimodal telemetry in{' '}
-              <span className="text-sentry-cyan font-semibold">14.8 milliseconds</span> using{' '}
+              The first autonomous tabular sentry for AI fleets. Evaluates multimodal telemetry with{' '}
+              <span className="text-sentry-cyan font-semibold">real-time Bayesian speed</span> using{' '}
               <span className="text-sentry-emerald font-semibold">Prior Labs TabPFN-3.5</span>, 
               intercepts destructive shell commands, redacts credentials in-flight, and autonomically heals rogue loops with{' '}
               <span className="text-white font-medium underline decoration-sentry-cyan/50 underline-offset-4">
@@ -92,11 +92,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchConsole }) => 
             <div className="flex flex-wrap items-center justify-center gap-y-2 gap-x-8 text-xs font-mono text-slate-400">
               <div className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-sentry-emerald" />
-                <span>100% Local Privacy Guarantee</span>
+                <span>Zero Prompt Leakage (Tabular Only)</span>
               </div>
               <div className="flex items-center gap-2">
                 <Zap className="w-4 h-4 text-sentry-cyan" />
-                <span>Sub-20ms Bayesian Inference</span>
+                <span>Real-Time Bayesian Inference</span>
               </div>
               <div className="flex items-center gap-2">
                 <Lock className="w-4 h-4 text-sentry-violet" />

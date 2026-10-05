@@ -25,7 +25,7 @@ Existing solutions fall into two flawed extremes:
 1. Static circuit breakers (`if error >= 3: stop()`) that prematurely kill productive agents actively exploring valid recovery paths (devastating task completion rates).
 2. Synchronous Cloud LLM-as-a-Judge evaluators that cost upwards of $1,368,000/year for 500k steps/day, add 2,250ms latency per step, and leak proprietary enterprise source code outside the enterprise perimeter.
 
-We realized a foundational paradigm shift: Autonomous agent execution telemetry is inherently structured, non-IID tabular data. By using Prior Labs' TabPFN-3.5 tabular foundation model, we could turn raw agent telemetry into a predictive runtime control system that halts runaway agents before catastrophic token burn occurs—with 14.5ms inference latency, 99.998% lower operational cost, and 100% zero code/prompt leakage.
+We realized a foundational paradigm shift: Autonomous agent execution telemetry is inherently structured, non-IID tabular data. By using Prior Labs' TabPFN-3.5 tabular foundation model, we could turn raw agent telemetry into a predictive runtime control system that halts runaway agents before catastrophic token burn occurs—with real-time Bayesian tabular inference, dramatically lower operational cost than LLM-as-a-judge, and zero internal code leakage.
 ```
 
 ---
@@ -69,13 +69,13 @@ Agentry is an enterprise-grade predictive runtime control layer and tabular safe
 ### Challenges We Ran Into
 ```text
 1. Eliminating Data Leakage in Sequential Agent Traces:
-   Standard random train/test splits severely contaminate evaluations because steps from the same agent trajectory share hidden state. We implemented a rigorous `GroupShuffleSplit` strictly by `session_id`, holding out full unseen sessions for testing across 5 independent folds.
+   Standard random train/test splits severely contaminate evaluations because steps from the same agent trajectory share hidden state. We implemented a rigorous `GroupShuffleSplit` strictly by `session_id`, holding out full unseen sessions for testing across independent folds.
 2. The False-Stop Dilemma:
-   Raw unthresholded argmax classification produced high false-stop rates on normal steps. We engineered a cost-sensitive Economic Utility formulation requiring Bayesian statistical confidence P(runaway) >= 0.85 combined with consecutive error streak evidence, dropping the False-Stop Rate to 2.0% while retaining 90.6% Failure Recall.
+   Raw unthresholded argmax classification produced high false-stop rates on normal steps. We engineered a cost-sensitive Economic Utility formulation requiring Bayesian statistical confidence P(runaway) combined with consecutive error streak evidence, achieving 91.7% Failure Recall and 24.5% False-Stop Rate on held-out unseen test trajectories.
 3. Non-IID Grouped Dynamics in Tabular Architecture:
-   Classical ML baselines (XGBoost, Random Forest) struggled on held-out trajectory cost regression. TabPFN-3.5's native support for grouped temporal relationships enabled it to achieve an R^2 of 0.782–0.961 on unseen trajectories.
+   Classical ML baselines (XGBoost, Random Forest) struggled on held-out trajectory cost regression. TabPFN-3.5's native support for grouped temporal relationships enabled it to achieve a Cost R^2 of 0.583 (over 2.5x higher than XGBoost) and 91.7% Failure Recall on unseen trajectories.
 4. Preserving Enterprise Privacy in AI Safety:
-   Cloud LLM judges require sending raw code diffs and prompts to third parties. We proved mathematically via permutation importance that 71.0% of predictive power comes from 5 non-sensitive tabular metadata features (`error_streak`, `prompt_tokens`, `step_latency_ms`, `thought_has_error`, `tool_call_count`), achieving complete runtime protection with zero proprietary code exposure.
+   Cloud LLM judges require sending raw code diffs and prompts to third parties. We showed that predictive safety governance is driven by structured tabular metadata features (`error_streak`, `prompt_tokens`, `step_latency_ms`, `thought_has_error`, `tool_call_count`), achieving runtime protection without exposing proprietary codebases.
 5. Safe Autonomic Context Pruning:
    Rolling an agent backward requires identifying the exact divergence point without discarding productive setup steps. Our divergence inflection point locator identifies the highest step index before fatal error cascades began, surgically stripping poisoned tool outputs while preserving environment state.
 ```
@@ -84,12 +84,12 @@ Agentry is an enterprise-grade predictive runtime control layer and tabular safe
 
 ### Accomplishments That We're Proud Of
 ```text
-• 100% Real-World Data: Validated strictly against 1,156 genuine SWE-bench developer steps across 55 sessions from Hugging Face with zero synthetic mocks.
-• Sub-Step Early Detection: Empirical research proved Agentry intercepts runaway failures at a median of Step 5.0, eliminating 53.3% of wasted trajectory length (569 steps and 162,339 tokens saved across failing sessions).
-• 155.2x Faster & 99.998% Cheaper than Cloud LLMs: TabPFN-3.5 evaluates steps in 14.5ms and costs $21.90/year for 500,000 daily steps, compared to GPT-4o's 2,250ms and $1,368,750.00/year.
+• 100% Real-World Data: Validated strictly against genuine SWE-bench developer steps across 35 sessions from Hugging Face with zero synthetic mocks.
+• Sub-Step Early Detection: Empirical research proved Agentry intercepts runaway failures early, eliminating over 65% of wasted token burn across failing sessions.
+• Orders of Magnitude Faster & Cheaper than Cloud LLMs: TabPFN-3.5 evaluates steps in tens of milliseconds without multi-second LLM prompts.
 • 8 Full Enterprise Capabilities: Autonomic Trajectory Rewind, Fleet Budget Governor, Prometheus Observability, What-If Policy Simulator, Human-in-the-Loop (HITL) escalation, Slack/Discord webhooks, automated post-mortem reporting (Markdown/HTML), and OpenAI reverse proxy.
 • Model Context Protocol (MCP) Native Support: Built a fully compliant MCP Server allowing Claude Desktop and Cursor users to guard their agents with TabPFN out-of-the-box.
-• 100% Passing Test Suite: 54 comprehensive unit, integration, deep resilience, and adversarial chaos tests passing in CI (validating multithreaded concurrency, SSE streaming proxy, autonomic rewind, budget governor, Prometheus endpoint, NaN/Inf mathematical immunity, and zero SQLite resource leaks).
+• 100% Passing Test Suite: 88 comprehensive unit, integration, deep resilience, and adversarial chaos tests passing in CI (validating multithreaded concurrency, SSE streaming proxy, autonomic rewind, budget governor, Prometheus endpoint, NaN/Inf mathematical immunity, and zero SQLite resource leaks).
 • One-Command Deployment: Complete Docker & Docker Compose configuration orchestrating Web UI, Reverse Proxy Gateway, and MCP Server.
 ```
 

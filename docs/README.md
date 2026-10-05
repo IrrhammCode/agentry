@@ -36,4 +36,4 @@ client = OpenAI(
     default_headers={"X-Agent-Session": "swe_coder_01"}
 )
 ```
-Agentry will automatically redact credentials, evaluate telemetry in **14.8 milliseconds** with TabPFN, and halt destructive actions before execution.
+Agentry will automatically redact credentials, evaluate telemetry in real time with TabPFN, and halt destructive actions before execution.

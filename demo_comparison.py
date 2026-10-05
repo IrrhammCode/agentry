@@ -140,7 +140,7 @@ def run_unprotected_simulation():
 def run_protected_simulation():
     console.print("\n" + "=" * 75)
     console.print("[bold green]>>> EXPERIMENT 2: RUNNING SAME AGENT WITH AGENTRY ACTIVE IN BACKGROUND[/]")
-    console.print("[dim]Agentry sits silently in the background, monitoring tabular telemetry via TabPFN-3.5 in sub-15ms.[/]\n")
+    console.print("[dim]Agentry sits silently in the background, monitoring tabular telemetry via TabPFN-3.5 in real time.[/]\n")
 
     session_id = f"demo_comparison_live_{int(time.time())}"
 
@@ -193,7 +193,8 @@ def run_protected_simulation():
         total_tokens += s["tokens"]
         total_cost += s["cost"]
 
-        # Call live Agentry Daemon on port 8000
+        # Audit via live Agentry Daemon or in-process guardrail
+        t_start = time.time()
         audit_payload = {
             "session_id": session_id,
             "step_index": s["step"],
@@ -202,13 +203,13 @@ def run_protected_simulation():
             "tool_name": s["tool"],
             "input_text": s["cmd"],
             "thought_trace": s["thought"],
-            "latency_ms": 14.8,
+            "latency_ms": 120.0,
             "accumulated_cost_usd": total_cost,
             "error_streak": s["streak"]
         }
 
         action = "PASS"
-        risk_pct = 15.0
+        risk_pct = 5.0
         reason = "Nominal operational telemetry."
         mode = "NORMAL"
 
@@ -221,26 +222,40 @@ def run_protected_simulation():
             with urllib.request.urlopen(req, timeout=5) as resp:
                 res_data = json.loads(resp.read().decode())
                 action = res_data.get("action", "PASS")
-                risk_pct = res_data.get("failure_probability", 0.15) * 100
+                risk_pct = res_data.get("failure_probability", 0.05) * 100
                 reason = res_data.get("reason", "")
                 mode = res_data.get("predicted_failure_mode", "NORMAL")
         except Exception:
-            # Fallback if daemon is briefly unreachable
-            if s["step"] >= 3:
-                action = "REROUTE"
-                risk_pct = 94.8
-                reason = "Repetitive failure loop detected across 3 steps on tool 'bash'."
-                mode = "INFINITE_LOOP"
+            # Fallback to local in-process guard
+            in_proc_guard = AgentryGuard()
+            dec = in_proc_guard.audit(
+                session_id=session_id,
+                tool_name=s["tool"],
+                input_text=s["cmd"],
+                output_text="",
+                prompt_tokens=s["tokens"],
+                completion_tokens=400,
+                thought_trace=s["thought"],
+                agent_role="Backend-Engineer",
+                model_name="claude-3-5-sonnet",
+                latency_ms=120.0
+            )
+            action = dec.action
+            risk_pct = dec.tabpfn_assessment.failure_probability * 100
+            reason = dec.reason
+            mode = dec.tabpfn_assessment.predicted_failure_mode
+
+        eval_latency_ms = (time.time() - t_start) * 1000.0
 
         console.print(f"  [dim]Step {s['step']}:[/] Command: [bold white]{s['cmd']}[/]")
         console.print(f"          Thought:   [italic dim]\"{s['thought']}\"[/]")
         
         if action == "PASS":
-            console.print(f"          Agentry:   [bold green]PASS (NOMINAL)[/] | TabPFN Risk: {risk_pct:.1f}%\n")
+            console.print(f"          Agentry:   [bold green]PASS (NOMINAL)[/] | Risk: {risk_pct:.1f}%\n")
         else:
             console.print(f"          Agentry:   [bold red][INTERCEPT] {action}![/] | Mode: [yellow]{mode}[/]")
             console.print(f"          Reason:    [bold yellow]{reason}[/]")
-            console.print(f"          Latency:   [bold cyan]14.8 ms[/] (Sub-20ms Bayesian Prior)\n")
+            console.print(f"          Latency:   [bold cyan]{eval_latency_ms:.1f} ms[/] (In-Context Prior Evaluation)\n")
 
 
             # TRIGGER AUTONOMIC TIME-TRAVEL REWIND & SELF-HEALING
@@ -297,7 +312,7 @@ def print_comparison_table(unprotected, protected):
     table.add_row(
         "Incident Outcome",
         "Database wiped by agent",
-        "Disaster prevented in 14.8ms"
+        "Disaster prevented autonomously"
     )
     table.add_row(
         "Recovery Mechanism",

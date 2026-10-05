@@ -38,20 +38,12 @@ if [ -d "frontend" ]; then
     FRONTEND_PID=$!
 fi
 
-# 6. Launch NovaStore
-if [ -d "projects_arena/novastore" ]; then
-    echo "[*] Launching NovaStore E-Commerce on port 5051..."
-    python -m uvicorn projects_arena.novastore.app:app --host 127.0.0.1 --port 5051 &
-    STORE_PID=$!
-fi
-
 echo ""
 echo "======================================================================"
 echo " [SUCCESS] All Agentry subsystems launched successfully!"
 echo " • Web Cockpit UI:  http://localhost:3000"
 echo " • Backend Daemon:  http://localhost:8000/health"
-echo " • NovaStore Demo:  http://127.0.0.1:5051"
 echo "======================================================================"
 
-trap "kill $DAEMON_PID $FRONTEND_PID $STORE_PID 2>/dev/null" EXIT
+trap "kill $DAEMON_PID $FRONTEND_PID 2>/dev/null" EXIT
 wait

@@ -304,6 +304,7 @@ class AgentryHTTPRequestHandler(BaseHTTPRequestHandler):
         if path == "/v1/chat/completions":
             proxy = get_proxy_handler()
             client_headers = {k.lower(): v for k, v in self.headers.items()}
+            client_headers["remote-addr"] = getattr(self, "client_address", ["127.0.0.1"])[0]
             is_stream = bool(payload.get("stream", False))
 
             if is_stream:

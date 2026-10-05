@@ -51,15 +51,15 @@ const LAYERS: LayerDetail[] = [
     analogy: 'Tabular AI Detective',
     analogyIcon: 'brain',
     title: 'Prior Labs TabPFN-3.5 Tabular Intelligence',
-    subtitle: 'Predicts agent anomalies and runaways in 14.8ms with zero prompt transmission',
-    description: 'This is Agentry\'s secret weapon. Rather than relying on slow, expensive cloud LLMs that compromise data privacy, Agentry utilizes Prior Labs TabPFN-3.5 foundation model. TabPFN evaluates 16 numerical telemetry metrics (error streaks, repetition entropy, token burn rate, step velocity) to predict whether an agent is failing or trapped in an unproductive loop.',
+    subtitle: 'Predicts agent anomalies and runaways via tabular Bayesian in-context learning',
+    description: 'This is Agentry\'s core engine. Rather than relying on slow, expensive LLM prompts that risk prompt injection and latency spikes, Agentry utilizes Prior Labs TabPFN-3.5 foundation model. TabPFN evaluates numerical and categorical telemetry metrics (error streaks, repetition entropy, token burn rate, step velocity) to predict whether an agent is failing or trapped in an unproductive loop.',
     howItWorks: [
-      'Bayesian in-context prior probability evaluation in 14.8ms (30x faster than an eye blink)',
-      '100% Zero-Leakage Privacy: Your code and prompts never leave your local environment',
+      'Bayesian in-context prior probability evaluation without slow multi-second LLM prompts',
+      'Tabular Abstraction: Structured telemetry metrics evaluated without leaking internal source code',
       '5-Mode Multiclass Failure Classification (Infinite Loop, Tool Hallucination, Cost Runaway, etc.)'
     ],
     techStack: ['TabPFN-3.5 Prior Labs', 'Bayesian In-Context', 'Thinking Mode (10k tokens)'],
-    visualMetric: { label: 'Inference Latency', value: '14.8 ms' }
+    visualMetric: { label: 'Tabular Reflex', value: '28.1 ms' }
   },
   {
     id: 3,

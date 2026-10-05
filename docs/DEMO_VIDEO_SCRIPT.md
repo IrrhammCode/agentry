@@ -32,7 +32,7 @@
   > 
   > This is where **Prior Labs' TabPFN-3.5** shines. TabPFN-3.5 was built specifically for messy, non-IID, grouped temporal data using `group_col='session_id'` and `group_time_col='step_index'`.
   > 
-  > On **739 real-world SWE-bench steps across 35 developer sessions**, classical tree models like XGBoost and Random Forest completely broke down, giving negative $R^2$. But **TabPFN-3.5 achieved an $R^2$ of 0.961 on 11 completely unseen held-out sessions**."
+  > On **739 real-world SWE-bench steps across 35 developer sessions**, classical tree models like XGBoost and Random Forest struggle with low cost $R^2$ ($0.190 - 0.235$), but **TabPFN-3.5 achieves an $R^2$ of 0.583 (over 2.5x higher) and 91.7% failure recall on completely unseen held-out sessions**."
 
 ---
 

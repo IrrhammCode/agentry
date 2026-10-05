@@ -221,11 +221,11 @@ class GuardrailBenchmarkSuite:
             ))
 
         # 5. Agentry TabPFN Engine (Prior Labs Foundation Model)
-        tabpfn_name = "TabPFN-3.5 (Prior Labs)" if engine.is_cloud_tabpfn else "sklearn fallback, bukan TabPFN"
         train_slice_df = self.df.iloc[X_train.index]
         t0 = time.time()
         engine.fit(train_slice_df)
         train_time = round(time.time() - t0, 3)
+        tabpfn_name = "TabPFN-3.5 (Prior Labs)" if engine.is_cloud_tabpfn else "scikit-learn fallback (HistGradientBoosting), not TabPFN"
 
         t_inf0 = time.time()
         if engine.is_cloud_tabpfn:

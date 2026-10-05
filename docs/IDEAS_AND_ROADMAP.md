@@ -10,7 +10,7 @@ Most agent guardrails today are built as "LLM-as-a-Judge" wrappers. They suffer 
 
 **TabPFN-3.5 has a unique, unfair advantage:**
 1. **Tabular Native:** Machine telemetry (step latency, token velocity, repetition score, error streak, tool diversity) is inherently tabular.
-2. **Sub-20ms Bayesian Prior:** It evaluates prior probability distributions in single-digit milliseconds without needing gradient descent or thousands of labeled samples.
+2. **Bayesian In-Context Prior:** It evaluates prior probability distributions rapidly without needing gradient descent or thousands of labeled samples.
 3. **Calibrated Uncertainty:** TabPFN outputs true posterior probabilities and uncertainty bounds, allowing deterministic mathematical decision boundaries (e.g. `P(failure) > 0.85 AND Uncertainty < 0.15`).
 
 Below are 8 high-impact ideas to expand Agentry into the definitive enterprise platform for autonomous agent safety.
@@ -73,7 +73,7 @@ Runaway agent fleets can cause $10,000+ surprise cloud bills on OpenAI, Anthropi
 
 ### The Innovation
 Combine **TabPFN Regression Mode** with dynamic compute arbitration:
-1. At step $t=3$, TabPFN predicts the final session cost distribution ($E[Cost] = \$14.80 \pm \$3.20$).
+1. At step $t=3$, TabPFN predicts the final session cost distribution ($E[Cost] = \$4.80 \pm \$1.20$).
 2. If the projected cost exceeds the task's expected economic value, Agentry dynamically:
    - Downgrades the downstream model from GPT-4o to Llama-3.3-70B on Groq or Cerebras.
    - Restricts context window retention to the last 3 turns.
@@ -112,11 +112,11 @@ In multi-agent architectures (CrewAI, AutoGen, LangGraph), one rogue agent can p
 ## 🎯 Idea 7: Winning Hackathon Presentation Strategy
 
 ### The 60-Second Hook
-> *"Every autonomous AI agent fleet operating in production today is one bad bash command away from a $50,000 cloud bill or a wiped database. Traditional guardrails call slow, expensive cloud LLMs that leak proprietary code. Agentry changes the paradigm: we use Prior Labs' TabPFN-3.5 foundation model to turn agent telemetry into a sub-20ms Bayesian sentry that stops catastrophic failures before execution, with zero prompt leakage."*
+> *"Every autonomous AI agent fleet operating in production today is one bad bash command away from a $50,000 cloud bill or a wiped database. Traditional guardrails call slow, expensive cloud LLMs that leak proprietary code. Agentry changes the paradigm: we use Prior Labs' TabPFN-3.5 foundation model to turn agent telemetry into a real-time Bayesian sentry that stops catastrophic failures before execution, with zero prompt leakage."*
 
 ### Key Demo Moments:
 1. **Show the Problem:** Agent attempts `rm -rf / --no-preserve-root` or an infinite retry loop.
-2. **Show the TabPFN Secret:** Highlight that TabPFN evaluated 16 tabular telemetry dimensions in **14.8 milliseconds**—30x faster than a human blink.
+2. **Show the TabPFN Secret:** Highlight that TabPFN evaluated 16 tabular telemetry dimensions in real time with Bayesian in-context precision.
 3. **Show Autonomic Healing:** The agent doesn't just crash; Agentry rewinds disk files to snapshot $t=0$ and injects counterfactual steering.
 4. **Show Live Enterprise Console:** The operator approves, steers, or aborts via the interactive Human-In-The-Loop war room.
 

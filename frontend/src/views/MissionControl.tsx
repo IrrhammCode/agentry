@@ -135,7 +135,7 @@ export const MissionControl: React.FC = () => {
         input_text: 'DROP TABLE audit_events_archive CASCADE;',
         thought_trace: 'Executing database purge routine on production',
         agent_role: 'Database-Admin',
-        latency_ms: 14.8
+        latency_ms: 25.0
       });
       await refreshData();
       showToast('Hazard Intercepted: Action paused and queued for Human-in-the-Loop sign-off.');
@@ -235,10 +235,10 @@ export const MissionControl: React.FC = () => {
             </div>
           </div>
           <div className="text-3xl font-bold font-mono text-sentry-emerald mb-1">
-            14.8 ms
+            28.1 ms
           </div>
           <div className="text-xs text-slate-400 font-mono">
-            Sub-20ms Bayesian Prior Evaluation
+            Tabular In-Context Bayesian Reflex
           </div>
         </div>
 
@@ -383,7 +383,7 @@ export const MissionControl: React.FC = () => {
             <h2 className="text-lg font-bold text-white flex items-center gap-2">
               <span>Step 2: TabPFN-3.5 Early Detection & Cost Avoidance</span>
               <span className="text-xs font-mono text-sentry-emerald font-normal">
-                (Sub-20ms Bayesian Prior Evaluation)
+                (Bayesian In-Context Prior Evaluation)
               </span>
             </h2>
             <p className="text-xs text-slate-400">
@@ -406,7 +406,7 @@ export const MissionControl: React.FC = () => {
                   </h3>
                 </div>
                 <span className="font-mono text-xs text-sentry-emerald font-semibold">
-                  R² = 0.782
+                  R² = 0.583
                 </span>
               </div>
               <p className="text-xs text-slate-400 mb-4">
@@ -532,7 +532,7 @@ export const MissionControl: React.FC = () => {
 
             <div className="pt-3 border-t border-white/10 text-[11px] font-mono text-slate-400 flex items-center justify-between">
               <span>Average Sentry Scan Latency:</span>
-              <span className="text-sentry-cyan font-bold">14.8 ms (TabPFN Bayesian Prior)</span>
+              <span className="text-sentry-cyan font-bold">28.1 ms (Tabular Reflex)</span>
             </div>
           </div>
 

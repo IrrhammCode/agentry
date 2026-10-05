@@ -5,11 +5,11 @@ import { ScrollReveal } from './ScrollReveal.tsx';
 const FAQS = [
   {
     q: 'Why use TabPFN instead of an LLM as a guardrail?',
-    a: 'LLMs take 500ms to 3,000ms to respond, cost significant token fees, and suffer from prompt injection attacks. Prior Labs TabPFN-3.5 evaluates multivariate tabular telemetry in 14.8ms, does not expose source code to third parties, and provides exact calibrated Bayesian probabilities without hallucinations.',
+    a: 'LLMs take 500ms to 3,000ms to respond, cost significant token fees, and suffer from prompt injection attacks. Prior Labs TabPFN-3.5 evaluates multivariate tabular telemetry in tens of milliseconds, protects internal codebases from prompt exposure, and provides calibrated Bayesian probabilities without LLM hallucinations.',
   },
   {
     q: 'Does Agentry send our proprietary code to the cloud?',
-    a: 'No. Agentry guarantees 100% Zero-Prompt Transmission. The telemetry transmitted to TabPFN consists strictly of numeric tabular features (token burn rate, error streaks, latency, entropy, blast radius score).',
+    a: 'Agentry operates primarily on structured tabular telemetry (token burn rate, error streaks, latency, repetition entropy, tool counts). In Cloud Mode, TabPFN-3.5 receives these metrics alongside short thought snippets for multimodal in-context evaluation. For strict air-gapped environments, setting TABPFN_OFFLINE_MODE=1 runs local HistGradientBoosting and local Ollama SLMs completely offline with zero outbound network transmission.',
   },
   {
     q: 'Can Agentry recover my agents automatically without human input?',

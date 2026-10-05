@@ -30,14 +30,6 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 Write-Host ""
-Write-Host "[4/4] Running NovaStore E-Commerce Integration Tests (10 tests)..." -ForegroundColor Yellow
-& .\.venv\Scripts\python.exe -m pytest projects_arena\novastore\tests\test_store.py -q
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "[FAIL] NovaStore tests failed!" -ForegroundColor Red
-    exit 1
-}
-
-Write-Host ""
 Write-Host "======================================================================" -ForegroundColor Cyan
 Write-Host " [ALL TESTS PASSED 100%] System is completely verified and operational!" -ForegroundColor Green
 Write-Host "======================================================================" -ForegroundColor Cyan

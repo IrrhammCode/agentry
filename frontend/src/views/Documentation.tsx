@@ -60,7 +60,7 @@ export const Documentation: React.FC = () => {
           tool_name: 'bash',
           input_text: apiInput,
           thought_trace: 'Auditing command in live documentation sandbox',
-          latency_ms: 14.8
+          latency_ms: 25.0
         });
         setApiResponse(res);
       } else if (apiEndpoint === 'dlp') {
@@ -215,10 +215,10 @@ export const Documentation: React.FC = () => {
               <span className="font-bold">Backend Port 8000 Online</span>
             </div>
             <div className="text-[11px] text-slate-400">
-              TabPFN Prior: <strong className="text-white">14.8ms</strong>
+              TabPFN Prior: <strong className="text-white">Real-Time In-Context</strong>
             </div>
             <div className="text-[11px] text-slate-400">
-              Zero-Prompt Leakage: <strong className="text-sentry-emerald">100%</strong>
+              Zero-Prompt Leakage: <strong className="text-sentry-emerald">Tabular Guard</strong>
             </div>
           </div>
         </div>
@@ -385,7 +385,7 @@ SESSION_MAX_COST_USD=5.00`}
                   <span className="text-xs font-mono text-slate-400">Best for: LangChain, CrewAI, AutoGen, Raw SDK</span>
                 </div>
                 <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
-                  Point any OpenAI client to <code className="text-sentry-cyan">http://127.0.0.1:8000/v1</code>. Pass <code className="text-sentry-cyan">X-Agent-Session</code> in headers. Agentry intercepts malicious commands, redacts secrets in-flight, and breaks infinite loops in 14.8ms.
+                  Point any OpenAI client to <code className="text-sentry-cyan">http://127.0.0.1:8000/v1</code>. Pass <code className="text-sentry-cyan">X-Agent-Session</code> in headers. Agentry intercepts malicious commands, redacts secrets in-flight, and breaks infinite loops in real time.
                 </p>
 
                 <div className="relative p-4 rounded-xl bg-black border border-white/10 font-mono text-xs">
@@ -690,7 +690,7 @@ bash_tool("pytest tests/test_auth.py")
                     Predictive Token Futures & Compute Hedging
                   </h3>
                   <p className="text-xs text-slate-400 leading-relaxed">
-                    Use TabPFN regression mode at step t=3 to forecast the expected final session cost distribution (Expected Cost = $14.80 ± $3.20). If projected cost exceeds task ROI, Agentry dynamically downgrades model tiers (e.g. from GPT-4o to ultra-fast Groq Llama-3.3-70B) or compresses context windows to preserve budget.
+                    Use TabPFN regression mode at step t=3 to forecast the expected final session cost distribution (Expected Cost = $4.80 ± $1.20). If projected cost exceeds task ROI, Agentry dynamically downgrades model tiers (e.g. from GPT-4o to ultra-fast Groq Llama-3.3-70B) or compresses context windows to preserve budget.
                   </p>
                   <div className="p-2.5 rounded-lg bg-black/60 border border-white/5 font-mono text-[11px] text-slate-300">
                     Benefit: Prevents unexpected multi-thousand dollar API invoices during overnight runs.
@@ -730,7 +730,7 @@ bash_tool("pytest tests/test_auth.py")
                     </div>
                     <div className="p-3 rounded-lg bg-emerald-950/30 border border-emerald-500/30">
                       <div className="text-sentry-emerald font-bold">3. TabPFN-3.5 Prior</div>
-                      <div className="text-[10px] text-slate-400 mt-1">16 Metrics Evaluated (14.8ms)</div>
+                      <div className="text-[10px] text-slate-400 mt-1">16 Metrics Evaluated (Tens of ms)</div>
                     </div>
                     <div className="p-3 rounded-lg bg-red-950/30 border border-red-500/30">
                       <div className="text-sentry-red font-bold">4. Action Engine</div>
@@ -753,12 +753,12 @@ bash_tool("pytest tests/test_auth.py")
                       <tr>
                         <td className="p-3 font-bold text-white">Inference Latency</td>
                         <td className="p-3 text-red-400">1,500ms – 3,000ms</td>
-                        <td className="p-3 text-sentry-emerald font-bold">14.8 milliseconds</td>
+                        <td className="p-3 text-sentry-emerald font-bold">28.1 milliseconds (Tabular Reflex)</td>
                       </tr>
                       <tr>
                         <td className="p-3 font-bold text-white">Enterprise Privacy</td>
                         <td className="p-3 text-red-400">Transmits code & database URIs</td>
-                        <td className="p-3 text-sentry-emerald font-bold">100% Zero-Prompt Transmission</td>
+                        <td className="p-3 text-sentry-emerald font-bold">Zero-Prompt Leakage (Tabular Only)</td>
                       </tr>
                       <tr>
                         <td className="p-3 font-bold text-white">Few-Shot Reliability</td>

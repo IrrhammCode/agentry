@@ -42,18 +42,11 @@ if (Test-Path "frontend") {
     Start-Process -FilePath "cmd.exe" -ArgumentList "/k", "cd frontend && npm.cmd run dev"
 }
 
-# 7. Launch NovaStore E-Commerce
-if (Test-Path "projects_arena\novastore") {
-    Write-Host "[*] Launching NovaStore E-Commerce (Port 5051)..." -ForegroundColor Green
-    Start-Process -FilePath "cmd.exe" -ArgumentList "/k", ".\.venv\Scripts\python.exe -m uvicorn projects_arena.novastore.app:app --host 127.0.0.1 --port 5051"
-}
-
 Write-Host ""
 Write-Host "======================================================================" -ForegroundColor Cyan
 Write-Host " [SUCCESS] All Agentry subsystems launched successfully!" -ForegroundColor Green
 Write-Host " • Web Cockpit UI:  http://localhost:3000" -ForegroundColor White
 Write-Host " • Backend Daemon:  http://localhost:8000/health" -ForegroundColor White
-Write-Host " • NovaStore Demo:  http://127.0.0.1:5051" -ForegroundColor White
 Write-Host "======================================================================" -ForegroundColor Cyan
 
 Start-Sleep -Seconds 2

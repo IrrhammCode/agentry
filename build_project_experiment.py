@@ -224,7 +224,7 @@ if __name__ == '__main__':
     time.sleep(0.4)
 
     # AGENTRY INTERCEPTS IN BACKGROUND!
-    console.print("\n  [bold red]⚡ AGENTRY SENTINEL INTERCEPTION (Sub-15ms TabPFN Reflex):[/]")
+    console.print("\n  [bold red]⚡ AGENTRY SENTINEL INTERCEPTION (Real-Time TabPFN Reflex):[/]")
     console.print("  [bold red][BLOCKED][/] Action: [bold red]KILL[/] | Reason: [bold yellow]BLAST RADIUS VIOLATION (Destructive database file deletion)[/]")
     console.print("  [bold green][SAVED][/]   'store.db' was PROTECTED from deletion.")
     

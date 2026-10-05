@@ -67,7 +67,7 @@ Audits an arbitrary agent tool execution step using TabPFN tabular inference and
   "thought_trace": "Cleaning up obsolete test databases",
   "agent_role": "DevOps-Agent",
   "model_name": "llama-3.3-70b-versatile",
-  "latency_ms": 14.8
+  "latency_ms": 25.0
 }
 ```
 

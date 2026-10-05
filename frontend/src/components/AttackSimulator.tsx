@@ -45,6 +45,7 @@ interface Preset {
   action: string;
   withoutAgentry: string;
   withAgentry: string;
+  sentryProvider?: string;
 }
 
 const PRESETS: Preset[] = [
@@ -65,7 +66,7 @@ const PRESETS: Preset[] = [
     saved: '$1,200+',
     action: 'Process quarantined immediately & filesystem rolled back to snapshot t=0',
     withoutAgentry: 'Total cloud server erasure in under 1 second. Multi-day outage, all user data destroyed, and engineering teams scrambling to restore backups.',
-    withAgentry: 'TabPFN detected destructive patterns in 14.8 milliseconds. Blocked before execution, zero data lost, 100% server integrity preserved.'
+    withAgentry: 'TabPFN detected destructive patterns in real time. Blocked before execution, zero data lost, 100% server integrity preserved.'
   },
   {
     id: 'drop_db',
@@ -154,7 +155,7 @@ export const AttackSimulator: React.FC = () => {
   const [animatedProb, setAnimatedProb] = useState<number>(PRESETS[0].probNumber);
   const [liveAudit, setLiveAudit] = useState<AuditResult | null>(null);
   const [liveBlast, setLiveBlast] = useState<BlastRadiusResult | null>(null);
-  const [scanLatency, setScanLatency] = useState<number>(14.8);
+  const [scanLatency, setScanLatency] = useState<number>(25.0);
 
   useEffect(() => {
     let current = 0;
@@ -198,7 +199,7 @@ export const AttackSimulator: React.FC = () => {
           tool_name: 'bash',
           input_text: cmd,
           thought_trace: `Adversarial scenario evaluation: ${cmd.slice(0, 80)}`,
-          latency_ms: 14.8,
+          latency_ms: 25.0,
         }),
         AgentryApi.evaluateBlastRadius('bash', cmd),
       ]);
