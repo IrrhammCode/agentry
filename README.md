@@ -96,7 +96,7 @@ flowchart TD
 
 ---
 
-## 📊 Empirical Benchmarks (Zero-Leakage Unseen Trajectory Group Splits)
+## 📊 Empirical Benchmarks (Strict Unseen Trajectory Group Splits)
 
 Evaluated on genuine SWE-bench developer sessions using `agentry.benchmark.GuardrailBenchmarkSuite`.
 Split strategy: `GroupShuffleSplit` strictly partitioned on `session_id` to guarantee 100% unseen agent trajectories in the evaluation set (zero cross-step leakage).

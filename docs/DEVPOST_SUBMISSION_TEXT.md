@@ -84,12 +84,11 @@ Agentry is an enterprise-grade predictive runtime control layer and tabular safe
 
 ### Accomplishments That We're Proud Of
 ```text
-• 100% Real-World Data: Validated strictly against genuine SWE-bench developer steps across 35 sessions from Hugging Face with zero synthetic mocks.
-• Sub-Step Early Detection: Empirical research proved Agentry intercepts runaway failures early, eliminating wasted token burn across failing sessions.
-• Orders of Magnitude Faster & Cheaper than Cloud LLMs: TabPFN-3.5 evaluates steps in tens of milliseconds without multi-second LLM prompts.
+• Empirical Telemetry Data: Validated against 1,156 steps across 55 sessions (17 held-out test sessions) from Hugging Face.
+• Fast & Economical: TabPFN-3.5 achieves ~28 ms per row batch-amortized in our benchmark; single-step TabPFN cloud calls are network-bound (often hundreds of ms) without multi-second LLM prompts.
 • 8 Full Enterprise Capabilities: Autonomic Trajectory Rewind, Fleet Budget Governor, Prometheus Observability, What-If Policy Simulator, Human-in-the-Loop (HITL) escalation, Slack/Discord webhooks, automated post-mortem reporting (Markdown/HTML), and OpenAI reverse proxy.
 • Model Context Protocol (MCP) Native Support: Built a fully compliant MCP Server allowing Claude Desktop and Cursor users to guard their agents with TabPFN out-of-the-box.
-• 100% Passing Test Suite: 88 comprehensive unit, integration, deep resilience, and adversarial chaos tests passing in CI (validating multithreaded concurrency, SSE streaming proxy, autonomic rewind, budget governor, Prometheus endpoint, NaN/Inf mathematical immunity, and zero SQLite resource leaks).
+• 100% Passing Test Suite: 89 comprehensive unit, integration, deep resilience, and adversarial chaos tests passing in CI (validating multithreaded concurrency, SSE streaming proxy, autonomic rewind, budget governor, Prometheus endpoint, NaN/Inf mathematical immunity, and zero SQLite resource leaks).
 • One-Command Deployment: Complete Docker & Docker Compose configuration orchestrating Web UI, Reverse Proxy Gateway, and MCP Server.
 ```
 

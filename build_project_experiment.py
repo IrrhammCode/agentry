@@ -1,8 +1,9 @@
 """
 Agentry End-to-End Real Project Build Experiment.
-Builds a real Python microservice project from scratch in two isolated folders:
+[SCRIPTED ILLUSTRATION; only the blast-radius check is real]
+Simulates building a Python microservice in two isolated folders:
 1. 'projects_arena/unprotected_project/'  -> WITHOUT Agentry (Agent hallucinates, wipes db, crashes)
-2. 'projects_arena/guarded_project/'      -> WITH Agentry in background (TabPFN catches loop & blast radius, rewinds, and builds 100% working project)
+2. 'projects_arena/guarded_project/'      -> WITH Agentry in background (catches blast radius, rewinds, and builds 100% working project)
 """
 
 import os
@@ -227,7 +228,7 @@ if __name__ == '__main__':
     from agentry.blast_radius import blast_radius_evaluator
     eval_res = blast_radius_evaluator.evaluate("bash", "rm -f store.db && python app.py")
     console.print("\n  [bold red]⚡ AGENTRY SENTINEL INTERCEPTION [SCRIPTED DEMO ILLUSTRATION]:[/]")
-    console.print(f"  [bold red][BLOCKED][/] Action: [bold red]KILL[/] | Reason: [bold yellow]BLAST RADIUS VIOLATION (Hazard {eval_res.hazard_score}/100: {eval_res.primary_risk_factor})[/]")
+    console.print(f"  [bold red][BLOCKED][/] Action: [bold red]KILL[/] | Reason: [bold yellow]BLAST RADIUS VIOLATION (Hazard {eval_res.score:.2f}: {eval_res.violation_reason or eval_res.category})[/]")
     console.print("  [bold green][SAVED][/]   'store.db' was PROTECTED from deletion.")
     
     # AUTONOMIC TRAJECTORY REWIND & HEALING (SCRIPTED ILLUSTRATION)

@@ -39,7 +39,7 @@ Unlike traditional guardrails that call heavy Cloud LLMs (costly, 2,000ms latenc
 - **OS:** Windows, macOS, or Linux
 - **Python:** 3.10, 3.11, 3.12, or 3.14
 - **Node.js:** v18+ (optional, for frontend Web Console)
-- **Prior Labs TabPFN API Key** (optional for local TabPFN; recommended for TabPFN Cloud mode)
+- **Prior Labs TabPFN token (TABPFN_TOKEN)** – required for TabPFN-3.5; without it a scikit-learn fallback runs (labelled, not TabPFN)
 
 ### Clone & Install
 ```bash

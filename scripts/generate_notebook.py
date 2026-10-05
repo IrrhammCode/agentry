@@ -52,7 +52,7 @@ nb = {
             "metadata": {},
             "source": [
                 "## 2. Load Real-World SWE-bench Agent Telemetry\n",
-                "We evaluate on genuine agent execution traces streamed from `nebius/SWE-agent-trajectories` (739 steps, 35 unique sessions)."
+                "We evaluate on genuine agent execution traces streamed from `nebius/SWE-agent-trajectories` (1,156 steps across 55 sessions, including 17 held-out test sessions)."
             ]
         },
         {
@@ -172,40 +172,6 @@ nb = {
                 "]\n",
                 "bench_df = pd.DataFrame(records)\n",
                 "bench_df"
-            ]
-        },
-        {
-            "cell_type": "markdown",
-            "metadata": {},
-            "source": [
-                "## 6. Equal-Success-Rate Fleet Runtime Experiment\n",
-                "Evaluating the fundamental trade-off: **Preserving successful tasks vs Slashing token burn.**"
-            ]
-        },
-        {
-            "cell_type": "code",
-            "execution_count": None,
-            "metadata": {},
-            "outputs": [],
-            "source": [
-                "from scripts.run_equal_success_experiment import run_fleet_simulation\n",
-                "regimes, total_succ, total_fail = run_fleet_simulation()\n",
-                "\n",
-                "baseline_tokens = regimes['Unprotected Fleet (No Guard)']['total_tokens']\n",
-                "fleet_records = []\n",
-                "for name, stats in regimes.items():\n",
-                "    succ_pct = (stats['completed_successes'] / max(1, total_succ)) * 100\n",
-                "    reduc = ((baseline_tokens - stats['total_tokens']) / baseline_tokens) * 100\n",
-                "    fleet_records.append({\n",
-                "        'Strategy': name,\n",
-                "        'Task Success Rate': f'{succ_pct:.1f}% ({stats[\"completed_successes\"]}/{total_succ})',\n",
-                "        'False Kills': stats['false_kills'],\n",
-                "        'Runaways Caught': f'{stats[\"runaways_interrupted\"]}/{total_fail}',\n",
-                "        'Total Tokens': f'{stats[\"total_tokens\"]:,}',\n",
-                "        'Fleet Cost': f'${stats[\"total_cost_usd\"]:.4f}',\n",
-                "        'Compute Reduction': 'Baseline (0%)' if reduc == 0 else f'-{reduc:.1f}%'\n",
-                "    })\n",
-                "pd.DataFrame(fleet_records)"
             ]
         }
     ],

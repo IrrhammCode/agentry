@@ -23,7 +23,7 @@ console = Console()
 def main():
     console.print(Panel(
         f"[bold green]AGENTRY RIGOROUS BENCHMARK: UNSEEN TRAJECTORY GROUP SPLIT[/]\n"
-        f"[dim white]Version {__version__} | Zero-Leakage GroupShuffleSplit by Session | Real SWE-bench Traces[/]",
+        f"[dim white]Version {__version__} | Strict GroupShuffleSplit by Session | Real SWE-bench Traces[/]",
         border_style="cyan"
     ))
 

@@ -5,7 +5,7 @@ import { ScrollReveal } from './ScrollReveal.tsx';
 const FAQS = [
   {
     q: 'Why use TabPFN instead of an LLM as a guardrail?',
-    a: 'LLMs take 500ms to 3,000ms to respond, cost significant token fees, and suffer from prompt injection attacks. Prior Labs TabPFN-3.5 evaluates multivariate tabular telemetry in tens of milliseconds, protects internal codebases from prompt exposure, and provides calibrated Bayesian probabilities without LLM hallucinations.',
+    a: 'LLMs take 500ms to 3,000ms to respond, cost significant token fees, and suffer from prompt injection attacks. Prior Labs TabPFN-3.5 achieves ~28 ms per row batch-amortized in our benchmark (single-step TabPFN cloud calls are network-bound, often hundreds of ms), protects internal codebases from raw prompt exposure, and provides calibrated Bayesian probabilities without LLM hallucinations.',
   },
   {
     q: 'Does Agentry send our proprietary code to the cloud?',

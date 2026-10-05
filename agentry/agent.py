@@ -377,6 +377,8 @@ Respond strictly in JSON with two keys:
         prob = assessment.failure_probability
         driver = assessment.primary_risk_driver
 
+        engine_label = "TabPFN" if getattr(self.engine, "is_cloud_tabpfn", False) else "Fallback (scikit-learn, not TabPFN)"
+
         reroute = None
         if action == "KILL":
             if step.error_streak >= settings.error_streak_kill or step.repetition_score >= settings.repetition_score_kill:
@@ -391,12 +393,12 @@ Respond strictly in JSON with two keys:
                 )
             else:
                 reason = (
-                    f"Autonomous termination triggered. TabPFN detected {mode} with {prob:.1%} probability. "
+                    f"Autonomous termination triggered. {engine_label} detected {mode} with {prob:.1%} probability. "
                     f"Root cause: {driver}. Terminating immediately to halt cost runaway."
                 )
         elif action == "REROUTE":
             reason = (
-                f"Autonomous reroute engaged. TabPFN/Sentry flagged anomalous {mode} ({prob:.1%}). "
+                f"Autonomous reroute engaged. {engine_label} flagged anomalous {mode} ({prob:.1%}). "
                 f"Injecting corrective telemetry steering directive."
             )
             thought_low = str(step.thought_trace or "").lower()
@@ -415,10 +417,10 @@ Respond strictly in JSON with two keys:
                 reroute = "CHECKPOINT: Summarize current findings and request user clarification before proceeding."
         elif action == "PAUSE":
             reason = (
-                f"Agent execution paused for human inspection. TabPFN tabular risk elevated to {prob:.1%} "
+                f"Agent execution paused for human inspection. {engine_label} risk elevated to {prob:.1%} "
                 f"({driver}). Escalated to operator review."
             )
         else:
-            reason = f"Telemetry nominal. TabPFN healthy confidence {1.0 - prob:.1%}. Agent authorized to proceed."
+            reason = f"Telemetry nominal. {engine_label} healthy confidence {1.0 - prob:.1%}. Agent authorized to proceed."
 
         return reason, reroute, "agentry-local-sentry"

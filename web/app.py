@@ -665,8 +665,9 @@ elif page == "🧪 What-If Policy Simulator":
         fig_sens.add_trace(go.Scatter(x=thresholds, y=recalls_sim, mode="lines+markers", name="Failure Recall (%)", line=dict(color="#10B981", width=3)))
         fig_sens.add_trace(go.Scatter(x=thresholds, y=fprs_sim, mode="lines+markers", name="False-Stop Rate (%)", line=dict(color="#EF4444", width=3)))
         fig_sens.add_vline(x=sim_threshold, line_width=2, line_dash="dash", line_color="#60EFFF", annotation_text=f"Selected: θ={sim_threshold}")
-        fig_sens.update_layout(title="Policy Sensitivity Curve", xaxis_title="Risk Threshold (θ)", yaxis_title="Percentage (%)", height=320, margin=dict(t=40, b=20, l=20, r=20))
+        fig_sens.update_layout(title="Policy Sensitivity Curve (Illustrative, not measured)", xaxis_title="Risk Threshold (θ)", yaxis_title="Percentage (%)", height=320, margin=dict(t=40, b=20, l=20, r=20))
         st.plotly_chart(fig_sens, use_container_width=True)
+        st.caption("ℹ️ Illustrative sensitivity model; not measured empirical telemetry.")
 
     with ch_col2:
         token_reds = [78.5, 74.2, 70.1, 65.5, 58.2, 48.0, 32.1]
@@ -676,12 +677,13 @@ elif page == "🧪 What-If Policy Simulator":
         fig_pareto = px.scatter(
             x=token_reds, y=task_succs, text=policies,
             labels={"x": "Token Burn Reduction (%)", "y": "Task Success Preservation (%)"},
-            title="Pareto Frontier: Task Success vs Compute Reduction",
+            title="Pareto Frontier: Task Success vs Compute Reduction (Illustrative, not measured)",
             color=task_succs, color_continuous_scale="Viridis"
         )
         fig_pareto.update_traces(textposition="top center", marker=dict(size=14))
         fig_pareto.update_layout(height=320, margin=dict(t=40, b=20, l=20, r=20))
         st.plotly_chart(fig_pareto, use_container_width=True)
+        st.caption("ℹ️ Illustrative Pareto trade-off curve across policy regimes; not measured empirical telemetry.")
 
     # Interactive Session Trajectory Replay & Rewind Inspector
     st.markdown("### 🔄 Interactive Session Replay & Rewind Prescription")
@@ -1405,7 +1407,7 @@ elif page == "🏛️ Architecture & Privacy":
     When enterprise agents write code, execute database queries, and query internal knowledge bases:
     1. **Local-First Privacy Architecture:** When run in Air-Gapped Mode (`TABPFN_OFFLINE_MODE=1`), all tabular evaluation (via scikit-learn HistGradientBoosting) and semantic reasoning (via Ollama Qwen 2.5) execute 100% on localhost with zero outbound telemetry.
     2. **Tabular Mathematical Abstraction:** TabPFN operates on structured tabular metrics (`step_latency`, `prompt_tokens`, `repetition_score`, `error_streak`). When Cloud TabPFN-3.5 is active, telemetry metrics and short thought snippets are transmitted via TLS to the Prior Labs foundation model.
-    3. **Low Latency Tabular Reflex:** In-line agent guardrails cannot afford multi-second delays per step. Tabular Bayesian inference evaluates in tens of milliseconds.
+    3. **Low Latency Tabular Reflex:** In-line agent guardrails cannot afford multi-second delays per step. TabPFN achieves ~28 ms per row batch-amortized in our benchmark; single-step TabPFN cloud calls are network-bound (often hundreds of ms).
 
     ### 🏗️ Agentry System Flow
     ```mermaid

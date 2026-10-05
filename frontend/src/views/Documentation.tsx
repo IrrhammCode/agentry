@@ -729,7 +729,7 @@ bash_tool("pytest tests/test_auth.py")
                     </div>
                     <div className="p-3 rounded-lg bg-emerald-950/30 border border-emerald-500/30">
                       <div className="text-sentry-emerald font-bold">3. TabPFN-3.5 Prior</div>
-                      <div className="text-[10px] text-slate-400 mt-1">16 Metrics Evaluated (Tens of ms)</div>
+                      <div className="text-[10px] text-slate-400 mt-1">16 Metrics Evaluated (~28ms Batch Avg)</div>
                     </div>
                     <div className="p-3 rounded-lg bg-red-950/30 border border-red-500/30">
                       <div className="text-sentry-red font-bold">4. Action Engine</div>
@@ -752,7 +752,7 @@ bash_tool("pytest tests/test_auth.py")
                       <tr>
                         <td className="p-3 font-bold text-white">Inference Latency</td>
                         <td className="p-3 text-red-400">1,500ms – 3,000ms</td>
-                        <td className="p-3 text-sentry-emerald font-bold">~28ms (Batch Avg) / Tens of ms</td>
+                        <td className="p-3 text-sentry-emerald font-bold">~28 ms batch-amortized; cloud single-step network-bound</td>
                       </tr>
                       <tr>
                         <td className="p-3 font-bold text-white">Enterprise Privacy</td>
