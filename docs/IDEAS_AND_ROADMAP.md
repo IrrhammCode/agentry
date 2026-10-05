@@ -112,7 +112,7 @@ In multi-agent architectures (CrewAI, AutoGen, LangGraph), one rogue agent can p
 ## 🎯 Idea 7: Winning Hackathon Presentation Strategy
 
 ### The 60-Second Hook
-> *"Every autonomous AI agent fleet operating in production today is one bad bash command away from a $50,000 cloud bill or a wiped database. Traditional guardrails call slow, expensive cloud LLMs that leak proprietary code. Agentry changes the paradigm: we use Prior Labs' TabPFN-3.5 foundation model to turn agent telemetry into a real-time Bayesian sentry that stops catastrophic failures before execution, with zero prompt leakage."*
+> *"Every autonomous AI agent fleet operating in production today is one bad bash command away from a $50,000 cloud bill or a wiped database. Traditional guardrails call slow, expensive cloud LLMs that require full prompt transmission. Agentry changes the paradigm: we use Prior Labs' TabPFN-3.5 foundation model to turn agent telemetry into a real-time Bayesian sentry that stops catastrophic failures before execution, operating on structured tabular signals with only short snippets needed for thinking mode."*
 
 ### Key Demo Moments:
 1. **Show the Problem:** Agent attempts `rm -rf / --no-preserve-root` or an infinite retry loop.

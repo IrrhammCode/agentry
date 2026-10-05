@@ -392,7 +392,7 @@ export const AttackSimulator: React.FC = () => {
                 </div>
               </div>
               <p className="text-[11px] text-slate-300 line-clamp-2">
-                Bayesian in-context prior probability evaluation with zero prompt leakage to external clouds.
+                Bayesian in-context prior evaluation operating on telemetry metrics and short thought snippets (≤250 chars).
               </p>
             </div>
 

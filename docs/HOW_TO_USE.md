@@ -29,7 +29,7 @@ Agentry protects autonomous AI agent fleets (SWE-bench coding agents, DevOps bot
 - **Credential & Secret Leaks:** Outbound API keys, database credentials, and auth tokens.
 - **Swarm Deadlocks:** Multi-agent cyclic delegation ping-pong (Agent A ⇆ Agent B).
 
-Unlike traditional guardrails that call heavy Cloud LLMs (costly, 2,000ms latency, leaks proprietary code), Agentry uses **Prior Labs TabPFN-3.5** to evaluate structured execution telemetry in **sub-20 milliseconds** with **zero prompt transmission**.
+Unlike traditional guardrails that call heavy Cloud LLMs (costly, 2,000ms latency, leaks proprietary code), Agentry uses **Prior Labs TabPFN-3.5** to evaluate structured execution telemetry in real time. In cloud mode, only tabular metrics and short thought snippets (up to 250 characters) are sent to Prior Labs API.
 
 ---
 
@@ -64,8 +64,7 @@ pip install -e .
 Create a `.env` file in the project root:
 ```env
 # Prior Labs TabPFN Cloud Credentials
-TABPFN_API_KEY=your_tabpfn_api_key_here
-TABPFN_MODEL=tabpfn-3.5-classification
+TABPFN_TOKEN=your_prior_labs_token_here
 TABPFN_THINKING_MODE=true
 
 # Local SLM Sentry (Ollama)
@@ -295,7 +294,7 @@ Add the following to your `claude_desktop_config.json` or Cursor MCP settings:
       "command": "python",
       "args": ["-m", "agentry.mcp_server", "--transport", "stdio"],
       "env": {
-        "TABPFN_API_KEY": "your_api_key_here"
+        "TABPFN_TOKEN": "your_token_here"
       }
     }
   }
@@ -370,8 +369,7 @@ Open **`http://localhost:3000`** in your browser:
 
 | Variable | Default | Purpose |
 | :--- | :--- | :--- |
-| `TABPFN_API_KEY` | None | Prior Labs cloud API authentication |
-| `TABPFN_MODEL` | `tabpfn-3.5-classification` | Model variant |
+| `TABPFN_TOKEN` | None | Prior Labs cloud API authentication token |
 | `TABPFN_THINKING_MODE` | `true` | Enables test-time Bayesian reasoning |
 | `RISK_THRESHOLD_KILL` | `0.85` | TabPFN failure probability threshold to trigger KILL |
 | `RISK_THRESHOLD_PAUSE` | `0.65` | Threshold to trigger Human-in-the-Loop PAUSE |

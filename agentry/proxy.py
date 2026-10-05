@@ -126,7 +126,8 @@ class OpenAIProxyHandler:
         if not req_model or req_model in ("gpt-4", "gpt-4o", "gpt-3.5-turbo", "llama-3.3-70b-versatile"):
             request_body["model"] = settings.groq_model
 
-        client_ip = client_headers.get("x-forwarded-for", "").split(",")[0].strip() or client_headers.get("x-real-ip") or client_headers.get("remote-addr") or "127.0.0.1"
+        # Use real socket client address passed by server; ignore spoofable X-Forwarded-For
+        client_ip = client_headers.get("remote-addr", "127.0.0.1")
         auth_header = self._resolve_auth_header(client_headers, client_ip=client_ip)
 
         # Refuse to relay unauthenticated requests to external cloud services
@@ -340,7 +341,8 @@ class OpenAIProxyHandler:
                 last_user_msg = str(m.get("content") or "")
                 break
 
-        client_ip = client_headers.get("x-forwarded-for", "").split(",")[0].strip() or client_headers.get("x-real-ip") or client_headers.get("remote-addr") or "127.0.0.1"
+        # Use real socket client address passed by server; ignore spoofable X-Forwarded-For
+        client_ip = client_headers.get("remote-addr", "127.0.0.1")
         auth_header = self._resolve_auth_header(client_headers, client_ip=client_ip)
         if not auth_header and "localhost" not in self.upstream_url and "127.0.0.1" not in self.upstream_url:
             err_payload = {

@@ -10,6 +10,8 @@ import {
   Cable
 } from 'lucide-react';
 
+import { AgentryApi } from '../services/api.ts';
+
 interface NavbarProps {
   currentView: 'showcase' | 'console' | 'defense' | 'docs' | 'mcp';
   onViewChange: (view: 'showcase' | 'console' | 'defense' | 'docs' | 'mcp') => void;
@@ -17,6 +19,13 @@ interface NavbarProps {
 
 export const Navbar: React.FC<NavbarProps> = ({ currentView, onViewChange }) => {
   const isConsoleMode = currentView === 'console' || currentView === 'defense' || currentView === 'docs' || currentView === 'mcp';
+  const [cloudMode, setCloudMode] = React.useState<boolean | null>(null);
+
+  React.useEffect(() => {
+    AgentryApi.getHealth()
+      .then((data) => setCloudMode(Boolean(data.tabpfn_cloud_mode)))
+      .catch(() => setCloudMode(false));
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 w-full bg-black/95 backdrop-blur-md border-b border-white/10 px-4 lg:px-8 py-3 transition-all duration-300">
@@ -162,6 +171,22 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onViewChange }) => 
               88 Pass
             </span>
           </a>
+
+          {/* Cloud Mode vs Fallback Badge */}
+          {cloudMode !== null && (
+            <div 
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-mono font-medium border transition-colors ${
+                cloudMode 
+                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' 
+                  : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+              }`}
+              title={cloudMode ? "Prior Labs TabPFN Cloud API Active" : "Scikit-Learn Fallback Engine Active (Not TabPFN)"}
+            >
+              <span className={`w-2 h-2 rounded-full ${cloudMode ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+              <span className="hidden sm:inline">{cloudMode ? 'TabPFN cloud' : 'scikit-learn fallback (not TabPFN)'}</span>
+              <span className="sm:hidden">{cloudMode ? 'TabPFN' : 'fallback'}</span>
+            </div>
+          )}
 
           {/* Primary View Switcher Button */}
           {!isConsoleMode ? (

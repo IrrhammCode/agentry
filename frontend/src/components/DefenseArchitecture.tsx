@@ -59,7 +59,7 @@ const LAYERS: LayerDetail[] = [
       '5-Mode Multiclass Failure Classification (Infinite Loop, Tool Hallucination, Cost Runaway, etc.)'
     ],
     techStack: ['TabPFN-3.5 Prior Labs', 'Bayesian In-Context', 'Thinking Mode (10k tokens)'],
-    visualMetric: { label: 'Tabular Reflex', value: '28.1 ms' }
+    visualMetric: { label: 'Benchmark Batch Avg', value: '~28 ms' }
   },
   {
     id: 3,

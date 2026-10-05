@@ -49,15 +49,15 @@
 
 ---
 
-### [2:00 - 2:35] Scene 4: Model Context Protocol (MCP) Server & Equal-Success Proof
-* **Screen Visual:** Switch to the **"🔌 Model Context Protocol (MCP)"** tab in the Streamlit app. Click **"Execute MCP Audit Step"** to show instant real-time auditing. Then show the Equal-Success-Rate table.
+### [2:00 - 2:35] Scene 4: Model Context Protocol (MCP) Server & Benchmark Proof
+* **Screen Visual:** Switch to the **"🔌 Model Context Protocol (MCP)"** tab in the Streamlit app. Click **"Execute MCP Audit Step"** to show instant real-time auditing. Then show the Unseen Trajectory Benchmark table.
 * **Voiceover:**
   > "Agentry is built for production ecosystems. Today, we're unveiling our native **Model Context Protocol (MCP) Server**.
   > 
-  > Any developer can connect Agentry directly to **Claude Desktop, Cursor IDE, or Windsurf** in one configuration line. Through MCP tools like `agentry_audit_step`, Claude Desktop gains real-time TabPFN guardrails with zero prompt leakage.
+  > Any developer can connect Agentry directly to **Claude Desktop, Cursor IDE, or Windsurf** in one configuration line. Through MCP tools like `agentry_audit_step`, Claude Desktop gains real-time TabPFN guardrails.
   > 
-  > And most importantly, look at our **Equal-Success-Rate Fleet Experiment**:
-  > While naive static rules kill 50% of successful developer tasks, **Agentry slashes fleet-wide compute by 65.5%—saving 3.23 million tokens across 35 sessions—while preserving task convergence**."
+  > And most importantly, look at our **Unseen Trajectory Benchmark**:
+  > While naive static rules miss over 45% of runaway failures, **TabPFN catches over 90% of failure cascades on unseen developer sessions while maintaining calibrated test-time confidence**."
 
 ---
 

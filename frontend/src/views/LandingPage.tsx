@@ -92,7 +92,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchConsole }) => 
             <div className="flex flex-wrap items-center justify-center gap-y-2 gap-x-8 text-xs font-mono text-slate-400">
               <div className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-sentry-emerald" />
-                <span>Zero Prompt Leakage (Tabular Only)</span>
+                <span>Tabular Telemetry + Thought Snippets (&le;250 chars)</span>
               </div>
               <div className="flex items-center gap-2">
                 <Zap className="w-4 h-4 text-sentry-cyan" />
@@ -100,7 +100,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchConsole }) => 
               </div>
               <div className="flex items-center gap-2">
                 <Lock className="w-4 h-4 text-sentry-violet" />
-                <span>Zero Prompt Transmission</span>
+                <span>Private Codebase Protected</span>
               </div>
               <div className="flex items-center gap-2">
                 <Cpu className="w-4 h-4 text-amber-400" />

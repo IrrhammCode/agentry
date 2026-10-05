@@ -85,7 +85,7 @@ Agentry is an enterprise-grade predictive runtime control layer and tabular safe
 ### Accomplishments That We're Proud Of
 ```text
 • 100% Real-World Data: Validated strictly against genuine SWE-bench developer steps across 35 sessions from Hugging Face with zero synthetic mocks.
-• Sub-Step Early Detection: Empirical research proved Agentry intercepts runaway failures early, eliminating over 65% of wasted token burn across failing sessions.
+• Sub-Step Early Detection: Empirical research proved Agentry intercepts runaway failures early, eliminating wasted token burn across failing sessions.
 • Orders of Magnitude Faster & Cheaper than Cloud LLMs: TabPFN-3.5 evaluates steps in tens of milliseconds without multi-second LLM prompts.
 • 8 Full Enterprise Capabilities: Autonomic Trajectory Rewind, Fleet Budget Governor, Prometheus Observability, What-If Policy Simulator, Human-in-the-Loop (HITL) escalation, Slack/Discord webhooks, automated post-mortem reporting (Markdown/HTML), and OpenAI reverse proxy.
 • Model Context Protocol (MCP) Native Support: Built a fully compliant MCP Server allowing Claude Desktop and Cursor users to guard their agents with TabPFN out-of-the-box.

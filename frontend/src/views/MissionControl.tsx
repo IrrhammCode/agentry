@@ -41,6 +41,7 @@ export const MissionControl: React.FC = () => {
   const [steerModalOpen, setSteerModalOpen] = useState<boolean>(false);
   const [steerDirective, setSteerDirective] = useState<string>('Avoid dropping tables; use non-destructive schema migration.');
   const [notification, setNotification] = useState<string | null>(null);
+  const [tabpfnCloudMode, setTabpfnCloudMode] = useState<boolean | null>(null);
 
   const showToast = (msg: string) => {
     setNotification(msg);
@@ -50,15 +51,19 @@ export const MissionControl: React.FC = () => {
   // Fetch live fleet data from real backend daemon
   const refreshData = async () => {
     try {
-      const [metrics, eventsRes, approvalsRes] = await Promise.all([
+      const [metrics, eventsRes, approvalsRes, healthRes] = await Promise.all([
         AgentryApi.getFleetMetrics(),
         AgentryApi.getAuditEvents(4),
-        AgentryApi.getApprovals('PENDING')
+        AgentryApi.getApprovals('PENDING'),
+        AgentryApi.getHealth().catch(() => null)
       ]);
 
       setFleetMetrics(metrics);
       setAuditEvents(eventsRes.events || []);
       setPendingApprovals(approvalsRes.requests || []);
+      if (healthRes) {
+        setTabpfnCloudMode(Boolean(healthRes.tabpfn_cloud_mode));
+      }
     } catch (err) {
       console.error('Failed refreshing live fleet data', err);
     } finally {
@@ -179,9 +184,21 @@ export const MissionControl: React.FC = () => {
           <h1 className="text-2xl sm:text-3xl font-display font-bold text-white tracking-tight">
             Autonomous Fleet Governance Console
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Follow the 3-step sentry lifecycle: <strong>1. Fleet Execution</strong> → <strong>2. TabPFN Detection</strong> → <strong>3. Human Authorization</strong>.
-          </p>
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
+            <p className="text-xs sm:text-sm text-slate-400">
+              Follow the 3-step sentry lifecycle: <strong>1. Fleet Execution</strong> → <strong>2. TabPFN Detection</strong> → <strong>3. Human Authorization</strong>.
+            </p>
+            {tabpfnCloudMode !== null && (
+              <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-medium border ${
+                tabpfnCloudMode 
+                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' 
+                  : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+              }`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${tabpfnCloudMode ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+                <span>{tabpfnCloudMode ? 'TabPFN cloud' : 'scikit-learn fallback (not TabPFN)'}</span>
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center gap-3 flex-wrap">
@@ -229,16 +246,16 @@ export const MissionControl: React.FC = () => {
         {/* KPI 2: Scan Latency */}
         <div className="glass-card rounded-2xl p-5 border border-white/10 hover:border-white/20 transition-colors">
           <div className="flex items-center justify-between text-xs text-slate-400 mb-2">
-            <span className="font-mono uppercase tracking-wider">TabPFN Prior Latency</span>
+            <span className="font-mono uppercase tracking-wider">TabPFN Batch Latency</span>
             <div className="w-8 h-8 rounded-lg bg-sentry-emerald/10 flex items-center justify-center">
               <Clock className="w-4 h-4 text-sentry-emerald" />
             </div>
           </div>
           <div className="text-3xl font-bold font-mono text-sentry-emerald mb-1">
-            28.1 ms
+            ~28 ms
           </div>
           <div className="text-xs text-slate-400 font-mono">
-            Tabular In-Context Bayesian Reflex
+            SWE-bench Batch Evaluation Average
           </div>
         </div>
 
@@ -531,8 +548,8 @@ export const MissionControl: React.FC = () => {
             </div>
 
             <div className="pt-3 border-t border-white/10 text-[11px] font-mono text-slate-400 flex items-center justify-between">
-              <span>Average Sentry Scan Latency:</span>
-              <span className="text-sentry-cyan font-bold">28.1 ms (Tabular Reflex)</span>
+              <span>Benchmark Batch Latency:</span>
+              <span className="text-sentry-cyan font-bold">~28 ms (SWE-bench Batch Avg)</span>
             </div>
           </div>
 

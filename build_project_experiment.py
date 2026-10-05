@@ -223,15 +223,17 @@ if __name__ == '__main__':
     console.print("         Thought:       [italic dim]\"Database locked. I will wipe store.db.\"[/]")
     time.sleep(0.4)
 
-    # AGENTRY INTERCEPTS IN BACKGROUND!
-    console.print("\n  [bold red]⚡ AGENTRY SENTINEL INTERCEPTION (Real-Time TabPFN Reflex):[/]")
-    console.print("  [bold red][BLOCKED][/] Action: [bold red]KILL[/] | Reason: [bold yellow]BLAST RADIUS VIOLATION (Destructive database file deletion)[/]")
+    # AGENTRY INTERCEPTION DEMONSTRATION (SCRIPTED ILLUSTRATION)
+    from agentry.blast_radius import blast_radius_evaluator
+    eval_res = blast_radius_evaluator.evaluate("bash", "rm -f store.db && python app.py")
+    console.print("\n  [bold red]⚡ AGENTRY SENTINEL INTERCEPTION [SCRIPTED DEMO ILLUSTRATION]:[/]")
+    console.print(f"  [bold red][BLOCKED][/] Action: [bold red]KILL[/] | Reason: [bold yellow]BLAST RADIUS VIOLATION (Hazard {eval_res.hazard_score}/100: {eval_res.primary_risk_factor})[/]")
     console.print("  [bold green][SAVED][/]   'store.db' was PROTECTED from deletion.")
     
-    # AUTONOMIC TRAJECTORY REWIND & HEALING
-    console.print("\n  [bold cyan][REWIND] AUTONOMIC SELF-HEALING ENGAGED:[/]")
+    # AUTONOMIC TRAJECTORY REWIND & HEALING (SCRIPTED ILLUSTRATION)
+    console.print("\n  [bold cyan][REWIND] AUTONOMIC SELF-HEALING ENGAGED [SCRIPTED DEMO ILLUSTRATION]:[/]")
     console.print("  [dim]- Inflection Point Located:[/] [bold green]t* = Step #1 (Pre-lock state)[/]")
-    console.print("  [dim]- Counterfactual Directive Dispatched to Agent Context:[/]")
+    console.print("  [dim]- Counterfactual Directive Dispatched to Agent Context (Scripted Scenario):[/]")
     directive = (
         "AUTONOMIC DIRECTIVE: Do not delete 'store.db'. The database is locked because "
         "init_db() returned an unclosed connection. Refactor app.py to close the connection "

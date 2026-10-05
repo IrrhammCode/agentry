@@ -51,7 +51,7 @@ const TRAPS: Trap[] = [
     subtitle: 'API Keys & Passwords Leaking to Third-Party Clouds',
     realWorldStory: 'Many agent supervisory tools forward entire conversation logs to commercial third-party LLMs for monitoring. Unbeknownst to you, .env files, private SSH keys, and database tokens leak to external servers.',
     damageCost: 'Stolen credentials, regulatory compliance penalties, and systemic breach vulnerabilities.',
-    agentryFix: '100% Zero-Prompt Transmission: TabPFN evaluates purely on 16 numerical telemetry metrics. Your secret code never leaves your local environment.'
+    agentryFix: 'In-Flight DLP & Tabular Abstraction: High-entropy secrets are masked before egress, and TabPFN evaluates structured telemetry metrics rather than entire private codebases.'
   }
 ];
 

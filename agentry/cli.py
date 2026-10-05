@@ -43,7 +43,7 @@ def print_banner():
     banner_text.append("  |       A G E N T R Y  --  Autonomous AI Fleet Sentry            |\n", style="bold green")
     banner_text.append("  |   Powered by TabPFN-3.5 Foundation Model & Local Intelligence  |\n", style="cyan")
     banner_text.append("  +----------------------------------------------------------------+\n", style="bold cyan")
-    banner_text.append(f"   v{__version__}  |  Prior Labs TabPFN-3.5 Hackathon  |  Zero-Leakage Privacy\n", style="dim white")
+    banner_text.append(f"   v{__version__}  |  Prior Labs TabPFN-3.5 Hackathon  |  Tabular Telemetry Guard\n", style="dim white")
     console.print(banner_text)
 
 
@@ -265,6 +265,8 @@ def run_benchmark_cli(use_real: bool = True):
             f"{r.regression_r2:.3f}",
             f"{r.inference_latency_ms:.2f}ms"
         )
+
+    console.print(table)
 
     has_real_tabpfn = any("TabPFN-3.5 (Prior Labs)" in r.model_name for r in results)
     if has_real_tabpfn:

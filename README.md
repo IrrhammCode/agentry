@@ -113,19 +113,6 @@ Split strategy: `GroupShuffleSplit` strictly partitioned on `session_id` to guar
 > 1. **The Heuristic Myth:** On held-out SWE-bench trajectories, a static error-streak rule (`if error >= 3: stop()`) catches only **54.4%** of runaway failures while still causing a **17.4%** False-Stop Rate on nominal steps.
 > 2. **Superior Cost Trajectory Forecasting:** Classical tree models (XGBoost, Random Forest) struggle on unseen trajectory cost regression ($R^2 = 0.190 - 0.235$, MAE ~ $0.021), while TabPFN-3.5 achieves **$R^2 = 0.583$** (over 2.5x higher) and cuts Cost MAE to **$0.0136 USD** per prediction step.
 > 3. **Discriminative Generalization:** Evaluating on 17 completely unseen trajectory sessions, Prior Labs TabPFN-3.5 achieves **91.7% Failure Recall** and **59.9% Balanced Accuracy**, showing that tabular foundation models effectively generalize to complex failure cascades without hyperparameter tuning.
-
-### 🏆 Fleet Runtime Impact: Equal-Success-Rate Experiment
-
-Evaluated across all **35 genuine SWE-bench developer sessions** (4 successful/recovered sessions, 31 runaway/failing sessions, 739 total steps):
-
-| Fleet Governance Strategy | Task Success Rate | False Kills | Runaways Caught | Total Steps | Total Tokens | Fleet Cost ($) | Compute Reduction |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Unprotected Fleet (No Guard)** | **100.0% (4/4)** | 0 | 0/31 | 739 | 4,935,110 | $0.6658 | **Baseline (0.0%)** |
-| **Static Rule Circuit-Breaker** | **50.0% (2/4)** | **2** | 18/31 | 437 | 1,578,606 | $0.4578 | -68.0% |
-| **Agentry (TabPFN-3.5 Policy)** | **75.0% (3/4)** | **1** | **20/31** | 448 | 1,701,091 | $0.4788 | **-65.5% (Saved 3.23M Tokens)** |
-
-> **The Definitive Proof:** A naive static rule (`if error >= 3`) kills **half of the successful tasks (50% false kill rate)**. In contrast, **Agentry slashes fleet-wide token burn by 65.5% (saving 3,234,019 tokens)** while catching **20/31 runaway failure cascades** and preserving productive task convergence.
-
 ---
 
 ## 🚀 Quickstart
@@ -142,8 +129,8 @@ python -m venv .venv
 # Linux/macOS:
 source .venv/bin/activate
 
-# Install dependencies
-pip install -r requirements.txt
+# Install dependencies and package in editable mode
+pip install -r requirements.txt -e .
 ```
 
 ### 2. Configure Environment (Required for Prior Labs TabPFN-3.5)
@@ -324,11 +311,11 @@ flowchart TD
     Layer2 --> Layer3
 ```
 
-1. **💣 Semantic Blast-Radius Evaluator ([`agentry/blast_radius.py`](file:///C:/Users/Irham/Documents/code/tabfpn/agentry/blast_radius.py)):** Intercepts destructive commands before they touch system or cloud resources.
-2. **🔒 In-Flight Data Loss Prevention ([`agentry/dlp.py`](file:///C:/Users/Irham/Documents/code/tabfpn/agentry/dlp.py)):** Automatically sanitizes credentials, private keys, and connection strings from tool calls and logs.
-3. **🔄 Swarm Deadlock Detector ([`agentry/swarm.py`](file:///C:/Users/Irham/Documents/code/tabfpn/agentry/swarm.py)):** Prevents multi-agent delegation loops ($A \rightarrow B \rightarrow A \rightarrow B$) from burning infinite tokens.
-4. **💾 Physical Filesystem Checkpointer ([`agentry/checkpoint.py`](file:///C:/Users/Irham/Documents/code/tabfpn/agentry/checkpoint.py)):** Takes pre-mutation disk snapshots, reverting poisoned modifications and deleting newly created toxic files upon failure.
-5. **🧠 Active In-Context Learning ([`agentry/active_memory.py`](file:///C:/Users/Irham/Documents/code/tabfpn/agentry/active_memory.py)):** Buffers human-verified resolutions and autonomic healing events, dynamically calibrating TabPFN test-time probabilities without offline model retraining.
+1. **💣 Semantic Blast-Radius Evaluator ([`agentry/blast_radius.py`](agentry/blast_radius.py)):** Intercepts destructive commands before they touch system or cloud resources.
+2. **🔒 In-Flight Data Loss Prevention ([`agentry/dlp.py`](agentry/dlp.py)):** Automatically sanitizes credentials, private keys, and connection strings from tool calls and logs.
+3. **🔄 Swarm Deadlock Detector ([`agentry/swarm.py`](agentry/swarm.py)):** Prevents multi-agent delegation loops ($A \rightarrow B \rightarrow A \rightarrow B$) from burning infinite tokens.
+4. **💾 Physical Filesystem Checkpointer ([`agentry/checkpoint.py`](agentry/checkpoint.py)):** Takes pre-mutation disk snapshots, reverting poisoned modifications and deleting newly created toxic files upon failure.
+5. **🧠 Active In-Context Learning ([`agentry/active_memory.py`](agentry/active_memory.py)):** Buffers human-verified resolutions and autonomic healing events, dynamically calibrating TabPFN test-time probabilities without offline model retraining.
 
 ---
 
@@ -363,7 +350,7 @@ python run.py demo
   |       A G E N T R Y  --  Autonomous AI Fleet Sentry            |
   |   Powered by TabPFN-3.5 Foundation Model & Local Intelligence  |
   +----------------------------------------------------------------+
-   v0.1.0  |  Prior Labs TabPFN-3.5 Hackathon  |  Zero-Leakage Privacy
+   v0.1.0  |  Prior Labs TabPFN-3.5 Hackathon  |  Tabular Telemetry Guard
 
   • Engine: TabPFN-3.5 Cloud (Thinking Mode)
   • Sentry Brain: qwen2.5:7b (Local Privacy-First)
@@ -465,7 +452,10 @@ Agentry supports two distinct operational modes depending on enterprise security
 In accordance with scientific and technical rigor:
 1. **Telemetry Metric Derivation:** In `agentry/swe_telemetry.py`, token counts (`len(text) // 4`), cumulative dollar spend ($0.002 / 1k tokens), and simulated step latencies are deterministic estimations calculated from SWE-bench trajectory text length, rather than hardware system timers or billing invoices.
 2. **Heuristic Failure Labeling & Feature Correlation:** In the SWE-bench parser, `INFINITE_LOOP` failure modes are heuristically derived when consecutive tool failures occur (`has_error and error_streak >= 2`). Because `error_streak` is also provided as a predictive feature in `FEATURE_COLS`, there is a direct structural correlation (partial target leakage) in heuristic ground truth assignment. In production deployments, ground truth labels should be anchored strictly to external task exit codes and CI/CD test assertions.
-3. **Reproducibility:** All benchmark figures cited in this documentation are generated directly by `agentry.benchmark.GuardrailBenchmarkSuite` on real trajectory data with zero hardcoded metric fallbacks.
+3. **Reproducibility:** Benchmark figures cited in the primary evaluation table are generated directly by `agentry.benchmark.GuardrailBenchmarkSuite` on held-out trajectory data with zero hardcoded metric fallbacks. To reproduce all benchmark results locally in a single command:
+   ```bash
+   python run.py benchmark
+   ```
 
 ---
 

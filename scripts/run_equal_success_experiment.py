@@ -47,6 +47,12 @@ def run_fleet_simulation():
     guard = AgentryGuard(auto_fit=False, raise_on_kill=False)
     guard.engine.fit(df)
 
+    agentry_label = (
+        "Agentry (TabPFN-3.5 Cloud Policy)"
+        if getattr(guard.engine, "is_cloud_tabpfn", False)
+        else "Agentry (scikit-learn fallback policy, not TabPFN)"
+    )
+
     regimes = {
         "Unprotected Fleet (No Guard)": {
             "completed_successes": 0,
@@ -64,7 +70,7 @@ def run_fleet_simulation():
             "total_steps": 0,
             "runaways_interrupted": 0
         },
-        "Agentry (TabPFN-3.5 Policy)": {
+        agentry_label: {
             "completed_successes": 0,
             "false_kills": 0,
             "total_tokens": 0,
@@ -145,17 +151,17 @@ def run_fleet_simulation():
                 agentry_halted = True
                 break
 
-        regimes["Agentry (TabPFN-3.5 Policy)"]["total_steps"] += agentry_steps
-        regimes["Agentry (TabPFN-3.5 Policy)"]["total_tokens"] += agentry_tokens
-        regimes["Agentry (TabPFN-3.5 Policy)"]["total_cost_usd"] += agentry_cost
+        regimes[agentry_label]["total_steps"] += agentry_steps
+        regimes[agentry_label]["total_tokens"] += agentry_tokens
+        regimes[agentry_label]["total_cost_usd"] += agentry_cost
         if agentry_halted:
             if is_ground_truth_success:
-                regimes["Agentry (TabPFN-3.5 Policy)"]["false_kills"] += 1
+                regimes[agentry_label]["false_kills"] += 1
             else:
-                regimes["Agentry (TabPFN-3.5 Policy)"]["runaways_interrupted"] += 1
+                regimes[agentry_label]["runaways_interrupted"] += 1
         else:
             if is_ground_truth_success:
-                regimes["Agentry (TabPFN-3.5 Policy)"]["completed_successes"] += 1
+                regimes[agentry_label]["completed_successes"] += 1
 
     return regimes, len(successful_session_ids), len(runaway_session_ids)
 
@@ -221,7 +227,11 @@ def main():
     for r in rows_data:
         md += f"| **{r['name']}** | **{r['success_rate']}** | {r['false_kills']} | {r['runaways_caught']} | {r['tokens']} | {r['cost']} | **{r['reduction']}** |\n"
     
-    md += "\n> **The Winning Takeaway:** Agentry preserves **100% of successful tasks** (0 false kills) while slashing fleet-wide token burn by early termination of unrecoverable failure cascades.\n"
+    agentry_row = next((r for r in rows_data if "Agentry" in r["name"]), None)
+    if agentry_row:
+        md += f"\n> **Takeaway:** {agentry_row['name']} achieved {agentry_row['success_rate']} task success with {agentry_row['false_kills']} false kills, intercepting {agentry_row['runaways_caught']} runaways with {agentry_row['reduction']} compute reduction.\n"
+    else:
+        md += "\n> **Takeaway:** Policy evaluated across all fleet sessions.\n"
 
     out_file = ROOT_DIR / "data" / "equal_success_experiment.md"
     with open(out_file, "w", encoding="utf-8") as f:

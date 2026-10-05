@@ -192,7 +192,7 @@ class AgentrySentry:
         Generates Sentry forensic reasoning.
         Priority:
         1. Groq Cloud Engine (if keys provided and preferred/auto).
-        2. Local Ollama SLM (Zero-leakage local privacy).
+        2. Local Ollama SLM (Local privacy-first reasoning).
         3. Deterministic Sentry Brain Fallback.
         """
         provider_pref = settings.sentry_provider
@@ -207,7 +207,7 @@ class AgentrySentry:
             if groq_result:
                 return groq_result[0], groq_result[1], f"groq-{settings.groq_model}"
 
-        # 2. Local Ollama SLM (Zero-leakage local privacy)
+        # 2. Local Ollama SLM (Local privacy-first reasoning)
         if provider_pref in ("ollama", "auto") and self._check_ollama_alive():
             ollama_result = self._query_ollama(step, assessment, action)
             if ollama_result:

@@ -461,3 +461,30 @@ async def test_mcp_hitl_and_report_tools():
         data_rep = data_rep["result"]
     assert data_rep["session_id"] == "mcp_hitl_sess"
     assert "report_content" in data_rep
+
+
+def test_proxy_security_spoofed_x_forwarded_for_rejected(tmp_path):
+    """External requests spoofing X-Forwarded-For: 127.0.0.1 must be rejected if unauthenticated."""
+    guard = AgentryGuard(
+        storage=AuditStorage(db_path=tmp_path / "proxy_sec.db"),
+        auto_fit=False,
+        raise_on_kill=False
+    )
+    # Using an external upstream URL to ensure authentication is enforced
+    proxy = OpenAIProxyHandler(guard=guard, upstream_base_url="https://api.groq.com/openai/v1")
+
+    # Client has external socket address 198.51.100.42 but sends spoofed X-Forwarded-For
+    headers = {
+        "remote-addr": "198.51.100.42",
+        "x-forwarded-for": "127.0.0.1",
+        "x-session-id": "spoof_attempt_session"
+    }
+
+    status, body, _ = proxy.handle_chat_completion(
+        request_body={"model": "gpt-4o", "messages": [{"role": "user", "content": "hello"}]},
+        client_headers=headers,
+        guard=guard
+    )
+
+    assert status == 401
+    assert body["error"]["code"] == "MISSING_AUTH_HEADER"

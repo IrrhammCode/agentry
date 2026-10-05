@@ -218,7 +218,7 @@ export const Documentation: React.FC = () => {
               TabPFN Prior: <strong className="text-white">Real-Time In-Context</strong>
             </div>
             <div className="text-[11px] text-slate-400">
-              Zero-Prompt Leakage: <strong className="text-sentry-emerald">Tabular Guard</strong>
+              Telemetry Transport: <strong className="text-sentry-emerald">Tabular + Thoughts (≤250 chars)</strong>
             </div>
           </div>
         </div>
@@ -298,7 +298,7 @@ pip install -e .`}
                   <div className="text-xs font-mono text-slate-400 font-semibold flex items-center justify-between">
                     <span>2. Environment Variables (.env)</span>
                     <button
-                      onClick={() => handleCopy("TABPFN_API_KEY=your_prior_labs_key\nTABPFN_MODEL=tabpfn-3.5-classification\nTABPFN_THINKING_MODE=true\nDAILY_FLEET_BUDGET_USD=50.00", 'env_cmd')}
+                      onClick={() => handleCopy("TABPFN_TOKEN=your_prior_labs_token\nTABPFN_THINKING_MODE=true\nDAILY_FLEET_BUDGET_USD=50.00", 'env_cmd')}
                       className="flex items-center gap-1.5 text-[11px] text-sentry-cyan hover:underline"
                     >
                       {copiedKey === 'env_cmd' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
@@ -306,9 +306,8 @@ pip install -e .`}
                     </button>
                   </div>
                   <pre className="p-4 rounded-xl bg-black border border-white/10 font-mono text-xs text-slate-300 overflow-x-auto leading-relaxed">
-{`# Prior Labs TabPFN-3.5 Cloud API (Optional for offline mode)
-TABPFN_API_KEY=your_prior_labs_api_key_here
-TABPFN_MODEL=tabpfn-3.5-classification
+{`# Prior Labs TabPFN-3.5 Cloud API (Optional for offline fallback mode)
+TABPFN_TOKEN=your_prior_labs_token_here
 TABPFN_THINKING_MODE=true
 
 # Fleet Budget Ceiling
@@ -505,7 +504,7 @@ bash_tool("pytest tests/test_auth.py")
       "command": "python",
       "args": ["-m", "agentry.mcp_server", "--transport", "stdio"],
       "env": {
-        "TABPFN_API_KEY": "your_api_key_here"
+        "TABPFN_TOKEN": "your_token_here"
       }
     }
   }
@@ -753,12 +752,12 @@ bash_tool("pytest tests/test_auth.py")
                       <tr>
                         <td className="p-3 font-bold text-white">Inference Latency</td>
                         <td className="p-3 text-red-400">1,500ms – 3,000ms</td>
-                        <td className="p-3 text-sentry-emerald font-bold">28.1 milliseconds (Tabular Reflex)</td>
+                        <td className="p-3 text-sentry-emerald font-bold">~28ms (Batch Avg) / Tens of ms</td>
                       </tr>
                       <tr>
                         <td className="p-3 font-bold text-white">Enterprise Privacy</td>
                         <td className="p-3 text-red-400">Transmits code & database URIs</td>
-                        <td className="p-3 text-sentry-emerald font-bold">Zero-Prompt Leakage (Tabular Only)</td>
+                        <td className="p-3 text-sentry-emerald font-bold">Tabular Metrics + Snippets (≤250 chars)</td>
                       </tr>
                       <tr>
                         <td className="p-3 font-bold text-white">Few-Shot Reliability</td>

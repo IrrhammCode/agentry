@@ -165,7 +165,7 @@ st.sidebar.markdown("""
 - Real-time tabular failure classification
 - Runaway cost regression
 - Temporal grouped session evaluation
-- Zero-leakage enterprise data sovereignty
+- Enterprise data sovereignty & in-flight DLP
 """)
 
 
@@ -202,9 +202,9 @@ if page == "🌐 Product Showcase & Landing Page":
     # Trust Badges
     st.markdown("""
     <div style="display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; margin: 1rem 0 2rem 0; font-family: monospace; font-size: 0.85rem; color: #94A3B8;">
-        <span>✓ Zero Prompt Leakage (Tabular Telemetry Only)</span>
+        <span>✓ Tabular Telemetry + Thought Snippets (&le;250 chars)</span>
         <span>✓ Real-Time Bayesian In-Context Inference</span>
-        <span>✓ Zero Prompt Transmission</span>
+        <span>✓ Private Codebase Protected From LLM Judges</span>
         <span>✓ SWE-bench Validated (1,156 Steps)</span>
     </div>
     """, unsafe_allow_html=True)
@@ -319,7 +319,7 @@ t=5 | tool: run_command("rm -rf /var/cache/*")           -> 🛑 BLAST RADIUS TR
                 Using third-party cloud LLMs to supervise coding agents sends proprietary source code, SSH keys, and passwords to external servers.
             </p>
             <div style="font-family: monospace; font-size: 0.75rem; color: #8B5CF6; margin-top: 10px;">
-                🛡️ Zero-Prompt Transmission: TabPFN runs purely on numeric tabular features.
+                🛡️ Tabular Abstraction: In cloud mode, TabPFN receives structured telemetry + thought snippets (≤250 chars), never full codebases.
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -407,7 +407,7 @@ def execute_agent_tool(tool_name: str, payload: dict):
     "agentry": {
       "command": "python",
       "args": ["-m", "agentry.mcp_server"],
-      "env": { "TABPFN_API_KEY": "your-prior-labs-key" }
+      "env": { "TABPFN_TOKEN": "your-prior-labs-token" }
     }
   }
 }""", language="json")
@@ -1171,78 +1171,54 @@ elif page == "📊 TabPFN Benchmark Suite":
     > calibrated zero-shot accuracy and cost regression out of the box on **unseen agent sessions**.
     """)
 
-    bench_tab1, bench_tab2, bench_tab3 = st.tabs(["📊 Unseen Trajectory Benchmark", "📈 Threshold Optimization Curve", "🏆 Fleet Runtime Impact"])
+    st.markdown("### Unseen Trajectory Benchmark")
+    st.caption("Live evaluation of models across genuine held-out SWE-bench agent sessions.")
 
-    with bench_tab1:
-        if st.button("🚀 Run Live Unseen-Trajectory Benchmark (Group Split)"):
-            with st.spinner("Evaluating TabPFN and baseline models across held-out agent sessions..."):
-                suite = GuardrailBenchmarkSuite()
-                bench_results = suite.run_benchmark(group_split=True)
+    if st.button("🚀 Run Live Unseen-Trajectory Benchmark (Group Split)"):
+        with st.spinner("Evaluating TabPFN and baseline models across held-out agent sessions..."):
+            suite = GuardrailBenchmarkSuite()
+            bench_results = suite.run_benchmark(group_split=True)
 
-                # Convert to DataFrame
-                b_df = pd.DataFrame([
-                    {
-                        "Model Architecture": r.model_name,
-                        "Unseen Test": f"{r.test_sessions_count} sessions",
-                        "Balanced Acc (%)": round(r.classification_balanced_acc * 100, 1),
-                        "F1 Macro (%)": round(r.classification_f1_macro * 100, 1),
-                        "ROC-AUC": r.classification_roc_auc,
-                        "Failure Recall (%)": round(r.failure_recall * 100, 1),
-                        "False-Stop Rate (%)": round(r.false_stop_rate * 100, 1),
-                        "Cost MAE ($/step)": f"${r.regression_mae_usd:.4f}",
-                        "Cost R²": round(r.regression_r2, 3),
-                        "Latency (ms)": r.inference_latency_ms
-                    }
-                    for r in bench_results
-                ])
+            # Convert to DataFrame
+            b_df = pd.DataFrame([
+                {
+                    "Model Architecture": r.model_name,
+                    "Unseen Test": f"{r.test_sessions_count} sessions",
+                    "Balanced Acc (%)": round(r.classification_balanced_acc * 100, 1),
+                    "F1 Macro (%)": round(r.classification_f1_macro * 100, 1),
+                    "ROC-AUC": r.classification_roc_auc,
+                    "Failure Recall (%)": round(r.failure_recall * 100, 1),
+                    "False-Stop Rate (%)": round(r.false_stop_rate * 100, 1),
+                    "Cost MAE ($/step)": f"${r.regression_mae_usd:.4f}",
+                    "Cost R²": round(r.regression_r2, 3),
+                    "Latency (ms)": r.inference_latency_ms
+                }
+                for r in bench_results
+            ])
 
-                st.dataframe(b_df, use_container_width=True, hide_index=True)
+            st.dataframe(b_df, use_container_width=True, hide_index=True)
 
-                # Plotly comparison
-                b_col1, b_col2 = st.columns(2)
-                with b_col1:
-                    fig_rec = px.bar(
-                        b_df,
-                        x="Model Architecture",
-                        y="Failure Recall (%)",
-                        color="Model Architecture",
-                        title="Failure Detection Recall (%) [Higher is Better]"
-                    )
-                    st.plotly_chart(fig_rec, use_container_width=True)
+            # Plotly comparison
+            b_col1, b_col2 = st.columns(2)
+            with b_col1:
+                fig_rec = px.bar(
+                    b_df,
+                    x="Model Architecture",
+                    y="Failure Recall (%)",
+                    color="Model Architecture",
+                    title="Failure Detection Recall (%) [Higher is Better]"
+                )
+                st.plotly_chart(fig_rec, use_container_width=True)
 
-                with b_col2:
-                    fig_mae = px.bar(
-                        b_df,
-                        x="Model Architecture",
-                        y="Cost MAE ($/step)",
-                        color="Model Architecture",
-                        title="Cost Regression MAE per Step ($ USD) [Lower is Better]"
-                    )
-                    st.plotly_chart(fig_mae, use_container_width=True)
-
-    with bench_tab2:
-        st.markdown("### Risk Threshold vs False-Stop Trade-off")
-        st.caption("How economic utility optimization eliminates false stops while preserving high failure recall.")
-        thresh_df = pd.DataFrame([
-            {"Threshold (θ)": 0.30, "Failure Recall": "98.3%", "False-Stop Rate": "35.4%", "False Stops": "75 / 212", "Policy": "Ultra-Conservative"},
-            {"Threshold (θ)": 0.40, "Failure Recall": "97.5%", "False-Stop Rate": "31.6%", "False Stops": "67 / 212", "Policy": "High Sensitivity"},
-            {"Threshold (θ)": 0.50, "Failure Recall": "95.0%", "False-Stop Rate": "27.8%", "False Stops": "59 / 212", "Policy": "Raw Argmax Baseline"},
-            {"Threshold (θ)": 0.70, "Failure Recall": "74.8%", "False-Stop Rate": "17.0%", "False Stops": "36 / 212", "Policy": "High Precision Filter"},
-            {"Threshold (θ)": 0.85, "Failure Recall": "57.1%", "False-Stop Rate": "10.8%", "False Stops": "23 / 212", "Policy": "Strict Anomaly Threshold"},
-            {"Threshold (θ)": "Agentry Policy", "Failure Recall": "91.7%", "False-Stop Rate": "24.5%", "False Stops": "Calibrated", "Policy": "Economic Utility & Bayesian Guard"},
-        ])
-        st.dataframe(thresh_df, use_container_width=True, hide_index=True)
-
-    with bench_tab3:
-        st.markdown("### Equal-Success-Rate Fleet Runtime Experiment")
-        st.caption("Evaluated across all 35 genuine SWE-bench developer sessions (739 total steps).")
-        fleet_df = pd.DataFrame([
-            {"Fleet Strategy": "Unprotected Fleet (No Guard)", "Task Success Rate": "100.0% (4/4)", "False Kills": 0, "Runaways Caught": "0/31", "Total Tokens": "4,935,110", "Fleet Cost": "$0.6658", "Compute Reduction": "Baseline (0.0%)"},
-            {"Fleet Strategy": "Static Rule Circuit-Breaker", "Task Success Rate": "50.0% (2/4)", "False Kills": 2, "Runaways Caught": "18/31", "Total Tokens": "1,578,606", "Fleet Cost": "$0.4578", "Compute Reduction": "-68.0%"},
-            {"Fleet Strategy": "Agentry (TabPFN-3.5 Policy)", "Task Success Rate": "75.0% (3/4)", "False Kills": 1, "Runaways Caught": "20/31", "Total Tokens": "1,701,091", "Fleet Cost": "$0.4788", "Compute Reduction": "-65.5% (Saved 3.23M Tokens)"},
-        ])
-        st.dataframe(fleet_df, use_container_width=True, hide_index=True)
-        st.success("✅ Agentry slashes fleet-wide token burn by 65.5% (saving 3,234,019 tokens) while preserving task success, whereas static rules murder 50% of successful sessions!")
+            with b_col2:
+                fig_mae = px.bar(
+                    b_df,
+                    x="Model Architecture",
+                    y="Cost MAE ($/step)",
+                    color="Model Architecture",
+                    title="Cost Regression MAE per Step ($ USD) [Lower is Better]"
+                )
+                st.plotly_chart(fig_mae, use_container_width=True)
 
 
 # PAGE 4: HISTORICAL TELEMETRY DATA

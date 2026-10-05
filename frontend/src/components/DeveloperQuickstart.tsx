@@ -31,7 +31,7 @@ def execute_agent_tool(tool_name: str, payload: dict):
     "agentry": {
       "command": "python",
       "args": ["-m", "agentry.mcp_server"],
-      "env": { "TABPFN_API_KEY": "your-prior-labs-key" }
+      "env": { "TABPFN_TOKEN": "your-prior-labs-token" }
     }
   }
 }`,
