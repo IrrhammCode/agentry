@@ -1,79 +1,86 @@
 # 🎬 Agentry: 3-Minute Hackathon Demo Video Script
 **Prior Labs TabPFN-3.5 Global Hackathon 2026**
 
-> **Target Duration:** 2 minutes 50 seconds – 3 minutes 00 seconds  
-> **Tools Recommended:** Loom, OBS Studio, or Screen Studio (1080p, 60fps)  
-> **Setup Before Recording:**
-> 1. Terminal 1 open: `.venv` activated.
-> 2. Terminal 2 open: running `python -m agentry.cli mcp --transport stdio` or `streamlit run web/app.py`.
-> 3. Browser open at `http://localhost:8501` (Agentry Command Center).
+> **Target Duration:** 2 minutes 45 seconds – 3 minutes 00 seconds  
+> **Recommended Screen Resolution:** 1080p, 60fps (Loom, OBS Studio, or Screen Studio)  
+> **Pre-Recording Checklist:**
+> 1. Terminal 1: `.venv` activated, ready to run `python run.py benchmark` or `python run.py demo`.
+> 2. Terminal 2: Running backend daemon `python run.py serve --port 8000`.
+> 3. Browser Tab 1: `http://localhost:3000` (Cyber-Sentry Web Console & Mission Control).
+> 4. Browser Tab 2: `https://github.com/IrrhammCode/agentry` (GitHub repo).
 
 ---
 
 ## ⏱️ Timeline & Scene-by-Scene Script
 
-### [0:00 - 0:35] Scene 1: The Urgent Problem (Hook)
-* **Screen Visual:** Show a real SWE-bench agent getting stuck in a loop (or the Agentry Terminal CLI `python run.py demo` showing the red infinite loop warnings).
-* **Voiceover:**
-  > "Autonomous coding agents are revolutionizing software engineering. But every enterprise deploying SWE-bench agents, Devin, or CrewAI encounters an existential crisis: **agents get trapped in infinite repetition loops and hallucination spirals**.
+### [0:00 - 0:30] Scene 1: The Urgent Problem (Hook)
+* **Screen Visual:** Split screen showing an autonomous coding agent failing a unit test in loop and burning tokens, or the Terminal running `python run.py demo` showing rogue agents.
+* **Click-Path:** Start on Terminal 1 or Mission Control (`http://localhost:3000`).
+* **Spoken Script (Voiceover):**
+  > "Autonomous coding agents are revolutionizing software engineering. But every team deploying SWE-bench agents, Devin, or LangGraph hits a painful wall: **agents get trapped in repetitive error spirals and catastrophic hallucination loops.**
   > 
-  > In real SWE-bench runs, an agent failing a unit test will retry the exact same broken patch 15 to 40 times consecutively. In under 15 minutes, a single runaway agent can burn millions of tokens, racking up **$50 to $200 in API bills on a single stuck task**.
+  > In real SWE-bench benchmarks, an agent that fails a test often repeats the same flawed attempt 15 to 40 times. Within 15 minutes, a single stuck loop burns hundreds of thousands of tokens, racking up $50 to $200 in cloud bills on a single unresolved task.
   > 
-  > Current solutions use static circuit breakers like `if error >= 3: stop()`, which murder half of all productive agents, or expensive cloud LLM-as-a-judge monitors that add 3,000 milliseconds of latency and leak proprietary enterprise source code."
+  > Static rules like `if error >= 3: stop()` kill productive agents that are exploring valid recoveries, while synchronous Cloud LLM judges add thousands of milliseconds of latency and leak proprietary codebase IP."
 
 ---
 
-### [0:35 - 1:15] Scene 2: The Breakthrough — Agent Telemetry is Tabular
-* **Screen Visual:** Switch to the Web Command Center tab: **"📊 TabPFN Benchmark Suite"**, showing the empirical comparison table against XGBoost and Random Forest.
-* **Voiceover:**
-  > "We realized a fundamental truth: **Autonomous agent execution telemetry is inherently non-IID tabular data.**
+### [0:30 - 1:15] Scene 2: The Breakthrough — Agent Telemetry is Tabular Non-IID Data
+* **Screen Visual:** Switch to browser showing `data/benchmark_group_results.md` or Mission Control benchmark view.
+* **Click-Path:** Scroll through the Unseen Trajectory Benchmark table.
+* **Spoken Script (Voiceover):**
+  > "We realized a fundamental breakthrough: **AI agent execution telemetry is inherently non-IID tabular data.**
   > 
-  > At every step, an agent generates dynamic signals: consecutive error streaks, repetition entropy, latency degradation, and token velocity.
+  > Every step generates numerical telemetry: consecutive error streaks, repetition entropy, latency shifts, and token velocities grouped by session.
   > 
-  > This is where **Prior Labs' TabPFN-3.5** shines. TabPFN-3.5 was built specifically for messy, non-IID, grouped temporal data using `group_col='session_id'` and `group_time_col='step_index'`.
+  > This is where **Prior Labs TabPFN-3.5** shines. TabPFN-3.5 was designed specifically for tabular foundation learning, with native temporal grouped support (`group_col='session_id'`, `group_time_col='step_index'`).
   > 
-  > On **1,156 steps across 55 sessions (17 held-out test sessions)**, classical tree models like XGBoost and Random Forest struggle on unseen cost trajectory forecasting, but **TabPFN-3.5 achieves 91.7% failure recall on completely unseen held-out sessions**."
+  > Evaluating on **1,156 genuine SWE-bench steps across 55 developer sessions** with strict `GroupShuffleSplit` on `session_id`—guaranteeing zero cross-step leakage—**TabPFN-3.5 achieves 91.7% failure recall on completely unseen held-out sessions**, outperforming tuned XGBoost and Random Forest with zero hyperparameter search."
 
 ---
 
-### [1:15 - 2:00] Scene 3: Live Command Center & Autonomous Sentry
-* **Screen Visual:** Switch to **"🚀 Live Fleet Simulation"** in the Streamlit app. Click through the simulation scrubber. Show the real-time donut chart, predicted failure mode, and the **KILL** intervention.
-* **Voiceover:**
-  > "Meet **Agentry**—the predictive runtime control layer for autonomous agent fleets.
+### [1:15 - 1:55] Scene 3: Live Mission Control & Attack Simulator
+* **Screen Visual:** Switch to `http://localhost:3000` (Agentry Mission Control / Attack Simulator).
+* **Click-Path:** 
+  1. Show the Attack Simulator with the default **TabPFN Runaway Loop & Error Spiral** preset.
+  2. Click **"Run Sentry Scan"** or **"Test TabPFN Audit"** in Mission Control.
+  3. Show the live TabPFN-3.5 probability output ($P(\text{failure}) = 94.6\%$, predicted mode `INFINITE_LOOP`, circuit breaker tripped).
+  4. Switch to the `rm -rf /` preset to show the secondary defense layer: the Semantic Blast-Radius Interceptor halting the command before shell execution.
+* **Spoken Script (Voiceover):**
+  > "Here is **Agentry Mission Control**. Every agent action is scored by TabPFN-3.5 in real time before execution.
   > 
-  > Here in the Live Fleet Command Center, TabPFN continuously monitors the fleet.
+  > In our Attack Simulator, notice our default preset: an agent caught in a 5x crash loop. TabPFN evaluates the tabular telemetry in ~28 ms batch-amortized, detecting an unrecoverable failure pattern and tripping the circuit breaker before tokens drain.
   > 
-  > Notice Step 3: when repetition entropy reaches 0.88 and error streak hits 3, TabPFN instantly detects a **96.8% unrecoverable failure risk**.
-  > 
-  > Instead of blindly cutting execution, Agentry pairs TabPFN with an economic loss formulation and local edge intelligence. It triggers an autonomous **KILL intervention**, halting the runaway agent immediately and saving **over 21,600 tokens and budget per stuck session**."
+  > Furthermore, Agentry enforces defense-in-depth: while TabPFN handles tabular failure and cost prediction, our secondary semantic blast-radius interceptor catches catastrophic mutations like `rm -rf /` or `DROP TABLE` before the shell runs, and our in-flight DLP redacts secrets."
 
 ---
 
-### [2:00 - 2:35] Scene 4: Model Context Protocol (MCP) Server & Benchmark Proof
-* **Screen Visual:** Switch to the **"🔌 Model Context Protocol (MCP)"** tab in the Streamlit app. Click **"Execute MCP Audit Step"** to show instant real-time auditing. Then show the Unseen Trajectory Benchmark table.
-* **Voiceover:**
-  > "Agentry is built for production ecosystems. Today, we're unveiling our native **Model Context Protocol (MCP) Server**.
+### [1:55 - 2:30] Scene 4: Production Integration & Model Context Protocol (MCP)
+* **Screen Visual:** Show the terminal running `python run.py mcp` and the SDK code snippet in `README.md`.
+* **Click-Path:** Highlight the 2-line `@guard.protect` Python decorator and show MCP server initialization.
+* **Spoken Script (Voiceover):**
+  > "Agentry is built for production environments. You can integrate it into any agent framework in two lines of Python using our `@guard.protect` decorator.
   > 
-  > Any developer can connect Agentry directly to **Claude Desktop, Cursor IDE, or Windsurf** in one configuration line. Through MCP tools like `agentry_audit_step`, Claude Desktop gains real-time TabPFN guardrails.
+  > We also provide an official **Model Context Protocol (MCP) Server** running over stdio and SSE. Any developer using **Claude Desktop, Cursor, or Windsurf** can plug Agentry in immediately.
   > 
-  > And most importantly, look at our **Unseen Trajectory Benchmark**:
-  > While naive static rules miss over 45% of runaway failures, **TabPFN catches over 90% of failure cascades on unseen developer sessions while maintaining calibrated test-time confidence**."
+  > When an agent diverges, Agentry doesn't just halt—it pinpoints the exact divergence step, captures an autonomic git checkpoint, and generates counterfactual steering instructions."
 
 ---
 
-### [2:35 - 3:00] Scene 5: Conclusion & Hackathon Submission
-* **Screen Visual:** Switch to the GitHub repository: `https://github.com/IrrhammCode/agentry`. Scroll through the README with passing badges.
-* **Voiceover:**
-  > "Agentry is 100% open-source, validated on real SWE-bench data with zero synthetic mocks, and ready for deployment.
+### [2:30 - 2:50] Scene 5: Conclusion & Hackathon Submission
+* **Screen Visual:** Switch to GitHub repository `github.com/IrrhammCode/agentry`. Show the passing test suite and clean documentation.
+* **Click-Path:** Scroll past the Apache-2.0 badge and reproducible benchmark logs.
+* **Spoken Script (Voiceover):**
+  > "Agentry is open-source under the Apache-2.0 license, backed by 89 passing tests, and completely reproducible via `python run.py benchmark` connecting to the official Prior Labs TabPFN Cloud API.
   > 
-  > By combining the tabular Bayesian power of Prior Labs TabPFN-3.5 with local-first privacy, Agentry makes autonomous AI agents enterprise-ready.
+  > By pairing the Bayesian tabular intelligence of TabPFN-3.5 with local-first autonomic protection, Agentry makes autonomous AI agent fleets reliable and enterprise-ready.
   > 
-  > Thank you to Prior Labs for hosting this global hackathon. Check out our repository at `github.com/IrrhammCode/agentry`!"
+  > Thank you to Prior Labs for hosting this hackathon. Check out Agentry on GitHub!"
 
 ---
 
-## 🎯 Tips for the Recording:
-1. Speak clearly and confidently at a steady, natural pace.
-2. Ensure your microphone input is crisp and background noise is minimized.
-3. Keep the mouse cursor smooth (avoid jittery movements).
-4. Upload the recorded video to YouTube (as *Unlisted* or *Public*) or Loom, and copy the link into `docs/HACKATHON_SUBMISSION.md` line 7!
+## 🎯 Recording Best Practices:
+1. **Pacing:** Speak at a steady, engaging pace (~135-145 words per minute).
+2. **Audio:** Use a dedicated headset or USB condenser mic in a quiet room.
+3. **Cursor:** Keep cursor movements purposeful; point directly to the metrics as you speak them.
+4. **Link:** Upload video to YouTube (Unlisted or Public) or Loom, and paste the URL into your Devpost submission!
