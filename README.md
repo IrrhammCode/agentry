@@ -6,9 +6,9 @@
 *Powered by TabPFN-3.5 Foundation Model & Local-First Intelligence*
 
 [![TabPFN-3.5](https://img.shields.io/badge/TabPFN-v3.5%20Thinking%20Mode-00FF87?style=for-the-badge&logo=python)](https://priorlabs.ai)
-[![Local-First Privacy](https://img.shields.io/badge/Privacy-100%25%20Local%20Sentry-60EFFF?style=for-the-badge&logo=shield)](https://github.com/ollama/ollama)
+[![Privacy Architecture](https://img.shields.io/badge/Privacy-Tabular%20Representation-60EFFF?style=for-the-badge&logo=shield)](#-methodological-transparency--data-disclosures)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue?style=for-the-badge&logo=python)](https://python.org)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](LICENSE)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache--2.0-yellow?style=for-the-badge)](LICENSE)
 
 *Built for the **Prior Labs TabPFN-3.5 Global Hackathon** (October 2026)*
 
@@ -28,7 +28,7 @@ Autonomous AI agent fleets (SWE-bench coding agents, DevOps agents, autonomous r
 
 ### The Fatal Flaw of Existing Guardrails
 Most existing AI guardrails rely on **calling yet another Cloud LLM** (e.g., GPT-4o) to monitor agent prompts. This introduces severe enterprise issues:
-- **Catastrophic Privacy Leakage:** Monitored agents work on proprietary codebase repositories, database connection strings, and enterprise PII. Sending telemetry prompts to public cloud LLMs violates data sovereignty.
+- **Catastrophic Privacy Leakage:** Monitored agents work on proprietary codebase repositories, database connection strings, and enterprise PII. Sending raw source code and conversation logs to third parties violates enterprise policies.
 - **Latency Bloat:** In-line agent guardrails cannot afford a 2,000ms cloud LLM call on every single tool execution.
 - **High Cost:** Paying cloud LLM token rates just to audit other cloud LLM tokens doubles infrastructure expenses.
 
@@ -38,8 +38,8 @@ Most existing AI guardrails rely on **calling yet another Cloud LLM** (e.g., GPT
 
 **Agentry** introduces an **Autonomous Tabular Guardrail & Sentry**:
 1. **Telemetry is Inherently Tabular:** Agent execution metrics (`step_latency_ms`, `total_tokens`, `repetition_score`, `error_streak`, `tool_frequency`) combined with group session metadata form a structured tabular stream.
-2. **TabPFN-3.5 as the Foundation Sentry Engine:** We utilize **TabPFN-3.5** (with **Thinking Mode**, `group_col="session_id"`, and `group_time_col="step_index"`) to perform real-time, sub-20ms multiclass anomaly classification and runaway cost regression.
-3. **Local-First Privacy Brain (Qwen 2.5 via Ollama):** All semantic reasoning, forensic root cause attribution, and autonomous intervention directives (`KILL`, `REROUTE`, `PAUSE`, `PASS`) are evaluated **100% locally on the user's PC**. Proprietary codebase traces never leave localhost.
+2. **TabPFN-3.5 as the Foundation Sentry Engine:** We utilize **Prior Labs TabPFN-3.5** (with **Thinking Mode**, `group_col="session_id"`, and `group_time_col="step_index"`) to perform real-time multiclass anomaly classification and runaway cost regression on unseen trajectories.
+3. **Privacy via Tabular Abstraction:** Numerical telemetry metrics abstract execution state without requiring raw codebase text inspection. For full air-gapped environments, Agentry provides an offline scikit-learn tabular fallback and local SLM inference (Qwen 2.5 via Ollama).
 
 ---
 
@@ -89,34 +89,30 @@ flowchart TD
 | Challenge in AI Agent Guardrails | Traditional ML / XGBoost | Cloud LLM Guardrail | **Agentry + TabPFN-3.5** |
 | :--- | :--- | :--- | :--- |
 | **Low Data Regime (Few-shot)** | Fails or overfits on < 200 sessions | High cost, slow | **State-of-the-Art zero-shot Bayesian prior** |
-| **Inference Latency** | ~5ms (poor accuracy) | 1,500ms - 3,000ms | **~15ms ultra-low latency** |
-| **Data Privacy & IP** | Local, but manual tuning | **Zero privacy (leaks traces)** | **100% Zero-Leakage Privacy** |
+| **Inference Latency** | ~5ms (poor accuracy) | 1,500ms - 3,000ms | **~28ms batch cloud TabPFN / <1ms local fallback** |
+| **Data Privacy & IP** | Local, but manual tuning | Zero privacy (raw prompts sent to cloud) | **Tabular telemetry abstraction (Code-agnostic)** |
 | **Group / Temporal Sequence** | Requires complex feature engineering | Struggles with numbers | **Native `group_col` & `group_time_col` support** |
 | **Thinking Mode Reasoning** | ❌ None | Uncalibrated probabilities | **Calibrated Bayesian uncertainty** |
 
 ---
 
-## 📊 Empirical Benchmarks (Zero-Leakage 5-Fold Grouped Cross-Validation)
+## 📊 Empirical Benchmarks (Zero-Leakage Unseen Trajectory Group Splits)
 
-Evaluated on **1,156 real-world coding agent steps across 55 unique developer sessions (15 successful sessions, 40 failing sessions)** extracted directly from Hugging Face [`nebius/SWE-agent-trajectories`](https://huggingface.co/datasets/nebius/SWE-agent-trajectories). 
+Evaluated on genuine SWE-bench developer sessions using `agentry.benchmark.GuardrailBenchmarkSuite`.
+Split strategy: `GroupShuffleSplit` strictly partitioned on `session_id` to guarantee 100% unseen agent trajectories in the evaluation set (zero cross-step leakage).
 
-To ensure strict zero data leakage and methodological integrity:
-1. **5-Fold Grouped Cross-Validation:** Partitioned strictly on `session_id` holding out 11 distinct developer sessions per fold.
-2. **Decoupled Physics Latency:** Modeled strictly on prompt/completion tokens, eliminating synthetic error leakage.
-3. **Grounded Failure Attribution:** Failure modes grounded in GitHub resolve outcome, exit codes, and tool exceptions.
-4. **Dynamic Remaining Cost Target:** Evaluates dynamic remaining spend ($\Delta C_{\text{remaining}} = \max(0, \hat{C}_{\text{terminal}} - C_{\text{current}})$).
-
-| Model Architecture | Failure Recall (Mean ± Std) | False Stop / FPR (Mean ± Std) | Cost MAE ($) (Mean ± Std) | Cost $R^2$ (Mean ± Std) |
-| :--- | :---: | :---: | :---: | :---: |
-| **Heuristic Rule Baseline** | 13.4% ± 4.8% | **1.6% ± 0.8%** | $0.0126 ± 0.0066 | -0.305 ± 0.676 |
-| **Random Forest (50 trees)** | 64.2% ± 12.1% | 16.8% ± 5.2% | $0.0116 ± 0.0084 | 0.212 ± 0.228 |
-| **XGBoost (50 trees)** | 61.5% ± 11.4% | 17.2% ± 4.9% | $0.0120 ± 0.0087 | 0.100 ± 0.288 |
-| **TabPFN-3.5 Engine** | **68.4% ± 10.9%** | 18.1% ± 6.3% | **$0.0057 ± 0.0104** | **0.782 ± 0.421** |
+| Model Architecture | Unseen Test Sessions | Balanced Acc | F1 Macro | ROC-AUC | Failure Recall | False-Stop Rate (FPR) | Cost MAE ($) | Cost R² | Inference Latency |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Heuristic Rule Baseline** | 17 sessions | 39.0% | 39.0% | 0.619 | 54.4% | **17.4%** | $0.0187 | 0.261 | 0.00 ms |
+| **Logistic Reg / Ridge** | 17 sessions | 33.0% | 33.8% | 0.808 | 45.0% | 28.3% | $0.0232 | 0.007 | 0.00 ms |
+| **Random Forest (100 trees)** | 17 sessions | 53.4% | 51.8% | 0.921 | 80.6% | 25.9% | $0.0205 | 0.235 | 0.04 ms |
+| **XGBoost (100 estimators)** | 17 sessions | 55.9% | 52.4% | 0.904 | 82.2% | 29.2% | $0.0210 | 0.190 | 0.01 ms |
+| **TabPFN-3.5 (Prior Labs)** | 17 sessions | **59.9%** | **58.6%** | 0.885 | **91.7%** | 24.5% | **$0.0136** | **0.583** | 28.10 ms |
 
 > **Critical Empirical Findings:**
-> 1. **The Heuristic Myth:** On held-out SWE-bench trajectories, a naive static rule (`if error >= 3: stop()`) catches only **13.4%** of runaway trajectories, missing **86.6%** of destructive failure loops.
-> 2. **Superior Cost Trajectory Forecasting:** Classical tree models (XGBoost, Random Forest) struggle on unseen trajectory cost regression ($R^2 = 0.100 - 0.212$, MAE ~ $0.012), while TabPFN-3.5 achieves **$R^2 = 0.782$** (nearly 4x higher) and cuts Cost MAE by **over 50% ($0.0057 USD)** per prediction step.
-> 3. **Discriminative Power & False-Stop Control:** While raw unthresholded argmax classification has a 27.8% step false-stop rate at $\theta=0.50$, **Agentry's Economic Utility Policy** ($P(\text{runaway}) \ge 0.85$ + operational streak evidence) slashes the **False-Stop Rate to 2.0% (1/51 steps)** while preserving **90.6% Failure Recall**, allowing **100% of productive tasks to complete uninterrupted**.
+> 1. **The Heuristic Myth:** On held-out SWE-bench trajectories, a static error-streak rule (`if error >= 3: stop()`) catches only **54.4%** of runaway failures while still causing a **17.4%** False-Stop Rate on nominal steps.
+> 2. **Superior Cost Trajectory Forecasting:** Classical tree models (XGBoost, Random Forest) struggle on unseen trajectory cost regression ($R^2 = 0.190 - 0.235$, MAE ~ $0.021), while TabPFN-3.5 achieves **$R^2 = 0.583$** (over 2.5x higher) and cuts Cost MAE to **$0.0136 USD** per prediction step.
+> 3. **Discriminative Generalization:** Evaluating on 17 completely unseen trajectory sessions, Prior Labs TabPFN-3.5 achieves **91.7% Failure Recall** and **59.9% Balanced Accuracy**, showing that tabular foundation models effectively generalize to complex failure cascades without hyperparameter tuning.
 
 ### 🏆 Fleet Runtime Impact: Equal-Success-Rate Experiment
 
@@ -150,19 +146,24 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 2. Configure Environment (Optional)
+### 2. Configure Environment (Required for Prior Labs TabPFN-3.5)
 Copy `.env.example` to `.env`:
 ```bash
 cp .env.example .env
 ```
-Configure your Sentry settings:
+Configure your credentials:
 ```env
+# Required for Prior Labs TabPFN-3.5 Cloud Foundation Model:
 TABPFN_TOKEN=pfn_your_token_here
 TABPFN_THINKING_MODE=true
+
+# Optional local/cloud reasoning:
+SENTRY_PROVIDER=auto
 OLLAMA_BASE_URL=http://localhost:11434/v1
 SENTRY_MODEL=qwen2.5:3b
 ```
-*(Note: If no Prior Labs token is provided, Agentry automatically engages its high-fidelity local tabular engine so all demos, CLIs, and dashboards run out-of-the-box!)*
+> [!NOTE]
+> `TABPFN_TOKEN` is required to connect to the official Prior Labs TabPFN-3.5 cloud foundation model. If no token is provided, Agentry engages its offline `scikit-learn fallback (HistGradientBoosting)` so local evaluation can still run.
 
 ---
 
@@ -181,7 +182,7 @@ def execute_bash(command: str) -> str:
     return run_shell(command)
 
 # If an agent spirals into an infinite loop or runaway cost:
-# -> Agentry intercepts in < 15ms and raises AgentHaltException,
+# -> Agentry intercepts in real time and raises AgentHaltException,
 #    saving wasted tokens and stopping further execution!
 ```
 
@@ -445,11 +446,26 @@ tests/test_e2e_closed_loop.py .....                                      [100%]
 
 ---
 
-## 🛡️ Enterprise Data Sovereignty Guarantee
+## 🛡️ Data Privacy & Cloud Architecture
 
-- **Zero Prompt Transmission:** Internal agent reasoning, proprietary source code, and enterprise secrets are parsed strictly on localhost.
-- **Abstract Tabular Ingestion:** TabPFN-3.5 operates strictly on mathematical and statistical telemetry signals (`repetition_score`, `step_latency`, `error_streak`, `token_growth`).
-- **Autonomous Air-Gapped Operation:** Supports fully offline environments using local quantized models (Qwen 2.5) and local tabular weights.
+Agentry supports two distinct operational modes depending on enterprise security requirements:
+
+- **1. Cloud Prior Labs & Groq Mode (Default High-Fidelity):**
+  - Tabular telemetry metrics (`session_id`, `step_index`, `step_latency_ms`, `tokens`, `repetition_score`, `error_streak`) are evaluated via HTTPS by the official Prior Labs TabPFN-3.5 API.
+  - When `GROQ_API_KEYS` are provided, diagnostic forensic root causes are synthesized via Groq cloud LLMs.
+- **2. Air-Gapped Offline Mode (`TABPFN_OFFLINE_MODE=1`):**
+  - Tabular evaluation runs locally via scikit-learn's `HistGradientBoosting` fallback engine (`sklearn fallback, bukan TabPFN`).
+  - Semantic reasoning runs locally via Ollama (`qwen2.5:3b`).
+  - In this configuration, **100% of data remains on localhost** with zero outbound network packets.
+
+---
+
+## 🔍 Methodological Transparency & Data Disclosures
+
+In accordance with scientific and technical rigor:
+1. **Telemetry Metric Derivation:** In `agentry/swe_telemetry.py`, token counts (`len(text) // 4`), cumulative dollar spend ($0.002 / 1k tokens), and simulated step latencies are deterministic estimations calculated from SWE-bench trajectory text length, rather than hardware system timers or billing invoices.
+2. **Heuristic Failure Labeling & Feature Correlation:** In the SWE-bench parser, `INFINITE_LOOP` failure modes are heuristically derived when consecutive tool failures occur (`has_error and error_streak >= 2`). Because `error_streak` is also provided as a predictive feature in `FEATURE_COLS`, there is a direct structural correlation (partial target leakage) in heuristic ground truth assignment. In production deployments, ground truth labels should be anchored strictly to external task exit codes and CI/CD test assertions.
+3. **Reproducibility:** All benchmark figures cited in this documentation are generated directly by `agentry.benchmark.GuardrailBenchmarkSuite` on real trajectory data with zero hardcoded metric fallbacks.
 
 ---
 
@@ -459,4 +475,4 @@ Developed for the **Prior Labs TabPFN-3.5 Hackathon** (October 2026).
 - **Core Concept:** Agentry — Autonomous Tabular Guardrail & Sentry
 - **Technologies:** Prior Labs TabPFN-3.5, Ollama (Qwen 2.5), Streamlit, Plotly, Rich, Scikit-learn.
 
-*License: MIT*
+*License: Apache-2.0*

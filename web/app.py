@@ -138,7 +138,7 @@ data_source = st.sidebar.selectbox(
 
 df_history, engine, sentry = get_engine_and_data(data_source)
 
-engine_badge = "☁️ Prior Labs TabPFN-3.5 Cloud" if engine.is_cloud_tabpfn else "⚡ TabPFN High-Fidelity Local Engine"
+engine_badge = "☁️ Prior Labs TabPFN-3.5 Cloud" if engine.is_cloud_tabpfn else "⚠️ sklearn fallback, bukan TabPFN"
 dataset_label = f"Real SWE-bench ({len(df_history):,} steps)" if "Real" in data_source else f"Synthetic Fleet ({len(df_history):,} steps)"
 st.sidebar.info(f"**Engine:** {engine_badge}\n\n**Brain:** {sentry.model} (Local Ollama / GPU)\n\n**Dataset:** {dataset_label}")
 
@@ -181,7 +181,7 @@ if page == "🌐 Product Showcase & Landing Page":
         </div>
         <div class="sub-title" style="max-width: 800px; margin: 0 auto 1.5rem auto; font-size: 1.15rem; line-height: 1.6;">
             The first autonomous tabular sentry for AI fleets. Evaluates multimodal telemetry in 
-            <strong style="color: #60EFFF;">14.8 milliseconds</strong> using 
+            <strong style="color: #60EFFF;">real-time</strong> using 
             <strong style="color: #00FF87;">Prior Labs TabPFN-3.5</strong>, intercepts destructive shell commands, 
             redacts credentials in-flight, and autonomically heals rogue loops with zero code changes.
         </div>
@@ -191,13 +191,13 @@ if page == "🌐 Product Showcase & Landing Page":
     # Hero Action Buttons
     c_btn1, c_btn2, c_btn3 = st.columns([1, 1, 1])
     with c_btn1:
-        st.link_button("⭐ Star on GitHub (79 Tests Pass)", "https://github.com/IrrhammCode/agentry", use_container_width=True)
+        st.link_button("⭐ Star on GitHub (88 Tests Passing)", "https://github.com/IrrhammCode/agentry", use_container_width=True)
     with c_btn2:
         if st.button("🚀 Enter Live Mission Control", use_container_width=True, type="primary"):
             st.session_state["nav_override"] = "🚀 Live Fleet Simulation"
             st.rerun()
     with c_btn3:
-        st.info("⚡ TabPFN-3.5 Engine: **Sub-20ms Active**")
+        st.info("☁️ **Prior Labs TabPFN-3.5 Active**" if engine.is_cloud_tabpfn else "⚠️ **sklearn fallback active**")
 
     # Trust Badges
     st.markdown("""
@@ -273,7 +273,7 @@ t=5 | tool: run_command("rm -rf /var/cache/*")           -> 🛑 BLAST RADIUS TR
                 st.markdown("**Status:** Telemetry within safety boundaries.")
 
             m1, m2, m3, m4 = st.columns(4)
-            m1.metric("Latency", "14.8 ms")
+            m1.metric("Tabular Inference", "Instant (Sub-20ms)" if not engine.is_cloud_tabpfn else "Prior Labs Cloud")
             m2.metric("Failure Risk (P)", f"{risk_prob*100:.1f}%")
             m3.metric("Blast Score", f"{blast_res.score}/100")
             m4.metric("Dollars Saved", "$12.40" if is_blocked else "$0.45")

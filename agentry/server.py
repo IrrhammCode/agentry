@@ -5,6 +5,7 @@ to interact with TabPFN-3.5 guardrails, export incident reports, manage HITL app
 and proxy OpenAI-compatible chat completions over standard HTTP.
 """
 
+import os
 import json
 import logging
 import time
@@ -52,12 +53,26 @@ def get_proxy_handler() -> OpenAIProxyHandler:
 class AgentryHTTPRequestHandler(BaseHTTPRequestHandler):
     """HTTP request dispatcher for Agentry guardrail daemon and OpenAI proxy."""
 
+    def _get_cors_origin(self) -> str:
+        origin = self.headers.get("Origin", "")
+        if origin:
+            p = urlparse(origin)
+            hostname = p.hostname or ""
+            if hostname in ("localhost", "127.0.0.1", "::1"):
+                return origin
+            allowed = [o.strip() for o in os.getenv("AGENTRY_ALLOWED_ORIGINS", "").split(",") if o.strip()]
+            if origin in allowed:
+                return origin
+            return "null"
+        return "*"
+
     def _send_json(self, status_code: int, data: dict, extra_headers: Optional[Dict[str, str]] = None):
         body = json.dumps(data, indent=2, default=str).encode("utf-8")
         self.send_response(status_code)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
-        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Origin", self._get_cors_origin())
+        self.send_header("Access-Control-Allow-Credentials", "true")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Session-ID, X-Agent-Session")
         if extra_headers:
@@ -71,7 +86,8 @@ class AgentryHTTPRequestHandler(BaseHTTPRequestHandler):
         self.send_response(status_code)
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
-        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Origin", self._get_cors_origin())
+        self.send_header("Access-Control-Allow-Credentials", "true")
         self.end_headers()
         self.wfile.write(body)
 
@@ -80,7 +96,8 @@ class AgentryHTTPRequestHandler(BaseHTTPRequestHandler):
         self.send_response(status_code)
         self.send_header("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
-        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Origin", self._get_cors_origin())
+        self.send_header("Access-Control-Allow-Credentials", "true")
         self.end_headers()
         self.wfile.write(body)
 
@@ -463,6 +480,30 @@ class AgentryHTTPRequestHandler(BaseHTTPRequestHandler):
 
         # 10. Global Kill Switch Emergency Suspend: POST /v1/fleet/emergency-suspend
         if path == "/v1/fleet/emergency-suspend":
+            client_ip = getattr(self, "client_address", ["127.0.0.1"])[0]
+            is_loopback = client_ip in ("127.0.0.1", "::1", "localhost", "testclient")
+            auth_header = self.headers.get("Authorization", "").replace("Bearer ", "").strip()
+            auth_token = os.getenv("AGENTRY_AUTH_TOKEN", "")
+
+            # If AGENTRY_AUTH_TOKEN is configured in environment, strictly verify it
+            if auth_token and auth_header != auth_token:
+                self._send_json(401, {"error": "Unauthorized: Invalid or missing AGENTRY_AUTH_TOKEN"})
+                return
+
+            # If unauthenticated, reject calls from remote hosts
+            if not is_loopback and not auth_token:
+                self._send_json(403, {"error": "Forbidden: emergency-suspend requires loopback client or AGENTRY_AUTH_TOKEN"})
+                return
+
+            # Block CSRF: reject cross-origin requests from external web browsers
+            origin = self.headers.get("Origin", "")
+            if origin:
+                p = urlparse(origin)
+                hostname = p.hostname or ""
+                if hostname not in ("localhost", "127.0.0.1", "::1"):
+                    self._send_json(403, {"error": "Forbidden: Cross-origin invocation of emergency-suspend is prohibited."})
+                    return
+
             with guard._lock:
                 for session in guard._sessions.values():
                     session.is_halted = True

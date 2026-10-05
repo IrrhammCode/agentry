@@ -288,13 +288,20 @@ export const AttackSimulator: React.FC = () => {
             ? 'Destructive commands execute unchecked on the host, wiping critical services or draining compute budgets.'
             : 'Agent runs without guardrails, leading to unobserved drift and failure escalation.',
           withAgentry: isCritical
-            ? `Agentry intercepted the action via ${auditRes.sentry_provider} in ${auditRes.latency_ms || 14.8}ms with zero state mutation.`
+            ? `Agentry intercepted the action via ${auditRes.sentry_provider} in ${auditRes.latency_ms ? `${auditRes.latency_ms}ms` : 'sub-second'} with zero state mutation.`
             : `Continuous TabPFN Bayesian audit verified nominal parameters with ${((1 - auditRes.failure_probability) * 100).toFixed(1)}% confidence.`,
         });
       }
     } catch (err) {
       console.error('Audit failed, using offline fallback', err);
-      if (targetPreset) setScanResult(targetPreset);
+      if (targetPreset) {
+        setScanResult({
+          ...targetPreset,
+          verdict: `${targetPreset.verdict} (DEMO OFFLINE)`,
+          sentryProvider: 'Simulated Fallback (Demo Offline)',
+          withAgentry: `[Demo Offline] ${targetPreset.withAgentry}`,
+        });
+      }
     } finally {
       setIsScanning(false);
       setScanStage(0);
@@ -327,7 +334,7 @@ export const AttackSimulator: React.FC = () => {
               <span className="animate-text-shimmer">Simulate an Attack & Watch Agentry Intercept It</span>
             </h2>
             <p className="text-slate-300 max-w-2xl mx-auto text-sm sm:text-base leading-relaxed">
-              Select an adversarial scenario below. Watch the <span className="text-sentry-emerald font-semibold">TabPFN-3.5</span> tabular foundation model evaluate risk in <span className="text-sentry-cyan font-semibold">14.8 milliseconds</span> and prevent catastrophic failures before execution.
+              Select an adversarial scenario below. Watch the <span className="text-sentry-emerald font-semibold">TabPFN-3.5</span> tabular foundation model evaluate risk in <span className="text-sentry-cyan font-semibold">real-time</span> and prevent catastrophic failures before execution.
             </p>
           </div>
         </ScrollReveal>
@@ -338,7 +345,7 @@ export const AttackSimulator: React.FC = () => {
         <ScrollReveal animation="fade-up" delayMs={120} durationMs={800}>
           <div className="mb-10 p-4 sm:p-5 rounded-2xl glass-card border border-white/10">
             <div className="text-[11px] font-mono text-slate-400 uppercase tracking-wider text-center mb-3">
-              Real-Time TabPFN Detection Pipeline (Sub-20ms)
+              Real-Time TabPFN Detection Pipeline
             </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 relative">
@@ -377,7 +384,7 @@ export const AttackSimulator: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-bold text-white">2. TabPFN-3.5 Bayesian Scan</span>
                     <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-emerald-500/30 text-sentry-emerald">
-                      14.8 ms
+                      {scanLatency.toFixed(1)} ms
                     </span>
                   </div>
                   <div className="text-[11px] text-slate-400 font-mono">16 Numerical Telemetry Metrics</div>
@@ -518,7 +525,7 @@ export const AttackSimulator: React.FC = () => {
                 </div>
                 <div className="font-mono text-xs text-sentry-cyan font-semibold flex items-center gap-2">
                   <Sparkles className="w-3.5 h-3.5 animate-spin" />
-                  <span>TabPFN-3.5 Evaluating 16 Risk Metrics... (14.8 ms)</span>
+                  <span>TabPFN-3.5 Evaluating Risk Metrics... ({scanLatency.toFixed(1)} ms)</span>
                 </div>
               </div>
             )}
@@ -659,7 +666,7 @@ export const AttackSimulator: React.FC = () => {
                   </p>
                 </div>
                 <div className="mt-4 pt-3 border-t border-emerald-500/20 text-[11px] font-mono text-sentry-emerald">
-                  Intercepted in 14.8ms • $0 cost • Filesystem and budget intact
+                  Intercepted in {scanLatency.toFixed(1)}ms • $0 cost • Filesystem and budget intact
                 </div>
               </div>
 

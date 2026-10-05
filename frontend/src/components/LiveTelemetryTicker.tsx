@@ -15,9 +15,9 @@ import { AgentryApi, FleetMetrics } from '../services/api.ts';
 
 const BASE_ITEMS = [
   { icon: <Cpu className="w-3.5 h-3.5 text-sentry-emerald" />, text: 'Prior Labs TabPFN-3.5 Foundation Model' },
-  { icon: <Zap className="w-3.5 h-3.5 text-sentry-cyan" />, text: '14.8ms Sub-20ms Bayesian In-Context Prior' },
-  { icon: <Lock className="w-3.5 h-3.5 text-sentry-violet" />, text: '100% Zero-Prompt Transmission Privacy' },
-  { icon: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />, text: '79/79 SWE-bench Test Suites Passed' },
+  { icon: <Zap className="w-3.5 h-3.5 text-sentry-cyan" />, text: 'Bayesian In-Context Tabular Prior' },
+  { icon: <Lock className="w-3.5 h-3.5 text-sentry-violet" />, text: 'Tabular Telemetry Representation (Code Agnostic)' },
+  { icon: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />, text: '88/88 Unit & Guardrail Tests Passing' },
   { icon: <ShieldCheck className="w-3.5 h-3.5 text-sentry-red" />, text: 'Deterministic In-Flight Blast Radius Shield' },
   { icon: <History className="w-3.5 h-3.5 text-amber-400" />, text: 'Closed-Loop Autonomic Disk Snapshot Rewind' },
   { icon: <Coins className="w-3.5 h-3.5 text-sentry-cyan" />, text: 'Fleet Token Budget Autopilot' },

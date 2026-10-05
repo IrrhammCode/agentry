@@ -45,8 +45,10 @@ def banner():
 
 def setup_workspace():
     """Initializes clean directory sandbox for both projects."""
-    if ARENA_DIR.exists():
-        shutil.rmtree(ARENA_DIR, ignore_errors=True)
+    if UNPROTECTED_DIR.exists():
+        shutil.rmtree(UNPROTECTED_DIR, ignore_errors=True)
+    if GUARDED_DIR.exists():
+        shutil.rmtree(GUARDED_DIR, ignore_errors=True)
     UNPROTECTED_DIR.mkdir(parents=True, exist_ok=True)
     GUARDED_DIR.mkdir(parents=True, exist_ok=True)
 

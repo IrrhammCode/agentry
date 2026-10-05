@@ -110,7 +110,7 @@ def run_live_fleet_demo(num_steps: int = 24, speed_s: float = 0.4, use_real: boo
         engine.fit(df)
         sentry = AgentrySentry(engine)
 
-    mode_status = "[bold green]TabPFN-3.5 Cloud (Thinking Mode)[/]" if engine.is_cloud_tabpfn else "[bold yellow]TabPFN Local High-Fidelity Engine (Set TABPFN_TOKEN for Cloud API)[/]"
+    mode_status = "[bold green]TabPFN-3.5 Cloud (Thinking Mode)[/]" if engine.is_cloud_tabpfn else "[bold yellow]sklearn fallback, bukan TabPFN (Set TABPFN_TOKEN for Cloud Prior Labs API)[/]"
     console.print(f"  • Telemetry Source: [bold cyan]{dataset_desc}[/]")
     console.print(f"  • Engine: {mode_status}")
     console.print(f"  • Sentry Brain: [cyan]{sentry.model}[/] (Ollama local inference)")

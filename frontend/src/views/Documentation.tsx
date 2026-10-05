@@ -801,7 +801,7 @@ bash_tool("pytest tests/test_auth.py")
                       Q: Can Agentry operate 100% offline without any internet connection?
                     </div>
                     <p className="text-slate-300 leading-relaxed font-sans text-xs">
-                      <strong>Yes.</strong> Agentry supports local TabPFN checkpoints and local SLMs (via Ollama Qwen 2.5:3b). In full offline mode, zero packets leave your workstation or VPC.
+                      <strong>Yes.</strong> Agentry supports offline execution via its local tabular fallback engine (scikit-learn HistGradientBoosting) and local SLMs (via Ollama Qwen 2.5:3b). In full offline mode, zero packets leave your workstation or VPC.
                     </p>
                   </div>
 

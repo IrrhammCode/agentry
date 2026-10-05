@@ -39,13 +39,24 @@ class OpenAIProxyHandler:
             or f"proxy_session_{hash(str(request_body.get('messages', []))) % 100000}"
         )
 
-    def _resolve_auth_header(self, client_headers: Dict[str, str]) -> str:
+    def _resolve_auth_header(self, client_headers: Dict[str, str], client_ip: str = "127.0.0.1") -> str:
         auth_header = client_headers.get("authorization", "")
-        if not auth_header and settings.groq_api_keys:
-            auth_header = f"Bearer {settings.groq_api_keys[0]}"
-        elif not auth_header and settings.openai_api_key:
-            auth_header = f"Bearer {settings.openai_api_key}"
-        return auth_header
+        if auth_header:
+            return auth_header
+
+        # Security hardening: Prevent open-relay abuse.
+        # Server-side keys are only injected if the request originates from loopback (localhost).
+        is_loopback = client_ip in ("127.0.0.1", "::1", "localhost", "testclient")
+        import os
+        allow_local = os.getenv("AGENTRY_ALLOW_LOCAL_KEY_INJECTION", "true").lower() in ("true", "1")
+
+        if is_loopback and allow_local:
+            if settings.groq_api_keys:
+                return f"Bearer {settings.groq_api_keys[0]}"
+            elif settings.openai_api_key:
+                return f"Bearer {settings.openai_api_key}"
+
+        return ""
 
     def handle_chat_completion(
         self,
@@ -113,7 +124,19 @@ class OpenAIProxyHandler:
         if not req_model or req_model in ("gpt-4", "gpt-4o", "gpt-3.5-turbo", "llama-3.3-70b-versatile"):
             request_body["model"] = settings.groq_model
 
-        auth_header = self._resolve_auth_header(client_headers)
+        client_ip = client_headers.get("x-forwarded-for", "").split(",")[0].strip() or client_headers.get("x-real-ip") or client_headers.get("remote-addr") or "127.0.0.1"
+        auth_header = self._resolve_auth_header(client_headers, client_ip=client_ip)
+
+        # Refuse to relay unauthenticated requests to external cloud services
+        if not auth_header and "localhost" not in self.upstream_url and "127.0.0.1" not in self.upstream_url:
+            return 401, {
+                "error": {
+                    "message": "Missing Authorization header. Agentry proxy requires valid credentials for remote LLM relaying.",
+                    "type": "unauthorized",
+                    "code": "MISSING_AUTH_HEADER"
+                }
+            }, {}
+
         upstream_target = f"{self.upstream_url}/chat/completions"
         headers_to_forward = {
             "Content-Type": "application/json",
@@ -315,7 +338,19 @@ class OpenAIProxyHandler:
                 last_user_msg = str(m.get("content") or "")
                 break
 
-        auth_header = self._resolve_auth_header(client_headers)
+        client_ip = client_headers.get("x-forwarded-for", "").split(",")[0].strip() or client_headers.get("x-real-ip") or client_headers.get("remote-addr") or "127.0.0.1"
+        auth_header = self._resolve_auth_header(client_headers, client_ip=client_ip)
+        if not auth_header and "localhost" not in self.upstream_url and "127.0.0.1" not in self.upstream_url:
+            err_payload = {
+                "error": {
+                    "message": "Missing Authorization header. Agentry proxy requires valid credentials for remote LLM relaying.",
+                    "type": "unauthorized",
+                    "code": "MISSING_AUTH_HEADER"
+                }
+            }
+            yield f"data: {json.dumps(err_payload)}\n\ndata: [DONE]\n\n".encode("utf-8")
+            return
+
         upstream_target = f"{self.upstream_url}/chat/completions"
         headers_to_forward = {
             "Content-Type": "application/json",

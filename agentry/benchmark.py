@@ -221,7 +221,7 @@ class GuardrailBenchmarkSuite:
             ))
 
         # 5. Agentry TabPFN Engine (Prior Labs Foundation Model)
-        tabpfn_name = "TabPFN-3.5 (Prior Labs)" if engine.is_cloud_tabpfn else "Agentry TabPFN Engine"
+        tabpfn_name = "TabPFN-3.5 (Prior Labs)" if engine.is_cloud_tabpfn else "sklearn fallback, bukan TabPFN"
         train_slice_df = self.df.iloc[X_train.index]
         t0 = time.time()
         engine.fit(train_slice_df)
@@ -243,7 +243,7 @@ class GuardrailBenchmarkSuite:
         try:
             auc = round(float(roc_auc_score(y_test_cls, cls_probs, multi_class="ovr")), 4)
         except Exception:
-            auc = 0.950
+            auc = float('nan')
 
         mae = round(float(mean_absolute_error(y_test_reg, reg_preds)), 4)
         rmse = round(float(np.sqrt(mean_squared_error(y_test_reg, reg_preds))), 4)
@@ -312,7 +312,7 @@ class GuardrailBenchmarkSuite:
                 cls_probs = cls_model.predict_proba(X_test)
             auc = round(float(roc_auc_score(y_test_cls, cls_probs, multi_class="ovr")), 4)
         except Exception:
-            auc = 0.500
+            auc = float('nan')
 
         mae = round(float(mean_absolute_error(y_test_reg, reg_preds)), 4)
         rmse = round(float(np.sqrt(mean_squared_error(y_test_reg, reg_preds))), 4)
@@ -364,12 +364,13 @@ def format_benchmark_markdown(results: List[ModelBenchmarkResult]) -> str:
     ]
     rows = []
     for r in results:
+        auc_str = "N/A" if np.isnan(r.classification_roc_auc) else f"{r.classification_roc_auc:.3f}"
         rows.append([
             f"**{r.model_name}**",
             f"{r.test_sessions_count} sessions",
             f"{r.classification_balanced_acc * 100:.1f}%",
             f"{r.classification_f1_macro * 100:.1f}%",
-            f"{r.classification_roc_auc:.3f}",
+            auc_str,
             f"{r.failure_recall * 100:.1f}%",
             f"**{r.false_stop_rate * 100:.1f}%**" if r.false_stop_rate < 0.10 else f"{r.false_stop_rate * 100:.1f}%",
             f"${r.regression_mae_usd:.4f}",

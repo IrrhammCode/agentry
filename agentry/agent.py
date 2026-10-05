@@ -4,10 +4,12 @@ Powered by Local LLM (Qwen 2.5 via Ollama) with TabPFN tabular signals.
 Audits telemetry, explains anomalies, and executes autonomous interventions.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 from dataclasses import dataclass, asdict
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Tuple
 import httpx
 
 from agentry.config import settings

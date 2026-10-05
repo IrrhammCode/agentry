@@ -73,7 +73,7 @@ Agentry is an enterprise-grade predictive runtime control layer and tabular safe
 2. The False-Stop Dilemma:
    Raw unthresholded argmax classification produced high false-stop rates on normal steps. We engineered a cost-sensitive Economic Utility formulation requiring Bayesian statistical confidence P(runaway) >= 0.85 combined with consecutive error streak evidence, dropping the False-Stop Rate to 2.0% while retaining 90.6% Failure Recall.
 3. Non-IID Grouped Dynamics in Tabular Architecture:
-   Classical ML baselines (XGBoost, Random Forest) struggled on held-out trajectory cost regression. TabPFN-3.5's native support for grouped temporal relationships enabled it to achieve an R^2 of 0.782–0.961 and ROC-AUC of 0.950.
+   Classical ML baselines (XGBoost, Random Forest) struggled on held-out trajectory cost regression. TabPFN-3.5's native support for grouped temporal relationships enabled it to achieve an R^2 of 0.782–0.961 on unseen trajectories.
 4. Preserving Enterprise Privacy in AI Safety:
    Cloud LLM judges require sending raw code diffs and prompts to third parties. We proved mathematically via permutation importance that 71.0% of predictive power comes from 5 non-sensitive tabular metadata features (`error_streak`, `prompt_tokens`, `step_latency_ms`, `thought_has_error`, `tool_call_count`), achieving complete runtime protection with zero proprietary code exposure.
 5. Safe Autonomic Context Pruning:

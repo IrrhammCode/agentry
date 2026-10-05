@@ -71,7 +71,7 @@ const STREAM_STEPS: TelemetryStep[] = [
     status: 'kill',
     statusText: 'CIRCUIT-BREAKER KILL',
     prob: 'P_fail = 0.998',
-    extra: 'BLAST RADIUS VIOLATION (14.8ms)',
+    extra: 'BLAST RADIUS VIOLATION (Intervention Triggered)',
   },
 ];
 
@@ -82,6 +82,7 @@ export const LiveHeroTerminal: React.FC = () => {
   const [visibleCount, setVisibleCount] = useState<number>(2);
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
   const [showHealer, setShowHealer] = useState<boolean>(false);
+  const [isLiveTelemetry, setIsLiveTelemetry] = useState<boolean>(false);
 
   useEffect(() => {
     AgentryApi.getAuditEvents(5)
@@ -98,6 +99,7 @@ export const LiveHeroTerminal: React.FC = () => {
             extra: e.estimated_cost_saved_usd > 0 ? `Saved $${e.estimated_cost_saved_usd.toFixed(2)}` : undefined
           }));
           setSteps(live);
+          setIsLiveTelemetry(true);
         }
       })
       .catch((err) => console.debug('Hero terminal offline fallback', err));
@@ -151,6 +153,15 @@ export const LiveHeroTerminal: React.FC = () => {
           <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-sentry-emerald border border-emerald-500/30 flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
             <span className="hidden sm:inline">AGENT:</span> CoderAgent-01
+          </span>
+
+          <span className={`px-2 py-0.5 rounded text-[10px] font-mono border flex items-center gap-1 ${
+            isLiveTelemetry 
+              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' 
+              : 'bg-amber-500/10 text-amber-300 border-amber-500/30'
+          }`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${isLiveTelemetry ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+            {isLiveTelemetry ? 'LIVE BACKEND' : 'DEMO OFFLINE'}
           </span>
 
           {/* Controls */}
