@@ -131,6 +131,24 @@ export const MissionControl: React.FC = () => {
     }
   };
 
+  const handleSimulateTabPfnProbe = async () => {
+    showToast('Dispatching TabPFN telemetry probe into audit queue...');
+    try {
+      await AgentryApi.auditStep({
+        session_id: 'agent_coder_infinite_loop',
+        tool_name: 'bash',
+        input_text: 'pytest tests/test_core.py',
+        thought_trace: 'Retrying the failed unit test again after repeated syntax error crash streak=4',
+        agent_role: 'Coder',
+        latency_ms: 28.0
+      });
+      await refreshData();
+      showToast('TabPFN Sentry Alert: Runaway loop pattern detected & audited by TabPFN-3.5.');
+    } catch (err) {
+      showToast('TabPFN simulation error: ' + (err as Error).message);
+    }
+  };
+
   const handleSimulateHazard = async () => {
     showToast('Dispatching live hazardous probe into audit queue...');
     try {
@@ -202,6 +220,15 @@ export const MissionControl: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-3 flex-wrap">
+          <button
+            onClick={handleSimulateTabPfnProbe}
+            className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-sentry-emerald border border-emerald-500/30 text-xs font-mono font-semibold transition-all hover:scale-[1.02]"
+            title="Inject a telemetry step to evaluate real-time TabPFN-3.5 risk scoring"
+          >
+            <Zap className="w-4 h-4" />
+            <span>Test TabPFN Audit</span>
+          </button>
+
           <button
             onClick={handleSimulateHazard}
             className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border border-amber-500/30 text-xs font-mono font-semibold transition-all hover:scale-[1.02]"

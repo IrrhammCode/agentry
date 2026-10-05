@@ -214,7 +214,7 @@ def run_live_fleet_demo(num_steps: int = 24, speed_s: float = 0.4, use_real: boo
         f"• Runaway Loops/Hallucinations Terminated: [bold red]3[/]\n"
         f"• Estimated Tokens Saved: [bold cyan]{total_tokens_saved:,}[/] tokens\n"
         f"• Direct Cloud API Cost Saved: [bold green]${total_cost_saved:.4f}[/] USD\n"
-        f"• Average Detection Latency: [bold white]~15ms[/] per step (TabPFN Real-Time Guardrail)"
+        f"• Average Detection Latency: [bold white]~28ms[/] per row batch-amortized (single-step cloud calls are network-bound)"
     )
     console.print(Panel(summary, title="[bold cyan]Agentry Fleet Sentry Summary[/]", border_style="cyan"))
 

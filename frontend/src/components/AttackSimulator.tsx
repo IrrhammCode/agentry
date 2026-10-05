@@ -50,6 +50,25 @@ interface Preset {
 
 const PRESETS: Preset[] = [
   {
+    id: 'infinite_retry',
+    name: 'TabPFN Runaway Loop & Error Spiral',
+    tag: 'TABPFN CLOUD SCORING',
+    icon: 'retry',
+    command: 'pytest tests/test_core.py\n# Result: Error exit code 1 (SyntaxError)\npytest tests/test_core.py\n# Result: Error exit code 1 (Repeated crash streak=5)',
+    verdict: 'CIRCUIT BREAKER TRIPPED',
+    verdictStyle: 'bg-red-500/20 text-sentry-red border-red-500/40 glow-red',
+    title: 'RUNAWAY UNPRODUCTIVE ERROR SPIRAL',
+    desc: 'Agent repeated identical failing executions 5 times in a row without making meaningful code improvements.',
+    prob: '94.6%',
+    probNumber: 94.6,
+    blast: '60 / 100',
+    blastNumber: 60,
+    saved: '$85.00',
+    action: 'Rolled back filesystem snapshot to t=2 & pruned poisoned context memory',
+    withoutAgentry: 'Agent burns hundreds of expensive LLM calls repeating identical mistakes until monthly budget caps or rate limits crash the pipeline.',
+    withAgentry: 'TabPFN identifies failure repetition on step 5, rewinds the codebase to a clean checkpoint, and prompts the agent with counterfactual alternatives.'
+  },
+  {
     id: 'rm_rf',
     name: 'rm -rf / (Destructive Root Deletion)',
     tag: 'CRITICAL HAZARD',
@@ -58,7 +77,7 @@ const PRESETS: Preset[] = [
     verdict: 'INTERCEPTED & KILLED',
     verdictStyle: 'bg-red-500/20 text-sentry-red border-red-500/40 glow-red',
     title: 'CATASTROPHIC BLAST RADIUS VIOLATION',
-    desc: 'Command attempted to wipe the entire root filesystem. TabPFN intercepted and terminated the execution pipeline before shell execution.',
+    desc: 'Command attempted to wipe the entire root filesystem. Blast-radius interceptor halted execution before shell execution.',
     prob: '99.8%',
     probNumber: 99.8,
     blast: '100 / 100',
@@ -66,7 +85,7 @@ const PRESETS: Preset[] = [
     saved: '$1,200+',
     action: 'Process quarantined immediately & filesystem rolled back to snapshot t=0',
     withoutAgentry: 'Total cloud server erasure in under 1 second. Multi-day outage, all user data destroyed, and engineering teams scrambling to restore backups.',
-    withAgentry: 'TabPFN detected destructive patterns in real time. Blocked before execution, zero data lost, 100% server integrity preserved.'
+    withAgentry: 'Blast-radius interceptor detected destructive patterns in real time. Blocked before execution, zero data lost, 100% server integrity preserved.'
   },
   {
     id: 'drop_db',
@@ -124,25 +143,6 @@ const PRESETS: Preset[] = [
     action: 'Pruned redundant loop turns & injected terminal steering directive',
     withoutAgentry: 'Agents exchange thousands of repetitive messages. LLM context limits saturate and cloud budgets drain with zero work accomplished.',
     withAgentry: 'Agentry detects zero-delta cyclic state loops, breaks the deadlock, and injects corrective directives so agents converge on a solution.'
-  },
-  {
-    id: 'infinite_retry',
-    name: '5x Consecutive Crash Loop',
-    tag: 'BUDGET RUNAWAY',
-    icon: 'retry',
-    command: 'pytest tests/test_core.py\n# Result: Error exit code 1 (SyntaxError)\npytest tests/test_core.py\n# Result: Error exit code 1 (Repeated crash streak=5)',
-    verdict: 'CIRCUIT BREAKER TRIPPED',
-    verdictStyle: 'bg-red-500/20 text-sentry-red border-red-500/40 glow-red',
-    title: 'RUNAWAY UNPRODUCTIVE ERROR SPIRAL',
-    desc: 'Agent repeated identical failing executions 5 times in a row without making meaningful code improvements.',
-    prob: '94.6%',
-    probNumber: 94.6,
-    blast: '60 / 100',
-    blastNumber: 60,
-    saved: '$85.00',
-    action: 'Rolled back filesystem snapshot to t=2 & pruned poisoned context memory',
-    withoutAgentry: 'Agent burns hundreds of expensive LLM calls repeating identical mistakes until monthly budget caps or rate limits crash the pipeline.',
-    withAgentry: 'TabPFN identifies failure repetition on step 5, rewinds the codebase to a clean checkpoint, and prompts the agent with counterfactual alternatives.'
   },
 ];
 

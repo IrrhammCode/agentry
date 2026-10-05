@@ -55,10 +55,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchConsole }) => 
           {/* Subheadline */}
           <ScrollReveal animation="fade-up" delayMs={250}>
             <p className="max-w-3xl mx-auto text-lg sm:text-xl text-slate-300 font-normal mb-8 leading-relaxed">
-              The first autonomous tabular sentry for AI fleets. Evaluates multimodal telemetry with{' '}
-              <span className="text-sentry-cyan font-semibold">real-time Bayesian speed</span> using{' '}
-              <span className="text-sentry-emerald font-semibold">Prior Labs TabPFN-3.5</span>, 
-              intercepts destructive shell commands, redacts credentials in-flight, and autonomically heals rogue loops with{' '}
+              Every tool call is scored by <span className="text-sentry-emerald font-semibold">TabPFN-3.5 (Prior Labs cloud)</span> before execution; regex blast-radius is a secondary hard stop. The first autonomous tabular sentry for AI fleets—evaluating multimodal telemetry with{' '}
+              <span className="text-sentry-cyan font-semibold">real-time Bayesian speed</span>, redacting credentials in-flight, and autonomically healing rogue loops with{' '}
               <span className="text-white font-medium underline decoration-sentry-cyan/50 underline-offset-4">
                 zero code changes
               </span>.

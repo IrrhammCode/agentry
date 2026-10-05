@@ -238,7 +238,7 @@ export const Documentation: React.FC = () => {
                     <span>Getting Started: 3-Minute Setup</span>
                   </h2>
                   <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
-                    Agentry is an autonomous tabular guardrail and sentry that intercepts dangerous agent commands, breaks infinite loops, and redacts sensitive credentials using <strong>Prior Labs TabPFN-3.5</strong>.
+                    Every tool call is scored by <strong>TabPFN-3.5 (Prior Labs cloud)</strong> before execution; regex blast-radius is a secondary hard stop. Agentry intercepts dangerous agent commands, breaks infinite loops, and redacts sensitive credentials in real-time.
                   </p>
                 </div>
 
