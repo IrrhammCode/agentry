@@ -90,9 +90,9 @@ export const McpUsageMonitor: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Simulate an MCP audit call to demonstrate the integration
+  // Dispatch live MCP audit call to demonstrate the integration
   const handleSimulateMcpCall = async () => {
-    showToast('Simulating MCP tool invocation → agentry_audit_step ...');
+    showToast('Dispatching live MCP tool invocation → agentry_audit_step ...');
     try {
       await AgentryApi.auditStep({
         session_id: `mcp_cursor_session_${Date.now()}`,
@@ -162,7 +162,7 @@ export const McpUsageMonitor: React.FC = () => {
             className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-sentry-violet/15 hover:bg-sentry-violet/25 text-sentry-violet border border-sentry-violet/30 text-xs font-mono font-semibold transition-all hover:scale-[1.02]"
           >
             <Cable className="w-4 h-4" />
-            <span>Simulate MCP Tool Call</span>
+            <span>Dispatch Live MCP Probe</span>
           </button>
           <button
             onClick={() => { refreshData(); showToast('Dashboard refreshed.'); }}
@@ -332,10 +332,10 @@ export const McpUsageMonitor: React.FC = () => {
             const hasData = !!metrics;
             const steps = metrics?.total_steps || 0;
             const sessions = metrics?.unique_sessions || 0;
-            const kills = metrics?.interventions.KILL || 0;
-            const reroutes = metrics?.interventions.REROUTE || 0;
-            const pauses = metrics?.interventions.PAUSE || 0;
-            const passes = metrics?.interventions.PASS || 0;
+            const kills = metrics?.interventions?.KILL || 0;
+            const reroutes = metrics?.interventions?.REROUTE || 0;
+            const pauses = metrics?.interventions?.PAUSE || 0;
+            const passes = metrics?.interventions?.PASS || 0;
 
             return (
               <button

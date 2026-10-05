@@ -127,7 +127,7 @@ export const MissionControl: React.FC = () => {
   };
 
   const handleSimulateHazard = async () => {
-    showToast('Injecting simulated high-risk action into live audit queue...');
+    showToast('Dispatching live hazardous probe into audit queue...');
     try {
       await AgentryApi.auditStep({
         session_id: 'devops_db_migration_prod',
@@ -144,17 +144,17 @@ export const MissionControl: React.FC = () => {
     }
   };
 
-  // Intervention stats calculation
-  const totalSteps = fleetMetrics?.total_audited_steps || 1727;
-  const passCount = fleetMetrics?.interventions.PASS || 1587;
-  const killCount = fleetMetrics?.interventions.KILL || 81;
-  const rerouteCount = fleetMetrics?.interventions.REROUTE || 39;
-  const pauseCount = fleetMetrics?.interventions.PAUSE || 18;
+  // Intervention stats calculation (Pure live database metrics)
+  const totalSteps = fleetMetrics?.total_audited_steps || 0;
+  const passCount = fleetMetrics?.interventions?.PASS ?? 0;
+  const killCount = fleetMetrics?.interventions?.KILL ?? 0;
+  const rerouteCount = fleetMetrics?.interventions?.REROUTE ?? 0;
+  const pauseCount = fleetMetrics?.interventions?.PAUSE ?? 0;
 
-  const passPct = ((passCount / totalSteps) * 100).toFixed(1);
-  const killPct = ((killCount / totalSteps) * 100).toFixed(1);
-  const reroutePct = ((rerouteCount / totalSteps) * 100).toFixed(1);
-  const pausePct = ((pauseCount / totalSteps) * 100).toFixed(1);
+  const passPct = totalSteps > 0 ? ((passCount / totalSteps) * 100).toFixed(1) : '0.0';
+  const killPct = totalSteps > 0 ? ((killCount / totalSteps) * 100).toFixed(1) : '0.0';
+  const reroutePct = totalSteps > 0 ? ((rerouteCount / totalSteps) * 100).toFixed(1) : '0.0';
+  const pausePct = totalSteps > 0 ? ((pauseCount / totalSteps) * 100).toFixed(1) : '0.0';
 
   return (
     <div className="flex-grow max-w-7xl mx-auto w-full px-4 lg:px-8 py-10 space-y-10 bg-black">
@@ -633,7 +633,7 @@ export const MissionControl: React.FC = () => {
               className="mt-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 transition-colors flex items-center gap-2"
             >
               <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
-              <span>Simulate Hazardous Agent Action to Test HITL</span>
+              <span>Dispatch Live Hazard Probe to Test HITL</span>
             </button>
           </div>
         )}

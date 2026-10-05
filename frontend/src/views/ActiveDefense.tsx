@@ -286,7 +286,7 @@ export const ActiveDefense: React.FC = () => {
               disabled={isDeadlockLoading}
               className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-mono text-slate-200 border border-white/10 transition-colors"
             >
-              {deadlockBroken ? 'Simulate Deadlock Cycle' : 'Test Autonomic Loop Break'}
+              {deadlockBroken ? 'Re-Inject Deadlock Cycle' : 'Test Autonomic Loop Break'}
             </button>
           </div>
 

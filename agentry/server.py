@@ -97,14 +97,19 @@ class AgentryHTTPRequestHandler(BaseHTTPRequestHandler):
         # 1. Health check
         if path in ("", "/health", "/v1/health"):
             ollama_status = guard.sentry._check_ollama_alive()
+            has_cloud_llm = bool(settings.groq_api_keys or os.getenv("GROQ_API_KEYS"))
+            reasoning_provider = "local_ollama" if ollama_status else ("groq_cloud" if has_cloud_llm else "deterministic_rules")
             self._send_json(200, {
                 "status": "healthy",
                 "service": "agentry-sentry-daemon",
                 "version": __version__,
                 "tabpfn_engine_fitted": guard.engine.is_fitted,
                 "tabpfn_cloud_mode": guard.engine.is_cloud_tabpfn,
+                "reasoning_engine_alive": ollama_status or has_cloud_llm,
+                "reasoning_provider": reasoning_provider,
                 "local_slm_alive": ollama_status,
-                "local_slm_model": guard.sentry.model
+                "local_slm_model": guard.sentry.model,
+                "cloud_llm_model": settings.groq_model,
             })
             return
 
