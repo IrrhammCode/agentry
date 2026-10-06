@@ -6,11 +6,12 @@ import { MissionControl } from './views/MissionControl.tsx';
 import { ActiveDefense } from './views/ActiveDefense.tsx';
 import { Documentation } from './views/Documentation.tsx';
 import { McpUsageMonitor } from './views/McpUsageMonitor.tsx';
+import { PresentationDeck } from './views/PresentationDeck.tsx';
 
 export function App() {
-  const [currentView, setCurrentView] = useState<'showcase' | 'console' | 'defense' | 'docs' | 'mcp'>('showcase');
+  const [currentView, setCurrentView] = useState<'showcase' | 'console' | 'defense' | 'docs' | 'mcp' | 'presentation'>('showcase');
 
-  const handleViewChange = (view: 'showcase' | 'console' | 'defense' | 'docs' | 'mcp') => {
+  const handleViewChange = (view: 'showcase' | 'console' | 'defense' | 'docs' | 'mcp' | 'presentation') => {
     setCurrentView(view);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -23,7 +24,16 @@ export function App() {
       {/* Main View Port */}
       <main className="flex-grow flex flex-col bg-black">
         {currentView === 'showcase' && (
-          <LandingPage onLaunchConsole={() => handleViewChange('console')} />
+          <LandingPage 
+            onLaunchConsole={() => handleViewChange('console')} 
+            onLaunchPresentation={() => handleViewChange('presentation')}
+          />
+        )}
+        {currentView === 'presentation' && (
+          <PresentationDeck 
+            onLaunchConsole={() => handleViewChange('console')}
+            onExitDeck={() => handleViewChange('showcase')}
+          />
         )}
         {currentView === 'console' && (
           <MissionControl />

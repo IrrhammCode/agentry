@@ -7,18 +7,20 @@ import {
   Terminal, 
   ArrowLeft,
   BookOpen,
-  Cable
+  Cable,
+  Sparkles
 } from 'lucide-react';
 
 import { AgentryApi } from '../services/api.ts';
 
 interface NavbarProps {
-  currentView: 'showcase' | 'console' | 'defense' | 'docs' | 'mcp';
-  onViewChange: (view: 'showcase' | 'console' | 'defense' | 'docs' | 'mcp') => void;
+  currentView: 'showcase' | 'console' | 'defense' | 'docs' | 'mcp' | 'presentation';
+  onViewChange: (view: 'showcase' | 'console' | 'defense' | 'docs' | 'mcp' | 'presentation') => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ currentView, onViewChange }) => {
   const isConsoleMode = currentView === 'console' || currentView === 'defense' || currentView === 'docs' || currentView === 'mcp';
+  const isPresentation = currentView === 'presentation';
   const [cloudMode, setCloudMode] = React.useState<boolean | null>(null);
 
   React.useEffect(() => {
@@ -46,11 +48,11 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onViewChange }) => 
               <div className="flex items-center gap-1.5">
                 <span className="font-display font-bold text-xl tracking-tight text-white">Agentry</span>
                 <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-sentry-emerald font-semibold border border-emerald-500/30">
-                  {currentView === 'docs' ? 'DOCS' : currentView === 'mcp' ? 'MCP' : isConsoleMode ? 'WAR ROOM' : 'v0.1.0'}
+                  {isPresentation ? 'DECK' : currentView === 'docs' ? 'DOCS' : currentView === 'mcp' ? 'MCP' : isConsoleMode ? 'WAR ROOM' : 'v0.1.0'}
                 </span>
               </div>
               <p className="text-[11px] text-slate-400 font-mono hidden sm:block">
-                {currentView === 'docs' ? 'Developer Hub & API Reference' : currentView === 'mcp' ? 'MCP Integration Monitor' : isConsoleMode ? 'Live Fleet Command Center' : 'TabPFN-3.5 Autonomous Sentry'}
+                {isPresentation ? 'Interactive Scrollytelling Presentation' : currentView === 'docs' ? 'Developer Hub & API Reference' : currentView === 'mcp' ? 'MCP Integration Monitor' : isConsoleMode ? 'Live Fleet Command Center' : 'TabPFN-3.5 Autonomous Sentry'}
               </p>
             </div>
           </button>
@@ -88,6 +90,13 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onViewChange }) => 
               >
                 ROI Calc
               </a>
+              <button 
+                onClick={() => onViewChange('presentation')}
+                className="px-3 py-1.5 rounded-lg text-sentry-emerald hover:bg-emerald-500/10 font-semibold transition-colors flex items-center gap-1.5 border border-emerald-500/20"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Deck</span>
+              </button>
               <button 
                 onClick={() => onViewChange('docs')}
                 className="px-3 py-1.5 rounded-lg text-sentry-cyan hover:bg-white/5 font-semibold transition-colors flex items-center gap-1"
@@ -168,7 +177,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onViewChange }) => 
             </svg>
             <span>Star</span>
             <span className="px-1.5 py-0.2 rounded bg-black/40 text-[10px] text-sentry-cyan font-mono border border-cyan-500/20">
-              88 Pass
+              89 Pass
             </span>
           </a>
 
@@ -189,15 +198,15 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onViewChange }) => 
           )}
 
           {/* Primary View Switcher Button */}
-          {!isConsoleMode ? (
+          {isPresentation ? (
             <button 
-              onClick={() => onViewChange('console')}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-sentry-cyan to-sentry-emerald text-void font-bold text-xs glow-cyan hover:scale-[1.02] active:scale-[0.98] transition-all"
+              onClick={() => onViewChange('showcase')}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-surface-2 hover:bg-surface-3 border border-white/10 text-xs font-semibold text-slate-200 hover:text-white transition-all"
             >
-              <Terminal className="w-4 h-4" />
-              <span>Launch Console</span>
+              <ArrowLeft className="w-3.5 h-3.5 text-sentry-cyan" />
+              <span>Exit Deck</span>
             </button>
-          ) : (
+          ) : isConsoleMode ? (
             <button 
               onClick={() => onViewChange('showcase')}
               className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-surface-2 hover:bg-surface-3 border border-white/10 text-xs font-semibold text-slate-200 hover:text-white transition-all"
@@ -205,6 +214,23 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onViewChange }) => 
               <ArrowLeft className="w-3.5 h-3.5 text-sentry-cyan" />
               <span>Exit Console</span>
             </button>
+          ) : (
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => onViewChange('presentation')}
+                className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-surface-2 hover:bg-surface-3 border border-sentry-emerald/30 text-sentry-emerald font-semibold text-xs transition-all hover:scale-[1.02]"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Pitch Deck</span>
+              </button>
+              <button 
+                onClick={() => onViewChange('console')}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-sentry-cyan to-sentry-emerald text-void font-bold text-xs glow-cyan hover:scale-[1.02] active:scale-[0.98] transition-all"
+              >
+                <Terminal className="w-4 h-4" />
+                <span>Launch Console</span>
+              </button>
+            </div>
           )}
         </div>
 

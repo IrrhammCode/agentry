@@ -2,7 +2,7 @@ import React from 'react';
 import { Shield } from 'lucide-react';
 
 interface FooterProps {
-  onViewChange: (view: 'showcase' | 'console' | 'defense' | 'docs' | 'mcp') => void;
+  onViewChange: (view: 'showcase' | 'console' | 'defense' | 'docs' | 'mcp' | 'presentation') => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({ onViewChange }) => {
@@ -24,6 +24,12 @@ export const Footer: React.FC<FooterProps> = ({ onViewChange }) => {
           >
             GitHub Repository
           </a>
+          <button 
+            onClick={() => onViewChange('presentation')} 
+            className="text-sentry-emerald hover:underline transition-colors font-semibold"
+          >
+            🎬 Pitch Deck
+          </button>
           <button 
             onClick={() => onViewChange('showcase')} 
             className="hover:text-white transition-colors"
@@ -48,7 +54,7 @@ export const Footer: React.FC<FooterProps> = ({ onViewChange }) => {
           >
             Documentation
           </button>
-          <span className="text-emerald-400">MIT Open Source</span>
+          <span className="text-emerald-400">Apache-2.0 Open Source</span>
         </div>
       </div>
     </footer>

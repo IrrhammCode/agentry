@@ -24,9 +24,10 @@ import { ScrollReveal } from '../components/ScrollReveal.tsx';
 
 interface LandingPageProps {
   onLaunchConsole: () => void;
+  onLaunchPresentation?: () => void;
 }
 
-export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchConsole }) => {
+export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchConsole, onLaunchPresentation }) => {
   return (
     <div className="flex-grow bg-black">
       
@@ -74,6 +75,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchConsole }) => 
                 <span>ENTER MISSION CONTROL</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
+
+              {onLaunchPresentation && (
+                <button
+                  onClick={onLaunchPresentation}
+                  className="flex items-center gap-2 px-6 py-4 rounded-xl bg-surface-2 hover:bg-surface-3 border border-sentry-cyan/40 text-white font-semibold text-sm hover:border-sentry-cyan transition-all shadow-md shadow-cyan-500/10"
+                >
+                  <Sparkles className="w-4 h-4 text-sentry-cyan" />
+                  <span>🎬 Interactive Pitch Deck</span>
+                </button>
+              )}
               
               <a 
                 href="#playground" 
