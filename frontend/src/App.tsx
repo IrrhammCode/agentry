@@ -9,10 +9,24 @@ import { McpUsageMonitor } from './views/McpUsageMonitor.tsx';
 import { PresentationDeck } from './views/PresentationDeck.tsx';
 
 export function App() {
-  const [currentView, setCurrentView] = useState<'showcase' | 'console' | 'defense' | 'docs' | 'mcp' | 'presentation'>('showcase');
+  const getInitialView = (): 'showcase' | 'console' | 'defense' | 'docs' | 'mcp' | 'presentation' => {
+    const hash = window.location.hash.replace('#', '').toLowerCase();
+    if (['showcase', 'console', 'defense', 'docs', 'mcp', 'presentation'].includes(hash)) {
+      return hash as any;
+    }
+    const params = new URLSearchParams(window.location.search);
+    const viewParam = params.get('view')?.toLowerCase();
+    if (viewParam && ['showcase', 'console', 'defense', 'docs', 'mcp', 'presentation'].includes(viewParam)) {
+      return viewParam as any;
+    }
+    return 'showcase';
+  };
+
+  const [currentView, setCurrentView] = useState<'showcase' | 'console' | 'defense' | 'docs' | 'mcp' | 'presentation'>(getInitialView);
 
   const handleViewChange = (view: 'showcase' | 'console' | 'defense' | 'docs' | 'mcp' | 'presentation') => {
     setCurrentView(view);
+    window.location.hash = view;
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
