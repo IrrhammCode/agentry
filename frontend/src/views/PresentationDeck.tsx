@@ -1183,9 +1183,9 @@ obj.onValuesChange((values) => {
 
                   <div className="p-4 rounded-xl bg-black/80 font-mono text-xs border border-white/5 space-y-2">
                     <div className="text-slate-500">$ curl -X POST http://localhost:8787/v1/audit \</div>
-                    <div className="text-slate-500 pl-4">-d '{"tool_name": "bash", "input_text": "rm -rf /", "session_id": "swe-sec-kill-1"}'</div>
+                    <div className="text-slate-500 pl-4">{'-d \'{"tool_name": "bash", "input_text": "rm -rf /", "session_id": "swe-sec-kill-1"}\''}</div>
                     <div className="text-sentry-emerald pt-2">&gt;&gt; TabPFN Assessment:</div>
-                    <div className="text-slate-300 pl-4">&#123; "action": "KILL", "risk_level": "CRITICAL", "hazard_score": 1.00, "reason": "Catastrophic recursive root deletion" &#125;</div>
+                    <div className="text-slate-300 pl-4">{'{ "action": "KILL", "risk_level": "CRITICAL", "hazard_score": 1.00, "reason": "Catastrophic recursive root deletion" }'}</div>
                   </div>
                 </div>
               )}
