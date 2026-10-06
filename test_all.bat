@@ -13,7 +13,7 @@ if %ERRORLEVEL% NEQ 0 (
 )
 
 echo.
-echo [2/4] Running Core Agentry Pytest Suite (88 tests)...
+echo [2/4] Running Core Agentry Pytest Suite (89 tests)...
 .venv\Scripts\python.exe -m pytest tests/ -q
 if %ERRORLEVEL% NEQ 0 (
     echo [FAIL] Core unit tests failed!
@@ -21,10 +21,10 @@ if %ERRORLEVEL% NEQ 0 (
 )
 
 echo.
-echo [3/4] Running Real Project Build Arena Experiment...
-.venv\Scripts\python.exe build_project_experiment.py
+echo [3/4] Running Live Coding Agent Verification...
+.venv\Scripts\python.exe scripts/test_live_coding_agent.py
 if %ERRORLEVEL% NEQ 0 (
-    echo [FAIL] Project build experiment failed!
+    echo [FAIL] Live coding agent test failed!
     exit /b 1
 )
 

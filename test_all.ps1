@@ -14,7 +14,7 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 Write-Host ""
-Write-Host "[2/4] Running Core Agentry Pytest Suite (88 tests)..." -ForegroundColor Yellow
+Write-Host "[2/4] Running Core Agentry Pytest Suite (89 tests)..." -ForegroundColor Yellow
 & .\.venv\Scripts\python.exe -m pytest tests/ -q
 if ($LASTEXITCODE -ne 0) {
     Write-Host "[FAIL] Core unit tests failed!" -ForegroundColor Red
@@ -22,10 +22,10 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 Write-Host ""
-Write-Host "[3/4] Running Real Project Build Arena Experiment..." -ForegroundColor Yellow
-& .\.venv\Scripts\python.exe build_project_experiment.py
+Write-Host "[3/4] Running Live Coding Agent Verification..." -ForegroundColor Yellow
+& .\.venv\Scripts\python.exe scripts/test_live_coding_agent.py
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "[FAIL] Project build experiment failed!" -ForegroundColor Red
+    Write-Host "[FAIL] Live coding agent test failed!" -ForegroundColor Red
     exit 1
 }
 
