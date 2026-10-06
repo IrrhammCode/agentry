@@ -87,6 +87,26 @@ export const PresentationDeck: React.FC<PresentationDeckProps> = ({
   const [motionCost, setMotionCost] = useState<number>(0.045);
   const motionTimerRef = useRef<number | null>(null);
 
+  // Core Slide Configuration (8 Slides)
+  const SLIDE_CONFIG = [
+    { id: 'crisis', num: '01', label: 'Crisis' },
+    { id: 'tabpfn-foundation', num: '02', label: 'TabPFN Deep Dive' },
+    { id: 'defense-architecture', num: '03', label: 'Pipeline' },
+    { id: 'benchmark-arena', num: '04', label: 'Benchmark' },
+    { id: 'live-proof-gallery', num: '05', label: 'Verified Proof' },
+    { id: 'curated-traces', num: '06', label: 'Traces' },
+    { id: 'motion-engine', num: '07', label: 'Motion Sim' },
+    { id: 'install-playbook', num: '08', label: 'Quickstart' }
+  ];
+
+  const getActiveSlideIndex = () => {
+    if (activeSection === 'hero') return 0;
+    const idx = SLIDE_CONFIG.findIndex(s => s.id === activeSection);
+    return idx !== -1 ? idx : 0;
+  };
+  const activeSlideIdx = getActiveSlideIndex();
+  const activeSlideNum = SLIDE_CONFIG[activeSlideIdx].num;
+
   const copyToClipboard = (text: string, key: string) => {
     navigator.clipboard.writeText(text);
     setCopiedKey(key);
@@ -441,34 +461,33 @@ export const PresentationDeck: React.FC<PresentationDeckProps> = ({
             </button>
             <div className="hidden sm:flex items-center gap-2">
               <span className="font-display font-bold text-white tracking-wide">AGENTRY MOTION DECK</span>
+              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-sentry-cyan/15 border border-sentry-cyan/40 text-sentry-cyan font-mono text-xs shadow-sm">
+                <span className="text-[10px] text-slate-300 font-bold">SLIDE</span>
+                <span className="font-bold text-white bg-sentry-cyan/30 px-1 rounded">{activeSlideNum}</span>
+                <span className="text-slate-400 text-[10px]">/ 08</span>
+              </div>
               <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-sentry-emerald font-mono text-[10px] border border-emerald-500/30">
                 Prior Labs 2026
               </span>
             </div>
           </div>
 
-          {/* Quick Chapter Pill Navigation */}
+          {/* Quick Chapter Pill Navigation with Slide Numbers */}
           <div className="hidden lg:flex items-center gap-1 font-mono text-[11px]">
-            {[
-              { id: 'crisis', label: '01. Crisis' },
-              { id: 'tabpfn-foundation', label: '02. TabPFN Deep Dive' },
-              { id: 'defense-architecture', label: '03. Pipeline' },
-              { id: 'benchmark-arena', label: '04. Benchmark' },
-              { id: 'live-proof-gallery', label: '05. Verified Proof' },
-              { id: 'curated-traces', label: '06. Traces' },
-              { id: 'motion-engine', label: '07. Live Motion Sim' },
-              { id: 'install-playbook', label: '08. Quickstart' }
-            ].map(chap => (
+            {SLIDE_CONFIG.map((chap, idx) => (
               <button
                 key={chap.id}
                 onClick={() => scrollToId(chap.id)}
-                className={`px-2.5 py-1 rounded-md transition-all ${
-                  activeSection === chap.id 
-                    ? 'bg-sentry-cyan/20 text-sentry-cyan font-semibold border border-sentry-cyan/40 shadow-sm' 
+                className={`px-2 py-1 rounded-md transition-all flex items-center gap-1.5 ${
+                  activeSlideIdx === idx 
+                    ? 'bg-sentry-cyan/20 text-sentry-cyan font-bold border border-sentry-cyan/40 shadow-sm' 
                     : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
                 }`}
               >
-                {chap.label}
+                <span className={`text-[10px] px-1 py-0.2 rounded font-bold ${
+                  activeSlideIdx === idx ? 'bg-sentry-cyan text-void' : 'bg-white/10 text-slate-300'
+                }`}>{chap.num}</span>
+                <span>{chap.label}</span>
               </button>
             ))}
           </div>
@@ -593,8 +612,9 @@ export const PresentationDeck: React.FC<PresentationDeckProps> = ({
           
           <ScrollReveal animation="fade-up">
             <div className="flex items-center gap-2 text-xs font-mono text-sentry-red mb-3">
-              <span className="px-2 py-0.5 rounded bg-red-500/10 border border-red-500/20">CHAPTER 01</span>
-              <span>THE PRODUCTION BOTTLENECK</span>
+              <span className="px-2.5 py-1 rounded bg-red-500/20 text-red-300 font-bold border border-red-500/30 tracking-wider">SLIDE 01 / 08</span>
+              <span className="text-white/40">•</span>
+              <span>CHAPTER 01: THE PRODUCTION BOTTLENECK</span>
             </div>
             <h2 className="text-3xl sm:text-5xl font-display font-extrabold text-white mb-6">
               Why Autonomous Coding Agents <br />
@@ -685,8 +705,9 @@ export const PresentationDeck: React.FC<PresentationDeckProps> = ({
           
           <ScrollReveal animation="fade-up">
             <div className="flex items-center gap-2 text-xs font-mono text-sentry-cyan mb-3">
-              <span className="px-2 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/20">CHAPTER 02</span>
-              <span>PRIOR LABS RESEARCH & ARCHITECTURAL FOUNDATION</span>
+              <span className="px-2.5 py-1 rounded bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/30 tracking-wider">SLIDE 02 / 08</span>
+              <span className="text-white/40">•</span>
+              <span>CHAPTER 02: PRIOR LABS TABPFN-3.5 FOUNDATION</span>
             </div>
             <h2 className="text-3xl sm:text-5xl font-display font-extrabold text-white mb-6">
               TabPFN-3.5: In-Context Bayesian Intelligence <br />
@@ -822,8 +843,9 @@ export const PresentationDeck: React.FC<PresentationDeckProps> = ({
           
           <ScrollReveal animation="fade-up">
             <div className="flex items-center gap-2 text-xs font-mono text-sentry-emerald mb-3">
-              <span className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">CHAPTER 03</span>
-              <span>DEFENSE-IN-DEPTH ARCHITECTURE</span>
+              <span className="px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30 tracking-wider">SLIDE 03 / 08</span>
+              <span className="text-white/40">•</span>
+              <span>CHAPTER 03: DEFENSE-IN-DEPTH ARCHITECTURE</span>
             </div>
             <h2 className="text-3xl sm:text-5xl font-display font-extrabold text-white mb-6">
               Dual-Engine Safeguard Pipeline: <br />
@@ -946,8 +968,9 @@ export const PresentationDeck: React.FC<PresentationDeckProps> = ({
           
           <ScrollReveal animation="fade-up">
             <div className="flex items-center gap-2 text-xs font-mono text-sentry-cyan mb-3">
-              <span className="px-2 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/20">CHAPTER 04</span>
-              <span>RIGOROUS UNSEEN SWE-BENCH BENCHMARK</span>
+              <span className="px-2.5 py-1 rounded bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/30 tracking-wider">SLIDE 04 / 08</span>
+              <span className="text-white/40">•</span>
+              <span>CHAPTER 04: RIGOROUS UNSEEN SWE-BENCH BENCHMARK</span>
             </div>
             <h2 className="text-3xl sm:text-5xl font-display font-extrabold text-white mb-6">
               Verified Benchmark Arena: <br />
@@ -1160,8 +1183,9 @@ export const PresentationDeck: React.FC<PresentationDeckProps> = ({
           
           <ScrollReveal animation="fade-up">
             <div className="flex items-center gap-2 text-xs font-mono text-sentry-emerald mb-3">
-              <span className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">CHAPTER 05</span>
-              <span>AUTHENTIC PROOF & PRODUCTION UI GALLERY</span>
+              <span className="px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30 tracking-wider">SLIDE 05 / 08</span>
+              <span className="text-white/40">•</span>
+              <span>CHAPTER 05: AUTHENTIC PROOF & PRODUCTION UI GALLERY</span>
             </div>
             <h2 className="text-3xl sm:text-5xl font-display font-extrabold text-white mb-6">
               Verified Visual Proof: <br />
@@ -1368,8 +1392,9 @@ export const PresentationDeck: React.FC<PresentationDeckProps> = ({
           
           <ScrollReveal animation="fade-up">
             <div className="flex items-center gap-2 text-xs font-mono text-sentry-cyan mb-3">
-              <span className="px-2 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/20">CHAPTER 06</span>
-              <span>VERIFIED TOOL-CALL AUDIT TRACES</span>
+              <span className="px-2.5 py-1 rounded bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/30 tracking-wider">SLIDE 06 / 08</span>
+              <span className="text-white/40">•</span>
+              <span>CHAPTER 06: 6 CURATED TOOL-CALL AUDIT TRACES</span>
             </div>
             <h2 className="text-3xl sm:text-5xl font-display font-extrabold text-white mb-6">
               6 Real-World Execution Scenarios: <br />
@@ -1505,8 +1530,9 @@ export const PresentationDeck: React.FC<PresentationDeckProps> = ({
           
           <ScrollReveal animation="fade-up">
             <div className="flex items-center gap-2 text-xs font-mono text-sentry-violet mb-3">
-              <span className="px-2 py-0.5 rounded bg-violet-500/10 border border-violet-500/20">CHAPTER 07</span>
-              <span>LIVE MOTION DESIGN TELEMETRY ENGINE</span>
+              <span className="px-2.5 py-1 rounded bg-violet-500/20 text-violet-300 font-bold border border-violet-500/30 tracking-wider">SLIDE 07 / 08</span>
+              <span className="text-white/40">•</span>
+              <span>CHAPTER 07: LIVE MOTION DESIGN TELEMETRY ENGINE</span>
             </div>
             <h2 className="text-3xl sm:text-5xl font-display font-extrabold text-white mb-6">
               Interactive Motion Design: <br />
@@ -1744,8 +1770,9 @@ export const PresentationDeck: React.FC<PresentationDeckProps> = ({
           
           <ScrollReveal animation="fade-up">
             <div className="flex items-center gap-2 text-xs font-mono text-sentry-emerald mb-3">
-              <span className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">CHAPTER 08</span>
-              <span>DEPLOYMENT & GETTING STARTED</span>
+              <span className="px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30 tracking-wider">SLIDE 08 / 08</span>
+              <span className="text-white/40">•</span>
+              <span>CHAPTER 08: DEPLOYMENT & GETTING STARTED</span>
             </div>
             <h2 className="text-3xl sm:text-5xl font-display font-extrabold text-white mb-6">
               How to Install and Run Agentry: <br />
@@ -1974,6 +2001,45 @@ docker-compose ps`}
 
         </div>
       </section>
+
+      {/* ===================================================================== */}
+      {/* FLOATING SLIDE NAVIGATION & PAGE NUMBER HUD                          */}
+      {/* ===================================================================== */}
+      <aside aria-label="Slide navigation" className="fixed bottom-6 right-6 z-40 bg-black/90 backdrop-blur-md border border-white/20 p-1.5 rounded-2xl shadow-2xl flex items-center gap-2 font-mono text-xs text-white">
+        <button
+          onClick={() => {
+            const prevIdx = Math.max(0, activeSlideIdx - 1);
+            scrollToId(SLIDE_CONFIG[prevIdx].id);
+          }}
+          disabled={activeSlideIdx <= 0}
+          className={`p-2 rounded-xl transition-all ${
+            activeSlideIdx <= 0 ? 'opacity-30 cursor-not-allowed text-slate-500' : 'hover:bg-white/10 text-white cursor-pointer hover:text-sentry-cyan'
+          }`}
+          title="Previous Slide"
+        >
+          <ChevronRight className="w-4 h-4 rotate-180" />
+        </button>
+
+        <div className="flex items-center gap-1.5 px-3 py-1 bg-surface-2 rounded-xl border border-white/10">
+          <span className="text-slate-400 text-[10px] uppercase font-bold tracking-wider">SLIDE</span>
+          <span className="text-sentry-cyan font-extrabold text-sm">{activeSlideNum}</span>
+          <span className="text-slate-500 text-xs">/ 08</span>
+        </div>
+
+        <button
+          onClick={() => {
+            const nextIdx = Math.min(SLIDE_CONFIG.length - 1, activeSlideIdx + 1);
+            scrollToId(SLIDE_CONFIG[nextIdx].id);
+          }}
+          disabled={activeSlideIdx >= SLIDE_CONFIG.length - 1}
+          className={`p-2 rounded-xl transition-all ${
+            activeSlideIdx >= SLIDE_CONFIG.length - 1 ? 'opacity-30 cursor-not-allowed text-slate-500' : 'hover:bg-white/10 text-white cursor-pointer hover:text-sentry-cyan'
+          }`}
+          title="Next Slide"
+        >
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      </aside>
 
     </div>
   );
